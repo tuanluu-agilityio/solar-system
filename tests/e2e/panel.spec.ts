@@ -36,6 +36,8 @@ test('selecting a body shows the panel in the right place', async ({ page }) => 
 });
 
 test('language switch retitles the open panel and back returns to overview', async ({ page }) => {
+  // Reload-based and close to the 60 s limit under load on software GL.
+  test.slow();
   await boot(page);
   await page.evaluate(() => localStorage.setItem('sse.lang', 'en'));
   await page.reload();

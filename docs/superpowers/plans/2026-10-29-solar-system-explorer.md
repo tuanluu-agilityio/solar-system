@@ -1244,10 +1244,10 @@ export function createTourController(deps: TourDeps): { dispatch(e: TourEvent): 
   A FAIL must be fixed in this task if it is ≤ 30 min of work. Otherwise it goes to a KNOWN_ISSUES entry.
 - If screenshots render blank under SwiftShader: retry headed (`--headed` with `--use-angle=d3d11`). If they are still blank, log KNOWN_ISSUES and rely on the e2e state checks.
 
-- [ ] **Step 1: Write the flows and screenshot specs**
-- [ ] **Step 2:** Run `npm run test:e2e && npm run test:visual`. Expected: PASS; 18 PNGs written.
-- [ ] **Step 3: Visual review against the checklist; fix or log**
-- [ ] **Step 4: Commit** (screenshots included)
+- [x] **Step 1: Write the flows and screenshot specs**
+- [x] **Step 2:** Run `npm run test:e2e && npm run test:visual`. Expected: PASS; 18 PNGs written.
+- [x] **Step 3: Visual review against the checklist; fix or log**
+- [x] **Step 4: Commit** (screenshots included)
 
 ### Task 29: Performance and budget verification
 **Model:** opus
