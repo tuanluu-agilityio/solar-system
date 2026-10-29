@@ -1,0 +1,38 @@
+{
+  "low": {
+    "earth_clouds": "textures/low/earth_clouds.webp",
+    "earth_day": "textures/low/earth_day.webp",
+    "earth_night": "textures/low/earth_night.webp",
+    "jupiter": "textures/low/jupiter.webp",
+    "mars": "textures/low/mars.webp",
+    "mercury": "textures/low/mercury.webp",
+    "moon": "textures/low/moon.webp",
+    "neptune": "textures/low/neptune.webp",
+    "pluto": "textures/low/pluto.webp",
+    "saturn": "textures/low/saturn.webp",
+    "saturn_ring": "textures/low/saturn_ring.webp",
+    "sky_2048": "textures/low/sky_2048.webp",
+    "sun": "textures/low/sun.webp",
+    "uranus": "textures/low/uranus.webp",
+    "venus_atmosphere": "textures/low/venus_atmosphere.webp",
+    "venus_surface": "textures/low/venus_surface.webp"
+  },
+  "high": {
+    "earth_clouds": "textures/high/earth_clouds.webp",
+    "earth_day": "textures/high/earth_day.webp",
+    "earth_night": "textures/high/earth_night.webp",
+    "jupiter": "textures/high/jupiter.webp",
+    "mars": "textures/high/mars.webp",
+    "mercury": "textures/high/mercury.webp",
+    "moon": "textures/high/moon.webp",
+    "neptune": "textures/high/neptune.webp",
+    "pluto": "textures/high/pluto.webp",
+    "saturn": "textures/high/saturn.webp",
+    "saturn_ring": "textures/high/saturn_ring.webp",
+    "sky_4096": "textures/high/sky_4096.webp",
+    "sun": "textures/high/sun.webp",
+    "uranus": "textures/high/uranus.webp",
+    "venus_atmosphere": "textures/high/venus_atmosphere.webp",
+    "venus_surface": "textures/high/venus_surface.webp"
+  }
+}
