@@ -1,0 +1,44 @@
+{
+  "intro": {
+    "text": "Chào mừng bạn đến với Khám phá Hệ Mặt Trời! Mình sẽ dẫn bạn đi từ Mặt Trời rực lửa ra tới rìa băng giá của hệ hành tinh. Bạn có thể kéo để xoay, chụm hai ngón để phóng to, và chạm vào một thiên thể để bay tới đó. Chạm vào cảnh sẽ tạm dừng tour, bấm Tiếp tục khi bạn sẵn sàng. Lưu ý nhỏ: kích thước và khoảng cách ở đây không theo đúng tỉ lệ. Nào, mình xuất phát thôi!"
+  },
+  "sun": {
+    "text": "Đây là Mặt Trời, ngôi sao ở trung tâm của cả hệ. Đường kính của nó gần 1,4 triệu kilômét, đủ chứa khoảng 1,3 triệu Trái Đất. Trong lõi, phản ứng tổng hợp hạt nhân biến hydro thành heli ở khoảng 15 triệu độ C, còn bề mặt chỉ khoảng năm nghìn rưỡi độ C. Điều bất ngờ là ánh sáng mất khoảng 8 phút mới tới Trái Đất, nên Mặt Trời bạn thấy luôn là hình ảnh của 8 phút trước."
+  },
+  "mercury": {
+    "text": "Tiếp theo là Sao Thủy, hành tinh nhỏ nhất và gần Mặt Trời nhất, cách khoảng 58 triệu kilômét. Nó chỉ rộng gần năm nghìn kilômét, lớn hơn Mặt Trăng một chút, và chạy hết một vòng quanh Mặt Trời trong 88 ngày. Không có khí quyển giữ nhiệt, ban ngày nóng khoảng 430 độ C, ban đêm lạnh tới âm 180 độ. Thú vị hơn, từ lúc mặt trời mọc đến lần mọc kế tiếp mất tới 176 ngày Trái Đất."
+  },
+  "venus": {
+    "text": "Giờ chúng ta tới Sao Kim, gần như song sinh với Trái Đất về kích thước, rộng khoảng 12 nghìn kilômét. Nhưng lớp khí cacbonic dày đặc và mây axit sunfuric gây hiệu ứng nhà kính mất kiểm soát, khiến bề mặt nóng khoảng 465 độ C, đủ làm chảy chì. Lạ hơn nữa, Sao Kim tự quay ngược chiều nên Mặt Trời mọc ở phía tây, và một ngày ở đây dài 243 ngày Trái Đất, lâu hơn cả một năm 225 ngày của nó."
+  },
+  "earth": {
+    "text": "Chào mừng về nhà! Đây là Trái Đất, rộng gần 12 nghìn 800 kilômét và cách Mặt Trời gần 150 triệu kilômét. Đây là nơi duy nhất ta biết có sự sống, với nước lỏng phủ khoảng 70 phần trăm bề mặt. Trục quay nghiêng khoảng 23,4 độ, chính độ nghiêng này tạo ra các mùa. Một điều bất ngờ: Trái Đất là hành tinh duy nhất không mang tên một vị thần Hy Lạp hay La Mã."
+  },
+  "moon": {
+    "text": "Ngay bên cạnh là Mặt Trăng, vệ tinh tự nhiên duy nhất của Trái Đất, cách chúng ta khoảng 384 nghìn kilômét. Nó rộng gần 3 nghìn 500 kilômét và tự quay đúng một vòng trong 27 ngày, bằng thời gian quay quanh Trái Đất, nên luôn hướng một mặt về phía ta. Mười hai phi hành gia đã đặt chân lên đây từ năm 1969 đến 1972. Bất ngờ là Mặt Trăng đang xa dần, khoảng 3,8 xentimét mỗi năm."
+  },
+  "mars": {
+    "text": "Đây là Sao Hỏa, Hành Tinh Đỏ, cách Mặt Trời khoảng 228 triệu kilômét. Màu đỏ đến từ khoáng chất sắt bị gỉ trong bụi, và nó chỉ rộng khoảng 6 nghìn 800 kilômét, cỡ một nửa Trái Đất. Một ngày ở đây dài hơn 24,6 giờ, nhưng một năm kéo dài 687 ngày, nhiệt độ trung bình khoảng âm 65 độ C. Sao Hỏa còn có Olympus Mons, ngọn núi lửa lớn nhất Hệ Mặt Trời, cao gần gấp ba đỉnh Everest."
+  },
+  "asteroid-belt": {
+    "text": "Giữa Sao Hỏa và Sao Mộc là Vành đai tiểu hành tinh, nơi chứa những khối đá còn sót lại từ thời các hành tinh hình thành. Các nhà khoa học ước tính có từ 1,1 đến 1,9 triệu tiểu hành tinh lớn hơn một kilômét. Lực hấp dẫn của Sao Mộc đã ngăn chúng kết thành một hành tinh. Bất ngờ là gộp tất cả lại, khối lượng vẫn nhỏ hơn Mặt Trăng, và vành đai phần lớn là khoảng trống, tàu vũ trụ bay qua mà không va phải gì."
+  },
+  "jupiter": {
+    "text": "Xin chào Sao Mộc, gã khổng lồ của Hệ Mặt Trời! Nó rộng gần 143 nghìn kilômét, khoảng một nghìn Trái Đất có thể lọt vừa bên trong, và nặng hơn gấp đôi tất cả các hành tinh khác cộng lại. Dù to lớn, Sao Mộc lại quay nhanh nhất, một ngày chỉ khoảng 10 giờ. Vết Đỏ Lớn là cơn bão rộng hơn cả Trái Đất, đã kéo dài hơn 300 năm. Sao Mộc có 115 mặt trăng đã biết, trong đó có Ganymede, mặt trăng lớn nhất."
+  },
+  "saturn": {
+    "text": "Và đây là Sao Thổ với hệ vành đai rực rỡ, gồm hàng tỉ mảnh băng và đá. Vành đai trải rộng hàng trăm nghìn kilômét nhưng nhiều chỗ chỉ dày khoảng 10 mét. Sao Thổ rộng khoảng 120 nghìn kilômét và có 293 mặt trăng đã biết, trong đó Titan có những hồ metan lỏng. Điều bất ngờ nhất: Sao Thổ có mật độ nhỏ hơn nước, nên nếu có một bồn tắm đủ lớn, nó sẽ nổi!"
+  },
+  "uranus": {
+    "text": "Ra xa hơn, ta gặp Sao Thiên Vương, hành tinh băng khổng lồ rộng khoảng 51 nghìn kilômét, có màu xanh lam nhạt nhờ khí metan. Điều đặc biệt nhất là trục của nó nghiêng khoảng 98 độ, nên hành tinh như đang lăn quanh Mặt Trời. Một vòng quỹ đạo mất khoảng 84 năm, vì vậy mỗi cực có khoảng 21 năm ngày liên tục rồi 21 năm đêm dài. Đây cũng là hành tinh đầu tiên được tìm thấy bằng kính thiên văn, năm 1781."
+  },
+  "neptune": {
+    "text": "Tiếp theo là Sao Hải Vương, hành tinh xa nhất, cách Mặt Trời khoảng 4,5 tỉ kilômét. Thế giới xanh thẫm này có những cơn gió nhanh nhất Hệ Mặt Trời, hơn 2 nghìn kilômét mỗi giờ. Một vòng quanh Mặt Trời mất khoảng 165 năm Trái Đất. Đặc biệt, đây là hành tinh đầu tiên được tìm ra nhờ toán học: các nhà thiên văn tính trước vị trí của nó, và Johann Galle đã nhìn thấy nó năm 1846."
+  },
+  "pluto": {
+    "text": "Điểm dừng cuối là Sao Diêm Vương, một thế giới băng nhỏ bé, rộng khoảng 2 nghìn 400 kilômét, còn nhỏ hơn Mặt Trăng. Được phát hiện năm 1930, nó là hành tinh thứ chín suốt 76 năm, cho tới năm 2006 thì bị xếp lại thành hành tinh lùn, vì chưa dọn sạch quỹ đạo trong Vành đai Kuiper đông đúc. Năm 2015, tàu New Horizons bay ngang qua và phát hiện một sông băng khổng lồ hình trái tim."
+  },
+  "outro": {
+    "text": "Chuyến tham quan của chúng ta đến đây là kết thúc! Từ Mặt Trời rực lửa tới Sao Diêm Vương băng giá, ta đã đi qua gần 6 tỉ kilômét. Giờ thì Hệ Mặt Trời là của bạn. Hãy chạm vào một hành tinh để bay tới và đọc bảng thông tin, kéo để xoay, chụm hai ngón để phóng to. Bạn có thể bấm nút Tour bất cứ lúc nào để đi lại hành trình này. Cảm ơn bạn đã đồng hành!"
+  }
+}
