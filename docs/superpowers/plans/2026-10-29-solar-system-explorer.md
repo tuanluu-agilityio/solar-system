@@ -12,28 +12,64 @@
 
 ## How this plan is executed (read first)
 
-- **Task 1 runs with the user present.** It creates `.claude/settings.json`, the file that pre-approves every command the run needs. Until it exists, Claude Code will ask permission for its edits. From Task 2 on, the run is fully automatic.
-- **Session model:** the orchestrating session runs on **Sonnet** (the user sets it with `/model sonnet`). Each task header says `Model:`. Dispatch it to the subagent of that tier, defined in Task 3: `implementer-light` = haiku, `implementer` = sonnet, `implementer-heavy` = opus. Reviews go to `reviewer` (sonnet). Task 32 goes to `final-reviewer` (opus). If a task fails twice on its tier, re-dispatch one tier up and log `DECISION:`.
-- **After each task, in ONE commit:**
-  1. the task's code;
-  2. this plan file with that task's checkboxes ticked;
-  3. one line appended to `docs/PROGRESS.md`: `- YYYY-MM-DD HH:MM T<NN> done — <one-line summary>` (plus any `DECISION:` lines).
+- **Task 1 runs with the user present.** It creates `.claude/settings.json`, the file that pre-approves every command the run needs. Until it exists, Claude Code will ask permission for its edits and its push. From Task 2 on, the run is fully automatic.
+- **Session model:** the orchestrating session (the "controller") runs on **Sonnet** (the user sets it with `/model sonnet`). Each task header says `Model:`. Dispatch it to the subagent of that tier, defined in Task 3: `implementer-light` = haiku, `implementer` = sonnet, `implementer-heavy` = opus. Reviews go to `reviewer` (sonnet). Task 32 goes to `final-reviewer` (opus). If a task fails twice on its tier, re-dispatch one tier up and log `DECISION:`.
 
-  Commit message: Conventional Commits with the task id, e.g. `feat(t04): add display scale math`, followed by the attribution trailer `Co-Authored-By: Claude <noreply@anthropic.com>`. The commit goes on the task branch, then the branch is merged (see the branch rules below).
-- **One branch per task** (requested by the user). Branch names follow `<type>/t<NN>-<kebab-slug>`, where `<type>` is a Conventional Commits type (`feat`, `fix`, `chore`, `docs`, `test`, `perf`, `ci`, `refactor`), `NN` is the zero-padded task number, and the slug is ≤ 5 lowercase words. Use exactly the names in the Branch Map below. Per task:
-  1. `git switch main`, then `git switch -c <branch>` (or `git switch <branch>` if it already exists from an interrupted run).
-  2. Work and commit on the branch. Commit messages use Conventional Commits with the task id: `feat(t04): add display scale math`. Intermediate commits are fine; the final commit of the task contains the ticked checkboxes and the PROGRESS line.
-  3. After the task's verification passes and the reviewer approves: `git switch main`, then `git merge --no-ff <branch> -m "Merge <branch> (T<NN>)"`, then `git branch -d <branch>`.
-  4. Never merge a branch whose tests fail. If a task ends `[blocked]`, leave its branch unmerged (log the branch name in KNOWN_ISSUES) and start the next task from `main`.
-  5. Pushing and opening pull requests are the user's job. The AI never pushes. The `--no-ff` merges keep one merge commit per task, so `git log --first-parent main` reads as the task list.
-- **Resume after interruption:** run `/resume-work` (Task 3). The first unticked task is the current one. If the current git branch is a task branch, that task is the one in progress.
+### Per-task flow (user-approved: one branch + one PR per task, AI merges after CI passes)
+
+1. **Prepare.** `git fetch origin` and `git switch main && git pull --ff-only origin main`. Create the task's worktree from the Branch Map: `git worktree add .worktrees/t<NN> -b <branch> origin/main`, then in it run `npm ci` (from Task 3 on; Task 2 creates the lockfile). Serial tasks may also use a worktree; this keeps the main checkout always on a clean `main`.
+2. **Implement.** Dispatch the implementer subagent with: the task's full text from this plan, the spec sections the task cites, the `Global Constraints` section, and the worktree path (all work happens in that folder). It follows the task's TDD steps and commits on the branch with Conventional Commits: `feat(t04): add display scale math`, followed by the trailer `Co-Authored-By: Claude <noreply@anthropic.com>`.
+3. **Verify.** The controller re-runs the task's verification commands in the worktree itself; it does not trust the report.
+4. **Review.** Dispatch `reviewer` with the task text + `git diff origin/main...<branch>`. Pass 1: spec/task compliance (nothing missing, nothing extra). Pass 2: code quality against `AGENTS.md`. If it reports fixes, send them to the implementer. At most 2 fix rounds, then escalate one model tier (`DECISION:`).
+5. **Record.** In the worktree, tick the task's checkboxes in this plan and write `docs/progress/t<NN>.md`:
+   - status;
+   - a one-paragraph summary;
+   - verification output (short);
+   - `DECISION:` lines;
+   - review verdict.
+
+   Commit `docs(t<NN>): record progress`. One file per task means parallel branches never conflict on the log.
+6. **Pull request.**
+   - `git push -u origin <branch>`.
+   - `gh pr create --base main --head <branch> --title "<type>(t<NN>): <task title>" --body-file <tmp>`. The body has: task link (plan heading), summary, files changed, test results, `DECISION:`s, the reviewer verdict, and the attribution line `🤖 Generated with [Claude Code](https://claude.com/claude-code)`.
+7. **CI.**
+   - If the PR is behind `main`, run `gh pr update-branch <n>` first.
+   - Run `gh pr checks <n> --watch --fail-fast`.
+   - On failure: read the log with `gh run view --log-failed`, fix it on the branch (implementer), push, and watch again. After 2 failed rounds the task is blocked (step 9).
+   - Task 1 runs before CI exists. When `gh pr checks` reports no checks, merge after step 3 passed.
+8. **Merge.** `gh pr merge <n> --merge --delete-branch` (a merge commit, so `git log --first-parent main` reads as the task list). Then remove the worktree (`git worktree remove .worktrees/t<NN>`), then `git switch main && git pull --ff-only origin main`.
+9. **Blocked.**
+   - Leave the PR open with a comment explaining the block, and add the label `blocked` (`gh pr edit <n> --add-label blocked`; create the label if missing).
+   - Add a `docs/KNOWN_ISSUES.md` entry (committed on the next task's branch).
+   - Every task that depends on it (Wave Plan) is skipped and also logged as blocked. Independent tasks continue.
+   - If nothing independent remains, write `RUN HALTED — see KNOWN_ISSUES` in `docs/progress/halt.md` on a branch, open its PR, and stop.
+
+### Wave Plan (user-approved: parallel by waves, at most 3 implementers at once)
+
+| Wave | Tasks | Mode | Depends on |
+|---|---|---|---|
+| A | 1 → 2 → 3 → 4 | serial | — |
+| B | 5, 6, 9, 10, 11, 12, 13 | parallel, ≤ 3 at a time | Wave A |
+| C | 7 and 8 in parallel, then 14 | 7 ∥ 8, then 14 | 7 needs 5, 6; 8 needs 6, 9, 10, 11; 14 needs 7, 13 |
+| D | 15 → 16 → … → 32 | serial | Waves B and C |
+
+- In parallel waves, each task has its own worktree, branch and PR. Steps 1–9 run independently per task.
+- PRs merge one at a time. Before each merge, step 7's `update-branch` + re-check guarantees the PR was tested against the current `main`.
+- If an update causes a merge conflict, resolve it on the branch (the implementer that owns the task), re-run the verification, and push.
+- Wave tasks were chosen to touch disjoint files. The only shared file is this plan (checkboxes in different sections, which git merges cleanly).
+
+### Other rules
+
+- **Resume after interruption:** run `/resume-work` (Task 3). It reconciles `git worktree list`, open PRs (`gh pr list --state open`), and the plan's checkboxes. The first unticked task of the earliest unfinished wave is current. For tasks already in flight it resumes at the right step: a branch without a PR resumes at step 3; a PR whose checks pass resumes at step 8.
 - **Never ask the user mid-run** (§12.6):
-  - Unspecified detail: choose the option most faithful to the spec, log `DECISION:` in PROGRESS (or write an ADR in `docs/decisions/` if it is architectural), and continue.
-  - Blocked: add an entry to `docs/KNOWN_ISSUES.md`, mark the task heading `[blocked]`, and continue with the next independent task.
+  - Unspecified detail: choose the option most faithful to the spec, log `DECISION:` in the task's progress file (or write an ADR in `docs/decisions/` if it is architectural), and continue.
+  - Blocked: follow step 9.
 - **Never:**
-  - `git push`;
+  - push to `main` directly or force-push;
+  - merge a PR whose checks fail;
   - edit `.claude/settings.json` after Task 1;
   - delete or weaken a passing test to get green.
+- **"PROGRESS" in task steps** means the current task's `docs/progress/t<NN>.md`.
 
 ## Branch Map
 
@@ -119,7 +155,7 @@
 .claude/agents/*.md              implementer-light|implementer|implementer-heavy|reviewer|final-reviewer (T3)
 .claude/commands/*.md            resume-work, status (T3), add-body (T31)
 AGENTS.md, CLAUDE.md             agent context; CLAUDE.md imports AGENTS.md (T3, finalized T31)
-docs/PROGRESS.md, KNOWN_ISSUES.md, BACKLOG.md, HUMAN_REVIEW.md, ai-setup.md, decisions/NNNN-*.md, screenshots/
+docs/progress/t<NN>.md, KNOWN_ISSUES.md, BACKLOG.md, HUMAN_REVIEW.md, ai-setup.md, decisions/NNNN-*.md, screenshots/
 scripts/fetch-textures.mjs       download + resize + WebP + manifest (T13)
 scripts/generate-narration.py    edge-tts → mp3 + cues manifest (T14)
 scripts/check-budget.mjs         size budget check (T30)
@@ -141,7 +177,8 @@ public/textures/{low,high}/*.webp, public/textures/manifest.json
 public/audio/narration/*.mp3, public/audio/narration/manifest.json
 tests/unit/**, tests/e2e/**, tests/visual/screenshots.spec.ts, tests/perf/fps.spec.ts
 playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, eslint.config.js, .prettierrc
-.github/workflows/deploy.yml
+.github/workflows/ci.yml         PR gate (T2)
+.github/workflows/deploy.yml     Pages deploy (T30)
 ```
 
 ---
@@ -154,7 +191,7 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
 **Files:**
 - Create: `.claude/settings.json`
 - Create: `.claude/hooks/session-start.mjs`
-- Create: `docs/PROGRESS.md`, `docs/KNOWN_ISSUES.md`, `docs/BACKLOG.md`, `docs/decisions/0001-record-architecture-decisions.md`
+- Create: `docs/progress/README.md`, `docs/KNOWN_ISSUES.md`, `docs/BACKLOG.md`, `docs/decisions/0001-record-architecture-decisions.md`
 - Modify: `.gitignore`
 
 **Interfaces:**
@@ -171,12 +208,15 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
   - npx: `npx playwright *`, `npx vitest *`, `npx tsc *`, `npx eslint *`, `npx prettier *`;
   - Python: `python -m venv .venv`, `.venv/Scripts/python *`, `.venv/Scripts/pip install *`;
   - Node: `node scripts/*`, `node .claude/hooks/*`;
-  - git: `init`, `add`, `commit`, `status`, `diff`, `log`, `branch`, `checkout`, `switch`, `stash`, `rev-parse`, `show`, `merge --no-ff *`;
+  - git: `init`, `add`, `commit`, `status`, `diff`, `log`, `branch`, `checkout`, `switch`, `stash`, `rev-parse`, `show`, `merge *`, `fetch *`, `pull --ff-only *`, `worktree *`;
+  - push, branches only: `git push -u origin <type>/t*` for each type `feat`, `fix`, `chore`, `docs`, `test`, `perf`, `ci`, `refactor`, and `git push origin <type>/t*`;
+  - GitHub CLI: `gh pr create *`, `gh pr checks *`, `gh pr merge *`, `gh pr view *`, `gh pr list *`, `gh pr edit *`, `gh pr comment *`, `gh pr update-branch *`, `gh run view *`, `gh run list *`, `gh label create *`, `gh api repos/tuanluu-agilityio/solar-system/pages*`;
   - file tools: `Read`, `Edit`, `Write`, `Glob`, `Grep`;
   - `WebFetch` for these domains: `www.solarsystemscope.com`, `nasa.gov` subdomains, `nssdc.gsfc.nasa.gov`, `science.nasa.gov`, `code.claude.com`, `registry.npmjs.org`, `pypi.org`.
 
   `permissions.deny`:
-  - `git push *`, `git remote *`, `git reset --hard *`, `git clean *`, `git branch -D *` (force delete), `git rebase *`;
+  - `git push origin main*`, `git push * main`, `git push --force*`, `git push -f*`, `git push * --force*`, `git push --delete *`, `git remote *`, `git reset --hard *`, `git clean *`, `git branch -D *`, `git rebase *`;
+  - `gh repo delete *`, `gh pr merge * --admin*`, `gh api -X DELETE *`;
   - `npm install -g *`, `pip install *` outside `.venv`;
   - `rm -rf /*`, `rm -rf ~*`;
   - `Edit(.claude/settings.json)`, `Write(.claude/settings.json)`.
@@ -188,7 +228,7 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
   Plain Node, no dependencies. It prints at most 40 lines:
   1. the newest file in `docs/superpowers/plans/`;
   2. the first heading `### Task N` that still has an unticked `- [ ]` under it;
-  3. the last 15 lines of `docs/PROGRESS.md`;
+  3. the 5 most recently modified files in `docs/progress/` (first 3 lines of each), plus open PRs from `gh pr list --state open --json number,headRefName,title` (skip silently if `gh` fails) and `git worktree list`;
   4. the titles of open entries in `docs/KNOWN_ISSUES.md` (`## ` headings without `(resolved)`);
   5. the current branch (`git branch --show-current`) and `git status --porcelain` (first 10 lines).
 
@@ -196,14 +236,14 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
 
 - [ ] **Step 4: Create the docs**
 
-  - `PROGRESS.md`: heading plus "## Log".
+  - `docs/progress/README.md`: explains the one-file-per-task log (`t<NN>.md` with Status / Summary / Verification / Decisions / Review).
   - `KNOWN_ISSUES.md`: heading plus the entry format `## <title>` / `Task:` / `Symptom:` / `Tried:` / `Status:`.
   - `BACKLOG.md`: the spec §15 items as bullets.
   - ADR 0001: the format to use (Context / Decision / Consequences).
 
 - [ ] **Step 5: Update `.gitignore`**
 
-  Append `node_modules/`, `dist/`, `.venv/`, `.cache/`, `test-results/`, `playwright-report/`, `__pycache__/`.
+  Append `node_modules/`, `dist/`, `.venv/`, `.cache/`, `.worktrees/`, `test-results/`, `playwright-report/`, `__pycache__/`.
 
 - [ ] **Step 6: Verify**
 
@@ -216,7 +256,7 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
 **Model:** sonnet
 
 **Files:**
-- Create: `package.json`, `tsconfig.json`, `vite.config.ts`, `eslint.config.js`, `.prettierrc`, `index.html`, `src/main.ts`, `vitest.config.ts` (or a `test` block in vite config), `playwright.config.ts`, `tests/unit/smoke.test.ts`, `tests/e2e/smoke.spec.ts`
+- Create: `package.json`, `tsconfig.json`, `vite.config.ts`, `eslint.config.js`, `.prettierrc`, `index.html`, `src/main.ts`, `vitest.config.ts` (or a `test` block in vite config), `playwright.config.ts`, `tests/unit/smoke.test.ts`, `tests/e2e/smoke.spec.ts`, `.github/workflows/ci.yml`
 
 **Interfaces:**
 - Produces npm scripts:
@@ -245,12 +285,22 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
   - Unit: `expect(1+1).toBe(2)`.
   - E2E: `page.goto('./')`, then expect `page.locator('canvas, #app')` to have count ≥ 1.
 
-- [ ] **Step 4: Verify**
+- [ ] **Step 4: Write `.github/workflows/ci.yml`** (the PR gate)
+
+  - Trigger: `pull_request` to `main`.
+  - Runner: `ubuntu-latest`, Node 24 with npm cache.
+  - Steps: `npm ci`, `npm run lint`, `npm run typecheck`, `npm test`, `npx playwright install --with-deps chromium`, `npm run test:e2e`.
+  - If `scripts/test_generate_narration.py` exists: setup-python 3.14, `pip install -r scripts/requirements.txt`, `python -m unittest scripts/test_generate_narration.py`.
+  - Upload `playwright-report/` as an artifact on failure.
+  - Concurrency group per PR with `cancel-in-progress`.
+  - It must not run `test:visual`, `test:perf`, `fetch:textures` or `narration`.
+
+- [ ] **Step 5: Verify**
 
   Run: `npm run lint && npm run typecheck && npm test && npm run test:e2e`
-  Expected: all pass, 1 unit test and 3 e2e results (one per project).
+  Expected: all pass, 1 unit test and 3 e2e results (one per project). Then the PR's CI (flow step 7) must pass. That is the first real run of `ci.yml`.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 6: Commit**
 
 ### Task 3: Agent context files, subagents, resume commands, stop hook
 **Model:** sonnet
@@ -272,7 +322,7 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
   - commands;
   - folder map (from File Structure);
   - Invariants (copy the Global Constraints);
-  - Workflow: per-task branch (naming rule + Branch Map location), Conventional Commits, `--no-ff` merge, PROGRESS line, the `DECISION:` rule, the blocked rule, and archiving: when `docs/PROGRESS.md` passes ~200 lines, move older entries to `docs/progress-archive/`;
+  - Workflow: a summary of the per-task flow (worktree → branch → TDD → verify → review → progress file → PR → CI → merge), the Branch Map location, the Wave Plan, Conventional Commits, the `DECISION:` rule and the blocked rule;
   - How to resume;
   - Where things go (ADRs, KNOWN_ISSUES, BACKLOG).
 
@@ -290,12 +340,15 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
 
   Steps:
   1. read the session-start summary (or run the hook);
-  2. `git branch --show-current` and `git status`. If on a task branch, that task is in progress: if there are uncommitted changes, finish and commit them if the tests pass, otherwise `git stash push -m "T<NN>-partial"` and log it. If on `main` with a ticked task whose branch is not merged yet (`git branch --no-merged main`), verify and merge it first;
-  3. continue the plan from the first unticked task using superpowers:subagent-driven-development.
+  2. reconcile in-flight work:
+     - `git worktree list`, `gh pr list --state open`, and `git branch --no-merged origin/main`;
+     - for each in-flight task, find its flow step (no PR → step 3 verify; PR open with failing or pending checks → step 7; PR green → step 8 merge);
+     - uncommitted changes in a worktree: commit them if that task's tests pass, otherwise `git stash push -m "t<NN>-partial"` and redo the task's implementation step;
+  3. continue with the Wave Plan (respect dependencies and the ≤ 3 parallel limit) using superpowers:subagent-driven-development.
 
 - [ ] **Step 4: Write `status.md`**
 
-  It prints done/total task counts, the current task, open issues and the last 5 PROGRESS lines.
+  It prints done/total task counts, the current wave and in-flight tasks, open PRs with check status, open issues, and the latest 5 progress files.
 
 - [ ] **Step 5: Write `stop-check.mjs` and register it**
 
@@ -337,6 +390,7 @@ export interface PhysicalData {
 export interface BodyDef { id: BodyId; kind: BodyKind; parent: BodyId | null; orderFromSun: number | null; physical: PhysicalData; }
 export interface BodyContent { name: string; kindLabel: string; description: string; facts: string[]; }
 export type TourStopId = 'intro' | ContentId | 'outro';
+export interface TourStopDef { id: TourStopId; focus: ContentId | 'overview'; }
 ```
 ```ts
 // src/config/scale.ts
@@ -453,8 +507,7 @@ Required UI keys:
 
 **Interfaces — Produces:**
 ```ts
-export interface TourStopDef { id: TourStopId; focus: ContentId | 'overview'; }
-export const TOUR_STOPS: TourStopDef[]; // intro(overview), sun, mercury, venus, earth, moon, mars, asteroid-belt, jupiter, saturn, uranus, neptune, pluto, outro(overview) — 14 entries, this order
+export const TOUR_STOPS: TourStopDef[]; // TourStopDef comes from src/data/types.ts // intro(overview), sun, mercury, venus, earth, moon, mars, asteroid-belt, jupiter, saturn, uranus, neptune, pluto, outro(overview) — 14 entries, this order
 ```
 JSON shape (both files, read by Python in Task 13): `{ "<stopId>": { "text": "<narration>" } }`. Sentences end with `.`, `!` or `?`.
 
@@ -495,10 +548,9 @@ export interface Store<T> { get(): T; set(patch: Partial<T>): void; subscribe(fn
 export function createStore<T extends object>(initial: T): Store<T>;
 // appState.ts
 export type View = 'overview' | 'focus';
-export type Layout = 'mobile' | 'desktop';
 export interface AppState { lang: Lang; muted: boolean; selected: ContentId | null; view: View; layout: Layout; quality: QualityTier; tour: TourSnapshot; ready: boolean; }
 ```
-`QualityTier` comes from Task 11 and `TourSnapshot` from Task 10. To avoid an ordering problem, declare `export type QualityTier = 'low'|'medium'|'high'` in `src/quality/tiers.ts` and `TourSnapshot` in `src/tour/tourMachine.ts` as type-only stubs now; Tasks 10 and 11 fill in those files.
+`AppState` imports `Layout` from `src/ui/layout.ts` (Task 9), `QualityTier` from `src/quality/tiers.ts` (Task 11), `TourSnapshot` from `src/tour/tourMachine.ts` (Task 10) and `UiKey` from `src/i18n/strings.ts` (Task 6). All of these are merged before Task 8 starts (Wave Plan).
 
 - [ ] **Step 1: Write the failing tests**
   - `detectLang(['vi-VN','en'])` → `'vi'`; `detectLang(['en-US'])` → `'en'`; `detectLang([])` → `'en'`.
@@ -522,6 +574,7 @@ export interface AppState { lang: Lang; muted: boolean; selected: ContentId | nu
 
 **Interfaces — Produces:**
 ```ts
+export type Layout = 'mobile' | 'desktop';
 export function getLayout(width: number, height: number): Layout;            // mobile if width < 768 || height > width
 export function focusDistance(radius: number, fovDeg: number, aspect: number, fill?: number): number; // fill default 0.35 of the limiting dimension
 export function focusScreenOffset(layout: Layout): { x: number; y: number }; // NDC shift: mobile {0, 0.45}, desktop {0.25, 0}
@@ -544,7 +597,7 @@ export const OVERVIEW_FIT_RADIUS: number; // displayOrbitRadius(5906.4) + 10
 **Model:** opus
 
 **Files:**
-- Modify: `src/tour/tourMachine.ts`
+- Create: `src/tour/tourMachine.ts`
 - Test: `tests/unit/tourMachine.test.ts`
 
 **Interfaces — Produces:**
@@ -562,7 +615,7 @@ export type TourEffect =
 export const TOUR_GAP_MS = 1500;
 export function initialTour(total: number): TourSnapshot;
 export function tourReducer(s: TourSnapshot, e: TourEvent, stops: TourStopDef[]): { state: TourSnapshot; effects: TourEffect[] };
-export function shouldAutostart(prefs: Prefs, isE2E: boolean, forceAutostart: boolean): boolean;
+export function shouldAutostart(tourSeen: boolean, isE2E: boolean, forceAutostart: boolean): boolean;
 ```
 
 - [ ] **Step 1: Write the failing tests** (state transitions with exact effects)
@@ -575,7 +628,7 @@ export function shouldAutostart(prefs: Prefs, isE2E: boolean, forceAutostart: bo
   - `NEXT`/`PREV` clamp to [0, total−1] and emit `stopNarration`, `cancelGap`, `flyTo`. `PREV` at 0 stays at 0 and re-flies.
   - `EXIT` from any active state → `idle` with `[stopNarration, cancelGap, autoOrbit(false)]`.
   - `LANG_CHANGED` while `narrating` → stays `narrating` with `[stopNarration, playNarration(sameStop)]`. In other states → no effects.
-  - `shouldAutostart({tourSeen:false},false,false)` → true; `tourSeen:true` → false; `isE2E:true` → false unless `forceAutostart`.
+  - `shouldAutostart(false,false,false)` → true; `shouldAutostart(true,false,false)` → false; `isE2E` true → false unless `forceAutostart`.
 - [ ] **Step 2:** Run them. Expected: FAIL.
 - [ ] **Step 3: Implement `tourReducer` as a pure switch**
 - [ ] **Step 4:** Run them. Expected: PASS.
@@ -585,12 +638,12 @@ export function shouldAutostart(prefs: Prefs, isE2E: boolean, forceAutostart: bo
 **Model:** sonnet
 
 **Files:**
-- Modify: `src/quality/tiers.ts`
-- Create: `src/quality/fpsMonitor.ts`
+- Create: `src/quality/tiers.ts`, `src/quality/fpsMonitor.ts`
 - Test: `tests/unit/quality.test.ts`
 
 **Interfaces — Produces:**
 ```ts
+export type QualityTier = 'low' | 'medium' | 'high';
 export interface DeviceInfo { isMobile: boolean; dpr: number; cores: number; }
 export interface TierSettings { pixelRatioCap: number; bloomResolutionScale: number; asteroidCount: number; textureSet: 'low' | 'high'; atmosphere: boolean; ringShadow: boolean; skySize: 2048 | 4096; antialias: boolean; }
 export function initialTier(d: DeviceInfo): QualityTier;    // mobile → 'low' if cores<=4 else 'medium'; desktop → 'high'
@@ -775,7 +828,7 @@ export function createPostFX(renderer: THREE.WebGLRenderer, scene: THREE.Scene, 
   Expected: PASS.
 - [ ] **Step 3: Take a screenshot and check it**
 
-  Run `npx playwright screenshot --viewport-size=1440,900 "http://localhost:4173/solar-system/?e2e=1" .cache/sun.png`, with `npm run preview` running. Then open the PNG (Read tool) and check the sun glows and is not a flat disc. Log the result in PROGRESS.
+  Run `npx playwright screenshot --viewport-size=1440,900 "http://localhost:4173/solar-system/?e2e=1" .cache/sun.png`, with `npm run preview` running. Then open the PNG (Read tool) and check the sun glows and is not a flat disc. Log the result in PROGRESS (the task's progress file).
 - [ ] **Step 4: Commit**
 
 ### Task 17: Planets, orbits, Moon, solar system assembly
@@ -843,7 +896,7 @@ export function createRing(innerR: number, outerR: number, tex: THREE.Texture | 
   - there is a blue rim;
   - Saturn's rings are translucent.
 
-  Log the result.
+  Log the result in PROGRESS (the task's progress file).
 - [ ] **Step 4: Commit**
 
 ### Task 19: Asteroid belt
@@ -1115,7 +1168,7 @@ export function createTourController(deps: TourDeps): { dispatch(e: TourEvent): 
 - `store.tour` mirrors the snapshot. `store.lang` changes → `LANG_CHANGED`.
 - Subtitles: a bottom-centre caption box above the mobile sheet's top edge or the desktop bottom. Text = `currentCue().text`, updated each frame. Hidden when not narrating. When muted, `tour.unmuteHint` is shown above it with a tap target that unmutes.
 - Tour controls: ⏸/▶ (`tour.pause`/`tour.resume`), ⏮ prev, ⏭ next, ✕ exit, and the progress text `tour.progress`. `data-testid` in `tour-pause`, `tour-prev`, `tour-next`, `tour-exit`, `tour-progress`. While paused by interaction, show a prominent `tour.resume` button.
-- Autostart: on `ready`, if `shouldAutostart(prefs, isE2E, params.has('autostart'))`, wait 3000 ms, `savePref('tourSeen', true)`, then dispatch `START`. The control-bar Tour button dispatches `START`/`EXIT`.
+- Autostart: on `ready`, if `shouldAutostart(prefs.tourSeen, isE2E, params.has('autostart'))`, wait 3000 ms, `savePref('tourSeen', true)`, then dispatch `START`. The control-bar Tour button dispatches `START`/`EXIT`.
 - In e2e mode, `setTimeScale(n)` also scales the controller's timers (via `timers`) so tests run fast.
 
 - [ ] **Step 1: Write the failing tests**
@@ -1164,7 +1217,7 @@ export function createTourController(deps: TourDeps): { dispatch(e: TourEvent): 
 
 **Files:**
 - Create: `tests/e2e/flows.spec.ts`, `tests/visual/screenshots.spec.ts`, `docs/screenshots/*.png`
-- Modify: `docs/PROGRESS.md`
+- Create: `docs/progress/t28.md` (holds the visual checklist results)
 
 - `flows.spec.ts` covers anything from §11.2 not covered yet:
   - select each of the 11 clickable bodies in turn → the panel title equals `getContent(id, lang).name` (in both languages);
@@ -1242,6 +1295,7 @@ export function createTourController(deps: TourDeps): { dispatch(e: TourEvent): 
   7. `actions/deploy-pages`.
 - Permissions: `pages: write`, `id-token: write`, `contents: read`. Concurrency group `pages`.
 - No TTS or texture fetching; the assets are committed.
+- Enable Pages for Actions builds: run `gh api -X POST repos/tuanluu-agilityio/solar-system/pages -f build_type=workflow`. If Pages already exists, use `-X PUT` with the same field instead. If that fails (permissions), add "Settings → Pages → Source: GitHub Actions" to `HUMAN_REVIEW.md` and continue. The first deploy runs when this PR merges.
 
 - [ ] **Step 1: Write the workflow**
 - [ ] **Step 2: Verify**
@@ -1267,7 +1321,8 @@ export function createTourController(deps: TourDeps): { dispatch(e: TourEvent): 
   - hooks (SessionStart, Stop);
   - subagents and model tiers (the §12.5 table);
   - commands;
-  - plan/PROGRESS/KNOWN_ISSUES/ADR/BACKLOG;
+  - plan / per-task progress files (`docs/progress/`) / KNOWN_ISSUES / ADR / BACKLOG;
+  - the branch → PR → CI → merge flow and the Wave Plan (why some tasks run in parallel and others don't);
   - how resume works step by step;
   - how to add a feature in future (brainstorm → spec → plan → run).
 
@@ -1278,7 +1333,8 @@ export function createTourController(deps: TourDeps): { dispatch(e: TourEvent): 
   - test on a real phone (iOS + Android) for FPS, touch and the sheet;
   - review the screenshots in `docs/screenshots/`;
   - check the KNOWN_ISSUES items;
-  - deploy steps: the repo already exists at https://github.com/tuanluu-agilityio/solar-system with `origin` set. Run `git push origin main` (optionally push task branches too), then Settings → Pages → Source: GitHub Actions. The site will be at https://tuanluu-agilityio.github.io/solar-system/;
+  - deploy: every task was merged through a PR, so `main` on GitHub is already up to date and the Pages workflow deploys on each merge from Task 30 on. Site: https://tuanluu-agilityio.github.io/solar-system/. If Task 30 could not enable Pages, do it in Settings → Pages → Source: GitHub Actions. Optionally protect `main` (require the CI check) now that the run is over;
+  - how to read the history: one PR per task on GitHub, plus `git log --first-parent main`;
   - optionally tighten `settings.json`.
 
 - [ ] **Step 1: Write the files**
@@ -1300,4 +1356,4 @@ export function createTourController(deps: TourDeps): { dispatch(e: TourEvent): 
 - [ ] **Step 3: Fix any ❌ that takes ≤ 30 min, then re-run the gate.** Everything else goes to KNOWN_ISSUES.
 - [ ] **Step 4: Final commit**
 
-  Commit `chore(t32): final review` on the task branch and merge it into `main`. Append to PROGRESS: "RUN COMPLETE — see docs/HUMAN_REVIEW.md". Run `git branch --no-merged main` and list any leftover (blocked) branches in `docs/FINAL_REVIEW.md`.
+  Commit `chore(t32): final review` and finish the per-task flow (PR, CI, merge). `docs/progress/t32.md` ends with "RUN COMPLETE — see docs/HUMAN_REVIEW.md". List any open (blocked) PRs from `gh pr list --state open` in `docs/FINAL_REVIEW.md`.

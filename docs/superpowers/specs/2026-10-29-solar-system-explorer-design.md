@@ -313,7 +313,7 @@ Nguyên tắc:
    - bảng thông tin không che thiên thể;
    - chữ không tràn.
 
-   Kết quả ghi vào `docs/PROGRESS.md`. Ảnh chụp **không** dùng làm visual-regression so pixel, vì render WebGL không ổn định giữa các lần chạy.
+   Kết quả ghi vào file tiến độ của task (`docs/progress/t<NN>.md`). Ảnh chụp **không** dùng làm visual-regression so pixel, vì render WebGL không ổn định giữa các lần chạy.
 4. **Hiệu năng:** **[Quyết định của AI]**
    - Chạy một bài đo bằng Playwright Chromium **có giao diện (headed), dùng GPU thật** của máy Windows, ở viewport mobile với CPU throttling ×4. Trong lúc chạy sẽ có cửa sổ trình duyệt tự bật lên.
    - Nếu không bật được GPU (renderer báo SwiftShader/software): FPS **chỉ ghi lại để tham khảo**, tuyệt đối **không** dùng để hạ chất lượng mặc định, vì đồ hoạ phần mềm không phản ánh điện thoại thật. Việc kiểm tra trên điện thoại thật chuyển vào `HUMAN_REVIEW.md`.
@@ -328,7 +328,7 @@ Nguyên tắc:
 - nghe thử nhạc nền, tiếng "vút", giọng thuyết minh;
 - đọc lại văn bản nội dung;
 - thử trên điện thoại thật;
-- tạo repo GitHub và push để deploy.
+- bật GitHub Pages nếu AI chưa tự bật được (mục 13).
 
 ## 12. Setup cho AI agent (Claude Code và các AI khác)
 
@@ -349,7 +349,7 @@ Nguyên tắc:
 ### 12.2 Thư mục `docs/`
 - `docs/superpowers/specs/`: tài liệu thiết kế (file này).
 - `docs/superpowers/plans/`: plan triển khai dạng checklist. **Đây là danh sách task chính thức** (thay cho Trello, người dùng đã đồng ý).
-- `docs/PROGRESS.md`: nhật ký tiến độ, gồm task đang làm, task vừa xong, ghi chú bàn giao cho phiên sau, kết quả kiểm tra trực quan/hiệu năng.
+- `docs/progress/`: nhật ký tiến độ, **mỗi task một file** `t<NN>.md` (trạng thái, tóm tắt, kết quả kiểm tra, `DECISION:`, kết luận review). Mỗi task một file để các task chạy song song không ghi đè lên nhau.
 - `docs/decisions/`: ADR (Architecture Decision Records), mỗi quyết định kỹ thuật đáng kể một file ngắn: bối cảnh, quyết định, lý do, hệ quả.
 - `docs/KNOWN_ISSUES.md`: vấn đề còn tồn tại, nợ kỹ thuật, task bị chặn.
 - `docs/HUMAN_REVIEW.md`: việc người dùng cần tự làm/kiểm tra.
@@ -364,18 +364,18 @@ Nguyên tắc:
     - đọc/ghi/sửa mọi file trong repo; Node script trong `scripts/` và `.claude/hooks/`;
     - tải file (WebFetch/curl/Node fetch) **chỉ từ**: `solarsystemscope.com`, `*.nasa.gov`, `registry.npmjs.org`, `pypi.org`, `files.pythonhosted.org`, `playwright.azureedge.net` (hoặc host tải trình duyệt của Playwright), và kết nối tới dịch vụ Edge TTS (do gói `edge-tts` tự gọi).
   - **Chặn:**
-    - `git push` (mọi dạng), `git remote add`, `git reset --hard`, `git clean -fdx`;
+    - push lên `main`, force-push, xoá branch trên remote, `git remote *`, `git reset --hard`, `git clean -fdx`, `git rebase`, `git branch -D`, `gh repo delete`, merge bằng quyền admin;
     - xoá file ngoài repo, `rm -rf` trên đường dẫn ngoài repo;
     - cài gói toàn cục (`npm install -g`, `pip install` ngoài venv);
     - sửa chính `.claude/settings.json` trong lúc chạy tự động.
   - `docs/ai-setup.md` giải thích từng quyền và cách siết lại sau khi chạy xong.
   - Nếu một lệnh cần thiết vẫn bị hỏi quyền (do cú pháp quy tắc không khớp), ghi vào KNOWN_ISSUES để lần sau sửa. Agent không tự nới quyền.
 - **Hooks:**
-  - `SessionStart`: in ra tóm tắt trạng thái, gồm plan đang chạy, task chưa xong đầu tiên, 10–20 dòng cuối của `PROGRESS.md`, và các vấn đề đang mở. Nhờ vậy mọi phiên mới đều biết đang dở việc gì.
+  - `SessionStart`: in ra tóm tắt trạng thái, gồm plan đang chạy, task chưa xong đầu tiên, 5 file tiến độ gần nhất, các PR đang mở, các worktree, và các vấn đề đang mở. Nhờ vậy mọi phiên mới đều biết đang dở việc gì.
   - Hook kiểm tra nhanh (ví dụ typecheck/lint trên file vừa sửa, hoặc chạy trước khi agent kết thúc lượt). Builder chọn thời điểm sao cho không làm chậm quá mức.
   - Script hook viết bằng **Node** để chạy được trên Windows.
 - **Slash commands / skills của dự án:**
-  - `/resume-work`: đọc plan + PROGRESS + git log, kiểm tra cây làm việc, dọn task dở (commit hoặc revert phần dở), rồi tiếp tục từ task chưa xong đầu tiên.
+  - `/resume-work`: đối chiếu plan, worktree, PR đang mở và kết quả CI; với mỗi task dở thì làm tiếp từ đúng bước (kiểm tra, review, PR, chờ CI, merge); rồi tiếp tục theo kế hoạch đợt.
   - `/add-body`: hướng dẫn từng bước thêm một thiên thể mới (dữ liệu, nội dung song ngữ, texture, kịch bản tour, test).
   - `/status`: báo cáo ngắn tiến độ.
 
@@ -383,12 +383,12 @@ Nguyên tắc:
 Không cấu hình nào giữ được "suy nghĩ" đang chạy dở của một agent khi máy tắt. Cơ chế đáng tin cậy là **trạng thái bền vững trên đĩa + task nhỏ**:
 
 1. Plan chia thành task nhỏ (5–15 phút). Mỗi task có checkbox trong file plan.
-2. Xong task: chạy kiểm tra → **commit** (code + tick checkbox + dòng log trong `PROGRESS.md` trong cùng commit). Commit message có mã task, ví dụ `T07: ...`.
+2. Xong task: kiểm tra → review → tick checkbox + ghi `docs/progress/t<NN>.md` → push branch → mở PR → CI pass → AI merge. Commit message theo Conventional Commits kèm mã task, ví dụ `feat(t07): ...`.
 3. Khi gián đoạn, tối đa mất phần dở dang của **một** task.
 4. Phiên mới: hook `SessionStart` đưa trạng thái vào ngữ cảnh. Người dùng gõ `/resume-work`, hoặc `claude --continue` rồi `/resume-work`.
    - Agent kiểm tra `git status`. Nếu có thay đổi chưa commit thuộc task dở thì đánh giá: hoàn thiện nếu hợp lý, nếu không thì `git stash` rồi làm lại task đó.
    - Sau đó tiếp tục.
-5. Cơ chế này hoạt động cho cả chế độ subagent: agent điều phối là bên đọc/ghi plan và PROGRESS, subagent chỉ nhận một task.
+5. Cơ chế này hoạt động cho cả chế độ subagent: agent điều phối là bên đọc/ghi plan và file tiến độ, subagent chỉ nhận một task.
 
 ### 12.5 Phân bổ model và tiết kiệm token
 Nguyên tắc (người dùng đã duyệt): dùng model mạnh nhất ở những chỗ mà sai một ly thì đi cả dặm; dùng model rẻ cho việc lặp lại hoặc có khuôn sẵn.
@@ -414,21 +414,25 @@ Quy tắc tiết kiệm token:
 - `CLAUDE.md` dưới 150 dòng, vì được nạp mỗi phiên. Chi tiết đặt ở `docs/` và chỉ đọc khi cần.
 - Hook `SessionStart` là script Node, chỉ in tóm tắt ngắn (task hiện tại, vài dòng log cuối, vấn đề đang mở), không in nguyên file.
 - Subagent chỉ nhận nội dung task của nó cùng các đoạn spec/file liên quan, không nhận toàn bộ spec.
-- `PROGRESS.md` giữ gọn; khi dài quá ~200 dòng thì chuyển phần cũ sang `docs/progress-archive/`.
+- File tiến độ mỗi task giữ ngắn; hook chỉ đọc vài file gần nhất.
 
 ### 12.6 Quy tắc chạy tự động (không cần người quyết giữa chừng)
 - Mọi quyết định sản phẩm đã nằm trong spec này.
-- Gặp chỗ spec chưa nói rõ: agent **tự chọn phương án hợp lý nhất, phù hợp với tinh thần spec**, ghi vào ADR hoặc `PROGRESS.md` với nhãn `DECISION:`, rồi **làm tiếp**, **không dừng lại hỏi**.
+- Gặp chỗ spec chưa nói rõ: agent **tự chọn phương án hợp lý nhất, phù hợp với tinh thần spec**, ghi vào ADR hoặc file tiến độ của task với nhãn `DECISION:`, rồi **làm tiếp**, **không dừng lại hỏi**.
 - Gặp lỗi chặn (dịch vụ ngoài lỗi, công cụ không cài được): thử cách thay thế. Nếu vẫn không được thì ghi `docs/KNOWN_ISSUES.md`, đánh dấu task `[blocked]`, chuyển sang task độc lập tiếp theo.
 - **Không** được làm vỡ test đang pass để "cho xong". Không sửa/xoá test để né lỗi.
-- **Không** push lên remote, không tạo repo GitHub. Đó là việc của người dùng (mục 13).
-- **Mỗi task một branch** (người dùng yêu cầu). Tên branch: `<type>/t<NN>-<slug>`, trong đó `<type>` theo Conventional Commits (`feat`, `fix`, `chore`, `docs`, `test`, `perf`, `ci`, `refactor`). Commit message theo Conventional Commits kèm mã task, ví dụ `feat(t04): ...`. Task xong, kiểm tra pass và review duyệt thì merge `--no-ff` vào `main`, rồi xoá branch local. Task bị chặn thì giữ branch, không merge. AI không push và không tạo PR; người dùng tự push.
+- **Không** push thẳng lên `main`, không force-push, không merge PR khi CI chưa pass.
+- **Mỗi task một branch và một PR** (người dùng yêu cầu):
+  - Tên branch: `<type>/t<NN>-<slug>`, trong đó `<type>` theo Conventional Commits (`feat`, `fix`, `chore`, `docs`, `test`, `perf`, `ci`, `refactor`). Commit message theo Conventional Commits kèm mã task.
+  - AI push branch, mở PR bằng `gh`, chờ **GitHub Actions CI** (lint, typecheck, unit, e2e) chạy trên PR, rồi **tự merge** (merge commit) khi CI pass. Người dùng đã chọn cách này để giữ chạy tự động hoàn toàn; PR vẫn lưu lại trên GitHub để xem lại sau.
+  - CI lỗi quá 2 vòng sửa: PR giữ mở, gắn nhãn `blocked`, ghi KNOWN_ISSUES; task phụ thuộc bị bỏ qua, task độc lập chạy tiếp.
+- **Chạy song song theo đợt** (người dùng yêu cầu): các task độc lập (logic thuần, script tài nguyên) chạy song song tối đa 3 agent, mỗi agent trong một git worktree riêng (`.worktrees/`). Các task đồ hoạ/giao diện cùng sửa `main.ts` chạy tuần tự. Danh sách đợt nằm trong plan.
 
 ## 13. Deploy
-- GitHub Actions workflow: build rồi deploy lên **GitHub Pages**, chạy khi push lên nhánh `main`. Workflow không gọi TTS.
+- GitHub Actions workflow: build rồi deploy lên **GitHub Pages**, chạy mỗi khi có commit vào `main` (tức mỗi lần PR được merge). Workflow không gọi TTS. Workflow CI riêng (`ci.yml`) chạy trên mọi PR.
 - Vite `base` cấu hình theo tên repo (ví dụ `/solar-system/`), dễ đổi trong một chỗ.
 - Repo GitHub đã có sẵn: https://github.com/tuanluu-agilityio/solar-system (remote `origin` đã cấu hình).
-- **Việc của người dùng sau khi AI chạy xong** (ghi trong `HUMAN_REVIEW.md`): `git push origin main`, bật Pages (Source: GitHub Actions). Trang sẽ ở https://tuanluu-agilityio.github.io/solar-system/.
+- AI thử bật Pages bằng `gh api`. Nếu không được, người dùng tự bật trong Settings → Pages → Source: GitHub Actions (ghi trong `HUMAN_REVIEW.md`). Trang sẽ ở https://tuanluu-agilityio.github.io/solar-system/.
 - **Nhánh:** repo hiện ở nhánh `master`, chưa có commit. Builder đổi tên/tạo nhánh `main` làm nhánh chính trước commit đầu tiên, và thêm `.superpowers/` vào `.gitignore`.
 
 ## 14. Rủi ro và cách giảm
