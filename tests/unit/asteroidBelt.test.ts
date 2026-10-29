@@ -3,7 +3,12 @@ import * as THREE from 'three';
 import { createAsteroidBelt } from '../../src/bodies/asteroidBelt';
 import { createSolarSystem } from '../../src/scene/solarSystem';
 import { tierSettings } from '../../src/quality/tiers';
-import { ASTEROID_BELT_MKM, EARTH_YEAR_DAYS, displayOrbitRadius } from '../../src/config/scale';
+import {
+  ASTEROID_BELT_MKM,
+  ASTEROID_BELT_PERIOD_YEARS,
+  EARTH_YEAR_SECONDS,
+  displayOrbitRadius,
+} from '../../src/config/scale';
 
 function firstMatrix(m: THREE.InstancedMesh): number[] {
   const out = new THREE.Matrix4();
@@ -50,9 +55,9 @@ describe('createAsteroidBelt', () => {
     expect(belt.mesh.count).toBe(50);
   });
 
-  it('rotates with a 4.6-year period', () => {
+  it('rotates with the belt period', () => {
     const belt = createAsteroidBelt(10, 1);
-    const period = 4.6 * EARTH_YEAR_DAYS * (60 / EARTH_YEAR_DAYS);
+    const period = ASTEROID_BELT_PERIOD_YEARS * EARTH_YEAR_SECONDS;
     belt.update(period / 4);
     expect(belt.mesh.rotation.y).toBeCloseTo(Math.PI / 2, 5);
   });

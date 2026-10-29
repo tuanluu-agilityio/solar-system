@@ -1,12 +1,12 @@
 import * as THREE from 'three';
 import {
   ASTEROID_BELT_MKM,
+  ASTEROID_BELT_PERIOD_YEARS,
   EARTH_YEAR_DAYS,
   displayOrbitRadius,
   orbitalAngle,
 } from '../config/scale';
 
-const BELT_PERIOD_YEARS = 4.6;
 const MAX_HEIGHT = 1.5;
 const SIZE_MIN = 0.08;
 const SIZE_MAX = 0.35;
@@ -25,7 +25,8 @@ function mulberry32(seed: number): () => number {
 }
 
 export interface AsteroidBelt {
-  mesh: THREE.InstancedMesh;
+  /** Do not cache across `setCount`: growing swaps in a new mesh. */
+  readonly mesh: THREE.InstancedMesh;
   update(tSec: number): void;
   setCount(n: number): void;
 }
@@ -75,7 +76,7 @@ export function createAsteroidBelt(count: number, seed: number = DEFAULT_SEED): 
       return mesh;
     },
     update(tSec) {
-      angle = orbitalAngle(BELT_PERIOD_YEARS * EARTH_YEAR_DAYS, tSec, 0);
+      angle = orbitalAngle(ASTEROID_BELT_PERIOD_YEARS * EARTH_YEAR_DAYS, tSec, 0);
       mesh.rotation.y = angle;
     },
     setCount(n) {
