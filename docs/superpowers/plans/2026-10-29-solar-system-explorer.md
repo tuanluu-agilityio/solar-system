@@ -855,16 +855,16 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
 - Orbit lines: `LineLoop` with 256 segments, white at opacity 0.15, one per planet and Pluto.
 - `getFocusTarget('asteroid-belt')` returns an `Object3D` placed on the belt at the Earth-facing side, with radius 12.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
   - `createSolarSystem` with 1×1 `DataTexture`s for every key has 11 bodies.
   - After `update(60)`, Earth's world position has returned to within 1e-3 of its `update(0)` position (one year).
   - Moon's world distance from Earth ≈ `MOON_ORBIT_DISPLAY`.
   - Each body's `pickProxy` radius ≥ `mesh` radius × 1.8 or ≥ 2.5.
   - `pickables.length === 11`.
-- [ ] **Step 2:** Run it. Expected: FAIL.
-- [ ] **Step 3: Implement it and add it to the scene in `main.ts`, driven by the loop**
-- [ ] **Step 4:** Run it plus `npm run test:e2e`. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run it. Expected: FAIL.
+- [x] **Step 3: Implement it and add it to the scene in `main.ts`, driven by the loop**
+- [x] **Step 4:** Run it plus `npm run test:e2e`. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 18: Earth, Venus atmosphere, Saturn and Uranus rings
 **Model:** opus

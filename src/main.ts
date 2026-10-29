@@ -14,6 +14,7 @@ import { createSky } from './scene/sky';
 import { startLoop } from './scene/loop';
 import { createPostFX } from './scene/postfx';
 import { createSun } from './bodies/sun';
+import { createSolarSystem } from './scene/solarSystem';
 import { createLoadingScreen, showBootError, showWebglUnsupported } from './ui/loadingScreen';
 import { installE2EApi } from './debug/e2eApi';
 
@@ -112,9 +113,12 @@ async function boot(): Promise<void> {
   if (skyTexture) scene.add(createSky(skyTexture));
   const sun = createSun(lowTex.get('sun') ?? makeFallbackTexture('sun'));
   scene.add(sun.group);
+  const solar = createSolarSystem(lowTex, settings);
+  scene.add(solar.root);
 
   startLoop((_dt, tSec) => {
     sun.update(tSec);
+    solar.update(tSec);
     postfx.render();
     if (!store.get().ready) {
       store.set({ ready: true });

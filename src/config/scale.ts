@@ -9,7 +9,8 @@ export const MOON_ORBIT_DISPLAY = 4;
 /** Asteroid belt extent, million km from the Sun. */
 export const ASTEROID_BELT_MKM = { inner: 329, outer: 479 } as const;
 
-const EARTH_YEAR_DAYS = 365.25;
+/** Earth orbital period in days used by the orbit maths (a 60 s display year). */
+export const EARTH_YEAR_DAYS = 365.25;
 const EARTH_DAY_HOURS = 23.93;
 const TWO_PI = 2 * Math.PI;
 
