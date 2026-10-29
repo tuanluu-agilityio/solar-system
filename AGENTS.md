@@ -13,19 +13,26 @@ Solar System Explorer: a mobile-first, bilingual (vi/en) three.js web app showin
 
 ## Commands
 
-- `npm ci` install; `npm run dev` dev server; `npm run build` typecheck + build.
-- `npm run lint`, `npm run typecheck`, `npm test` (Vitest), `npm run test:e2e` (Playwright). CI runs all four.
-- `npm run format` (Prettier write); `npm run format -- --check` to verify.
-- `npm run fetch:textures`, `npm run narration`, `npm run check:budget`, `npm run test:visual`, `npm run test:perf`: added by later tasks.
+- `npm ci` install; `npm run dev` dev server; `npm run build` typecheck + build (set `BASE_PATH=/solar-system/` to mimic Pages).
+- `npm run lint`, `npm run typecheck`, `npm test` (Vitest), `npm run test:e2e` (Playwright). CI (`verify` job) runs all four.
+- `npm run format` (Prettier write); `npm run format -- --check` to verify. Never run `format` on the whole repo for a docs or small change.
+- `npm run fetch:textures` (`scripts/fetch-textures.mjs`, needs network, writes `public/textures/{low,high}` + `manifest.json`).
+- `npm run narration` (`scripts/generate-narration.py` in `.venv`, needs network for Edge TTS; regenerates only changed text).
+- `npm run check:budget` (`scripts/check-budget.mjs`, run after `npm run build`; initial payload and JS gzip budgets).
+- `npm run test:visual` (`playwright.visual.config.ts`): refreshes `docs/screenshots/`, one worker.
+- `npm run test:perf` (`playwright.perf.config.ts`): headed real-GPU FPS, port 4179, writes `docs/perf-results.json` (ADR 0005).
+- Port 4173 is shared: `test:e2e` and `test:visual` both start a preview server on it. Never run them (or two worktrees' e2e) at the same time.
+- E2E is slow under software GL (SwiftShader). `playwright.config.ts` uses `workers: 2`, `retries: 1`, 60 s timeout on purpose; run a single spec/project while iterating.
 
 ## Folder map
 
 - `.claude/` settings, hooks (`session-start.mjs`, `stop-check.mjs`), `agents/`, `commands/`.
-- `docs/` progress (`progress/t<NN>.md`), `decisions/` (ADRs), `KNOWN_ISSUES.md`, `BACKLOG.md`, `superpowers/` (spec, plan).
-- `scripts/` texture fetch, narration generation, budget check.
-- `src/config/` scale and time constants; `src/data/` body data, bilingual content, tour stops; `src/i18n/`; `src/state/` store and prefs; `src/quality/` tiers and FPS monitor.
+- `.github/workflows/` `ci.yml` (PR checks) and `deploy.yml` (GitHub Pages on each merge to `main`).
+- `docs/` progress (`progress/t<NN>.md`), `decisions/` (ADRs), `KNOWN_ISSUES.md`, `BACKLOG.md`, `HUMAN_REVIEW.md`, `ai-setup.md` (both Vietnamese), `screenshots/`, `perf-results.json`, `superpowers/` (spec, plan).
+- `scripts/` texture fetch, narration generation (+ its pytest), budget check.
+- `src/config/` scale and time constants; `src/data/` body data, bilingual content, tour stops (see `src/data/CLAUDE.md` to add a body); `src/i18n/`; `src/state/` store and prefs; `src/quality/` tiers and FPS monitor.
 - `src/tour/` state machine, narration, controller; `src/scene/` renderer, sky, postfx, textures, loop; `src/bodies/` planets, sun, earth, rings, belt, orbits.
-- `src/camera/` framing and rig; `src/interaction/` picker; `src/audio/` engine, ambient, whoosh; `src/ui/` layout, styles, panels, controls; `src/debug/` e2e API.
+- `src/camera/` framing and rig; `src/ui/labelLayout.ts` label placement; `src/interaction/` picker; `src/audio/` engine, ambient, whoosh; `src/ui/` layout, styles, panels, controls; `src/debug/` e2e API.
 - `public/textures/`, `public/audio/narration/` committed assets and manifests.
 - `tests/unit/`, `tests/e2e/`, `tests/visual/`, `tests/perf/`.
 
@@ -59,11 +66,13 @@ Solar System Explorer: a mobile-first, bilingual (vi/en) three.js web app showin
 5. Record: tick the task's checkboxes in the plan; write `docs/progress/t<NN>.md` (status, summary, verification, `DECISION:` lines, review); commit `docs(t<NN>): record progress`.
 6. PR: push the branch, `gh pr create --base main`.
 7. CI: `gh pr checks <n> --watch --fail-fast`; fix failures on the branch (2 rounds max).
-8. Merge: `gh pr merge <n> --merge --delete-branch`, remove the worktree, pull `main`.
+8. Merge: `gh pr merge <n> --merge --delete-branch`, remove the worktree (`git worktree remove`; on Windows it can fail with `Permission denied` while a dev server or editor holds the folder: stop it, retry, else leave it and run `git worktree prune` later), pull `main`.
 9. Blocked: leave the PR open with the `blocked` label and a comment, add a `docs/KNOWN_ISSUES.md` entry, skip dependent tasks, continue independent ones.
 
 - Branch Map and Wave Plan live in the plan. Waves: A (1-4 serial), B (5, 6, 9-13 parallel, at most 3 at once), C (7 and 8 in parallel, then 14), D (15-32 serial).
 - Never ask the user mid-run. For an unspecified detail pick the option most faithful to the spec and log `DECISION: ...` in the progress file (architectural: write an ADR).
+- Auto mode blocks `npx --yes <external package>`; use only locally installed tools.
+- Extra tasks may be inserted (Task 28b fixed the visual issues from Task 28): they get their own `t28b.md` and PR.
 - Never: push to `main` or force-push; merge a PR with failing checks; edit `.claude/settings.json` after Task 1; delete or weaken a passing test to get green.
 - Model tiers: `implementer-light` (haiku), `implementer` (sonnet), `implementer-heavy` (opus), `reviewer` (sonnet), `final-reviewer` (opus). If a task fails twice on its tier, go one tier up.
 
