@@ -3,7 +3,7 @@ import './ui/styles.css';
 import { createStore } from './state/store';
 import type { ContentId } from './data/types';
 import type { AppState } from './state/appState';
-import { loadPrefs } from './state/prefs';
+import { loadPrefs, savePref } from './state/prefs';
 import { getLayout } from './ui/layout';
 import { initialTier, tierSettings, type QualityTier } from './quality/tiers';
 import { initialTour } from './tour/tourMachine';
@@ -25,6 +25,8 @@ import { createPicker } from './interaction/picker';
 import { createLabels } from './ui/labels';
 import { createCameraRig } from './camera/cameraRig';
 import { createLoadingScreen, showBootError, showWebglUnsupported } from './ui/loadingScreen';
+import { createControlBar } from './ui/controlBar';
+import { createCredits } from './ui/credits';
 import { installE2EApi } from './debug/e2eApi';
 
 function safeStorage(): Storage | null {
@@ -67,6 +69,25 @@ async function boot(): Promise<void> {
     ready: false,
   });
   const settings = tierSettings(store.get().quality);
+
+  const storage = safeStorage();
+  const credits = createCredits(root, store);
+  createControlBar(root, store, {
+    toggleLang() {
+      const lang = store.get().lang === 'vi' ? 'en' : 'vi';
+      savePref(storage, 'lang', lang);
+      store.set({ lang });
+    },
+    toggleMute() {
+      const muted = !store.get().muted;
+      savePref(storage, 'muted', muted);
+      store.set({ muted });
+    },
+    toggleTour() {
+      // Wired by the tour controller task.
+    },
+    openCredits: () => credits.open(),
+  });
 
   const loading = createLoadingScreen(root, prefs.lang);
   const canvas = document.createElement('canvas');
