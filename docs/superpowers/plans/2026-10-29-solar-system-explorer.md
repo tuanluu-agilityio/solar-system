@@ -266,11 +266,11 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
   - `test:visual`, `test:perf`, `fetch:textures`, `narration`, `check:budget` (filled in by later tasks; define them now as scripts that point at the future files).
 - `vite.config.ts`: `base` is `'/'` in dev and `process.env.BASE_PATH ?? '/solar-system/'` in build. That is the single place to change the base path.
 
-- [ ] **Step 1: Install dependencies**
+- [x] **Step 1: Install dependencies**
 
   `npm install three camera-controls` and `npm install -D typescript vite vitest @types/three eslint typescript-eslint prettier @playwright/test sharp jsdom`. Then run `npx playwright install chromium`.
 
-- [ ] **Step 2: Write `playwright.config.ts`**
+- [x] **Step 2: Write `playwright.config.ts`**
 
   - `webServer` runs `npm run build && npm run preview -- --port 4173`, `baseURL` is `http://localhost:4173/solar-system/`.
   - Three Chromium projects:
@@ -280,12 +280,12 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
   - `launchOptions.args`: `['--use-angle=swiftshader','--enable-unsafe-swiftshader']`.
   - `testDir: tests/e2e`.
 
-- [ ] **Step 3: Write the smoke tests**
+- [x] **Step 3: Write the smoke tests**
 
   - Unit: `expect(1+1).toBe(2)`.
   - E2E: `page.goto('./')`, then expect `page.locator('canvas, #app')` to have count ≥ 1.
 
-- [ ] **Step 4: Write `.github/workflows/ci.yml`** (the PR gate)
+- [x] **Step 4: Write `.github/workflows/ci.yml`** (the PR gate)
 
   - Trigger: `pull_request` to `main`.
   - Runner: `ubuntu-latest`, Node 24 with npm cache.
@@ -295,12 +295,12 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
   - Concurrency group per PR with `cancel-in-progress`.
   - It must not run `test:visual`, `test:perf`, `fetch:textures` or `narration`.
 
-- [ ] **Step 5: Verify**
+- [x] **Step 5: Verify**
 
   Run: `npm run lint && npm run typecheck && npm test && npm run test:e2e`
   Expected: all pass, 1 unit test and 3 e2e results (one per project). Then the PR's CI (flow step 7) must pass. That is the first real run of `ci.yml`.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ### Task 3: Agent context files, subagents, resume commands, stop hook
 **Model:** sonnet
