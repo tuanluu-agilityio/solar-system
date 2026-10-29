@@ -1171,7 +1171,7 @@ export function createTourController(deps: TourDeps): { dispatch(e: TourEvent): 
 - Autostart: on `ready`, if `shouldAutostart(prefs.tourSeen, isE2E, params.has('autostart'))`, wait 3000 ms, `savePref('tourSeen', true)`, then dispatch `START`. The control-bar Tour button dispatches `START`/`EXIT`.
 - In e2e mode, `setTimeScale(n)` also scales the controller's timers (via `timers`) so tests run fast.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
   - Unit with fake timers, muted:
     - `START` → flyTo resolves → narrating;
     - after `durationMs` → gap → after 1500 → next stop's flyTo.
@@ -1184,10 +1184,10 @@ export function createTourController(deps: TourDeps): { dispatch(e: TourEvent): 
     - a canvas drag pauses (`status === 'paused'`);
     - `tour-exit` → `idle`;
     - with `setTimeScale(20)` the tour reaches `finished`, and the subtitle element had non-empty text at some point.
-- [ ] **Step 2:** Run them. Expected: FAIL.
-- [ ] **Step 3: Implement**
-- [ ] **Step 4:** Run them. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run them. Expected: FAIL.
+- [x] **Step 3: Implement**
+- [x] **Step 4:** Run them. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ---
 
