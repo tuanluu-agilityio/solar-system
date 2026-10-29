@@ -62,3 +62,40 @@ body {
   font-size: 0.9rem;
   opacity: 0.8;
 }
+.body-labels {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 10;
+}
+.body-label {
+  position: absolute;
+  left: 0;
+  top: 0;
+  margin: 6px 0 0;
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: #e8ecf5;
+  font: inherit;
+  font-size: 12px;
+  line-height: 16px;
+  text-shadow: 0 0 4px #000;
+  white-space: nowrap;
+  pointer-events: auto;
+  cursor: pointer;
+}
+.body-label[hidden] {
+  display: none;
+}
+/* Invisible hit area: at least 44 px tall and wide. */
+.body-label::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, 44px);
+  height: 44px;
+  transform: translate(-50%, -50%);
+}

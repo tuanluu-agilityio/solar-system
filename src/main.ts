@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import './ui/styles.css';
 import { createStore } from './state/store';
+import type { ContentId } from './data/types';
 import type { AppState } from './state/appState';
 import { loadPrefs } from './state/prefs';
 import { getLayout } from './ui/layout';
@@ -15,6 +16,8 @@ import { startLoop } from './scene/loop';
 import { createPostFX } from './scene/postfx';
 import { createSun } from './bodies/sun';
 import { createSolarSystem } from './scene/solarSystem';
+import { createPicker } from './interaction/picker';
+import { createLabels } from './ui/labels';
 import { createLoadingScreen, showBootError, showWebglUnsupported } from './ui/loadingScreen';
 import { debugCamTarget, installE2EApi } from './debug/e2eApi';
 
@@ -116,6 +119,17 @@ async function boot(): Promise<void> {
   const solar = createSolarSystem(lowTex, settings);
   scene.add(solar.root);
 
+  const select = (id: ContentId): void => store.set({ selected: id, view: 'focus' });
+  const labels = createLabels(root, solar.bodies, camera, () => store.get().lang, {
+    onSelect: select,
+    isMobile: () => store.get().layout === 'mobile',
+  });
+  createPicker(canvas, camera, solar.pickables, select, (id) => labels.setHovered(id));
+  labels.setVisible(store.get().view === 'overview');
+  store.subscribe((s, prev) => {
+    if (s.view !== prev.view) labels.setVisible(s.view === 'overview');
+  });
+
   // Temporary close-up for screenshot checks; replaced by the camera rig in Task 21.
   const debugBody = debugCamTarget();
   const debugCam = debugBody ? solar.getFocusTarget(debugBody) : null;
@@ -126,6 +140,7 @@ async function boot(): Promise<void> {
   startLoop((_dt, tSec) => {
     sun.update(tSec);
     solar.update(tSec);
+    labels.update();
     if (debugCam) {
       // Look at the body from beside its orbit so the terminator and the rings both show.
       debugCam.object.getWorldPosition(debugPos);
