@@ -29,6 +29,7 @@ import { createControlBar } from './ui/controlBar';
 import { createCredits } from './ui/credits';
 import { createInfoPanel } from './ui/infoPanel';
 import { installE2EApi } from './debug/e2eApi';
+import { createAudioEngine } from './audio/audioEngine';
 
 function safeStorage(): Storage | null {
   try {
@@ -72,6 +73,11 @@ async function boot(): Promise<void> {
   const settings = tierSettings(store.get().quality);
 
   const storage = safeStorage();
+  // Audio starts only after a user gesture (spec §3.7). Every pointerdown re-runs the
+  // idempotent unlock, which also resumes a context iOS suspended after an interruption.
+  const audio = createAudioEngine();
+  audio.setMuted(store.get().muted);
+  window.addEventListener('pointerdown', () => void audio.unlock(), { capture: true });
   const credits = createCredits(root, store);
   createControlBar(root, store, {
     toggleLang() {
@@ -81,6 +87,9 @@ async function boot(): Promise<void> {
     },
     toggleMute() {
       const muted = !store.get().muted;
+      // unlock() creates/resumes the context synchronously inside this click.
+      void audio.unlock();
+      audio.setMuted(muted);
       savePref(storage, 'muted', muted);
       store.set({ muted });
     },
@@ -124,6 +133,7 @@ async function boot(): Promise<void> {
   };
   const backToOverview = async (): Promise<void> => {
     store.set({ selected: null, view: 'overview' });
+    audio.playWhoosh();
     await rig.flyToOverview();
   };
   createInfoPanel(root, store, () => void backToOverview());
@@ -168,12 +178,9 @@ async function boot(): Promise<void> {
   const solar = createSolarSystem(lowTex, settings);
   scene.add(solar.root);
 
-  const whoosh = (): void => {
-    // Fly-to whoosh; wired by the audio engine task.
-  };
   selectBody = async (id) => {
     store.set({ selected: id, view: 'focus' });
-    whoosh();
+    audio.playWhoosh();
     await rig.flyTo(solar.getFocusTarget(id));
     // Only the high tier swaps in the large maps, and only once the camera has arrived.
     // A superseded flight resolves early, so also check the camera really is on this body.

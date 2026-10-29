@@ -1130,13 +1130,13 @@ export function createAudioEngine(ctxFactory?: () => AudioContext): AudioEngine;
   - the sound toggle calls `unlock()` then `setMuted(...)` and persists `sse.muted`;
   - selection calls `playWhoosh()`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
   - Unit: `setMuted(false)` schedules master gain → 1. While narration plays, ambientBus is ramped to 0.06; after the `ended` event it ramps to 0.22. A narration `error` resolves `'error'` and restores the gain.
   - e2e: the `sound` button toggles `getState().muted`, and the setting persists across reload.
-- [ ] **Step 2:** Run them. Expected: FAIL.
-- [ ] **Step 3: Implement**
-- [ ] **Step 4:** Run them. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run them. Expected: FAIL.
+- [x] **Step 3: Implement**
+- [x] **Step 4:** Run them. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 26: Tour controller, subtitles, tour controls, autostart
 **Model:** opus
