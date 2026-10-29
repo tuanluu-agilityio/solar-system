@@ -15,7 +15,7 @@
     "test:visual": "playwright test tests/visual/screenshots.spec.ts",
     "test:perf": "playwright test tests/perf/fps.spec.ts",
     "fetch:textures": "node scripts/fetch-textures.mjs",
-    "narration": ".venv/Scripts/python scripts/generate-narration.py",
+    "narration": ".venv\\Scripts\\python scripts\\generate-narration.py",
     "check:budget": "node scripts/check-budget.mjs"
   },
   "dependencies": {

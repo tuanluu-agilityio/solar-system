@@ -51,6 +51,25 @@ def fallback_cues(sentences, duration_ms):
     return cues
 
 
+def make_contiguous(cues, duration_ms):
+    """Close Edge TTS cue gaps and overlaps so cues tile [0, duration_ms].
+
+    The first cue starts at 0 (absorbing leading silence), each later cue starts
+    where the previous one ended, and the last cue ends at duration_ms.
+    """
+    out = []
+    prev_end = 0
+    for i, cue in enumerate(cues):
+        start = prev_end
+        if i == len(cues) - 1:
+            end = duration_ms
+        else:
+            end = max(cue["endMs"], start)
+        out.append({"startMs": start, "endMs": end, "text": cue["text"]})
+        prev_end = end
+    return out
+
+
 def needs_regen(entry, new_hash, mp3_exists):
     return entry is None or entry.get("hash") != new_hash or not mp3_exists
 
@@ -79,6 +98,8 @@ async def synthesize(text, voice):
     duration = last_end if cues else estimate_duration_ms(data)
     if not cues:
         cues = fallback_cues(split_sentences(text), duration)
+    else:
+        cues = make_contiguous(cues, duration)
     return data, cues, duration
 
 
@@ -114,6 +135,9 @@ async def run():
     manifest["version"] = 1
     manifest["voices"] = dict(VOICES)
     segments = manifest.setdefault("segments", {})
+    for by_lang in segments.values():
+        for entry in by_lang.values():
+            entry["cues"] = make_contiguous(entry["cues"], entry["durationMs"])
     failed = False
 
     for lang, stops in sources.items():
