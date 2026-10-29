@@ -8,6 +8,8 @@ export const EARTH_DAY_SECONDS = 20;
 export const MOON_ORBIT_DISPLAY = 4;
 /** Asteroid belt extent, million km from the Sun. */
 export const ASTEROID_BELT_MKM = { inner: 329, outer: 479 } as const;
+/** Asteroid belt orbital period in Earth years. */
+export const ASTEROID_BELT_PERIOD_YEARS = 4.6;
 
 /** Earth orbital period in days used by the orbit maths (a 60 s display year). */
 export const EARTH_YEAR_DAYS = 365.25;

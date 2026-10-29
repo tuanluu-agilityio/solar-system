@@ -24,6 +24,7 @@ import {
   createEarthMaterial,
 } from '../bodies/earth';
 import { createRing } from '../bodies/rings';
+import { createAsteroidBelt } from '../bodies/asteroidBelt';
 import { createOrbitLine } from '../bodies/orbitLine';
 import { isFallbackTexture, makeFallbackTexture } from './textures';
 
@@ -215,6 +216,9 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
   beltPivot.add(beltAnchor);
   root.add(beltPivot);
 
+  const belt = createAsteroidBelt(s.asteroidCount);
+  root.add(belt.mesh);
+
   const deco = decorate(bodies, tex, s);
   const pickables = [...bodies.values()].map((b) => b.pickProxy);
 
@@ -225,6 +229,7 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
     update(tSec) {
       for (const rig of rigs.values()) rig.update(tSec);
       deco.update();
+      belt.update(tSec);
       beltPivot.rotation.y = orbitalAngle(EARTH_YEAR_DAYS, tSec, INITIAL_PHASE.earth);
     },
     getFocusTarget(id) {
@@ -236,6 +241,7 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
     setTierSettings(next) {
       for (const rig of rigs.values()) rig.setSegments(next);
       deco.apply(next);
+      belt.setCount(next.asteroidCount);
     },
   };
   solar.update(0);
