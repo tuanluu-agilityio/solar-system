@@ -451,15 +451,15 @@ Reference values (NASA Planetary Fact Sheet; massEarths is derived from 10²⁴ 
 
 `orderFromSun`: mercury = 1 … neptune = 8, pluto = 9; sun and moon are `null`. `parent`: moon → earth; everything else → sun; sun → `null`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
   For each row, every field equals the table (`toBeCloseTo` with 2 significant digits for massEarths). Also:
   - every body except sun/moon has `parent === 'sun'`;
   - kinds: mercury/venus/earth/mars terrestrial; jupiter/saturn gas-giant; uranus/neptune ice-giant; pluto dwarf-planet; moon moon; sun star.
-- [ ] **Step 2:** Run it. Expected: FAIL.
-- [ ] **Step 3: Implement `bodies.ts`**
-- [ ] **Step 4:** Run it. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run it. Expected: FAIL.
+- [x] **Step 3: Implement `bodies.ts`**
+- [x] **Step 4:** Run it. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 6: Bilingual body content and UI strings
 **Model:** opus (content writing, §12.5)
@@ -483,20 +483,20 @@ Required UI keys:
 - `kind.*` for each `BodyKind`;
 - `lang.switch`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
   - For both languages and every `ContentId`: `name`, `kindLabel` and `description` are non-empty; `description` has 2–4 sentences; `facts.length` is between 3 and 5.
   - `Object.keys(UI_STRINGS.vi)` equals `Object.keys(UI_STRINGS.en)` (sorted).
   - No value contains `TODO` or is empty.
   - `getContent('pluto','vi').kindLabel` mentions "hành tinh lùn".
-- [ ] **Step 2:** Run it. Expected: FAIL.
-- [ ] **Step 3: Write the content**
+- [x] **Step 2:** Run it. Expected: FAIL.
+- [x] **Step 3: Write the content**
 
   Base it on NASA Science pages (fetch them), with friendly, specific, accurate wording. Write the English natively, not as a translation of the Vietnamese.
   - The Pluto content explains the 2006 IAU reclassification.
   - `asteroid-belt` content: location 2.2–3.2 AU, Ceres, total mass < Moon's.
   - Number formatting is not part of the content (done by the panel in Task 24).
-- [ ] **Step 4:** Run it. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 4:** Run it. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 7: Tour stops and narration scripts
 **Model:** opus
@@ -581,17 +581,17 @@ export function focusScreenOffset(layout: Layout): { x: number; y: number }; // 
 export const OVERVIEW_FIT_RADIUS: number; // displayOrbitRadius(5906.4) + 10
 ```
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
   - `getLayout(390,844)` → `'mobile'`; `getLayout(1024,1366)` → `'mobile'` (portrait); `getLayout(1440,900)` → `'desktop'`; `getLayout(767,500)` → `'mobile'`.
   - `focusDistance` grows linearly with radius.
   - A narrower aspect gives a larger distance.
   - `focusDistance(1,50,1)` > 1 (the camera stays outside the body).
-- [ ] **Step 2:** Run them. Expected: FAIL.
-- [ ] **Step 3: Implement**
+- [x] **Step 2:** Run them. Expected: FAIL.
+- [x] **Step 3: Implement**
 
   `focusDistance = radius / Math.sin(atan(tan(fov/2) · min(1, aspect)) · fill)`. Clamp it to ≥ `radius * 1.6`.
-- [ ] **Step 4:** Run them. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 4:** Run them. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 10: Tour state machine
 **Model:** opus
@@ -618,7 +618,7 @@ export function tourReducer(s: TourSnapshot, e: TourEvent, stops: TourStopDef[])
 export function shouldAutostart(tourSeen: boolean, isE2E: boolean, forceAutostart: boolean): boolean;
 ```
 
-- [ ] **Step 1: Write the failing tests** (state transitions with exact effects)
+- [x] **Step 1: Write the failing tests** (state transitions with exact effects)
   - `START` from `idle` → `flying` at index 0, effects `[cancelGap? none, flyTo(stops[0]), showPanel(null)]`. The intro/outro focus `'overview'` gives `showPanel(null)`; a body stop gives `showPanel(id)`.
   - `FLIGHT_DONE` in `flying` → `narrating`, effects include `playNarration(stopId)` and `autoOrbit(true)`.
   - `NARRATION_ENDED` → `gap` with `startGap(1500)`.
@@ -629,10 +629,10 @@ export function shouldAutostart(tourSeen: boolean, isE2E: boolean, forceAutostar
   - `EXIT` from any active state → `idle` with `[stopNarration, cancelGap, autoOrbit(false)]`.
   - `LANG_CHANGED` while `narrating` → stays `narrating` with `[stopNarration, playNarration(sameStop)]`. In other states → no effects.
   - `shouldAutostart(false,false,false)` → true; `shouldAutostart(true,false,false)` → false; `isE2E` true → false unless `forceAutostart`.
-- [ ] **Step 2:** Run them. Expected: FAIL.
-- [ ] **Step 3: Implement `tourReducer` as a pure switch**
-- [ ] **Step 4:** Run them. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run them. Expected: FAIL.
+- [x] **Step 3: Implement `tourReducer` as a pure switch**
+- [x] **Step 4:** Run them. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 11: Quality tiers and FPS monitor
 **Model:** sonnet
