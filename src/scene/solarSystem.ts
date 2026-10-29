@@ -362,6 +362,8 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
         b.tiltGroup.scale.setScalar(k);
         const proxyR = Math.max(b.radius * PICK_SCALE, PICK_MIN_RADIUS);
         b.pickProxy.scale.setScalar(Math.max(1, (b.radius * k * PICK_BOOST_MARGIN) / proxyR));
+        // The picker prefers the body whose visible disc is under the tap.
+        b.pickProxy.userData.shownRadius = b.radius * k;
       }
       deco.setSaturnScale(boosts.get('saturn') ?? 1);
       const earth = bodies.get('earth');

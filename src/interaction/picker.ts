@@ -32,6 +32,14 @@ export function createPicker(
 ): { dispose(): void } {
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
+  const centre = new THREE.Vector3();
+  const scale = new THREE.Vector3();
+  const proxyRadius = (o: THREE.Object3D): number => {
+    const geo = (o as THREE.Mesh).geometry as THREE.BufferGeometry | undefined;
+    if (!geo) return 0;
+    if (!geo.boundingSphere) geo.computeBoundingSphere();
+    return (geo.boundingSphere?.radius ?? 0) * o.getWorldScale(scale).x;
+  };
   const active = new Set<number>();
   let down: Sample | null = null;
   let multi = false;
@@ -45,8 +53,30 @@ export function createPicker(
       -(((clientY - rect.top) / rect.height) * 2 - 1),
     );
     raycaster.setFromCamera(ndc, camera);
-    const hit = raycaster.intersectObjects(pickables, false)[0];
-    const id: unknown = hit?.object.userData.bodyId;
+    const hits = raycaster.intersectObjects(pickables, false);
+    // Enlarged tap targets of neighbouring bodies can overlap (inner planets in a phone
+    // overview). The front-most body whose visible disc (`userData.shownRadius`) is under
+    // the tap wins; failing that, the proxy whose centre is closest to the ray, relative
+    // to its size.
+    let best: THREE.Object3D | null = null;
+    let bestScore = Infinity;
+    for (const h of hits) {
+      const o = h.object;
+      o.getWorldPosition(centre);
+      const d = Math.sqrt(raycaster.ray.distanceSqToPoint(centre));
+      const shown: unknown = o.userData.shownRadius;
+      if (typeof shown === 'number' && d <= shown) {
+        best = o;
+        break;
+      }
+      const r = proxyRadius(o);
+      const score = r > 0 ? d / r : Infinity;
+      if (best === null || score < bestScore) {
+        best = o;
+        bestScore = score;
+      }
+    }
+    const id: unknown = best?.userData.bodyId;
     return isBodyId(id) ? id : null;
   }
 

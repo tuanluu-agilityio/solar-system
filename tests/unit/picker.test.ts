@@ -112,6 +112,68 @@ describe('createPicker', () => {
   });
 });
 
+describe('createPicker with overlapping enlarged proxies', () => {
+  function proxy(id: BodyId, x: number, z: number, proxyR: number, shown: number): THREE.Mesh {
+    const m = new THREE.Mesh(
+      new THREE.SphereGeometry(proxyR, 12, 8),
+      new THREE.MeshBasicMaterial(),
+    );
+    m.position.set(x, 0, z);
+    m.userData.bodyId = id;
+    m.userData.shownRadius = shown;
+    m.updateMatrixWorld(true);
+    return m;
+  }
+  function tapAt(world: THREE.Vector3, others: THREE.Mesh[]): BodyId | undefined {
+    const dom = document.createElement('canvas');
+    document.body.append(dom);
+    dom.getBoundingClientRect = () =>
+      ({
+        left: 0,
+        top: 0,
+        width: 400,
+        height: 400,
+        right: 400,
+        bottom: 400,
+        x: 0,
+        y: 0,
+      }) as DOMRect;
+    const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 100);
+    camera.position.set(0, 0, 10);
+    camera.lookAt(0, 0, 0);
+    camera.updateMatrixWorld(true);
+    const onPick = vi.fn<(id: BodyId) => void>();
+    const picker = createPicker(dom, camera, others, onPick);
+    const s = world.clone().project(camera);
+    const x = ((s.x + 1) / 2) * 400;
+    const y = ((1 - s.y) / 2) * 400;
+    dom.dispatchEvent(pointer('pointerdown', 1, x, y));
+    dom.dispatchEvent(pointer('pointerup', 1, x, y));
+    picker.dispose();
+    dom.remove();
+    return onPick.mock.calls[0]?.[0];
+  }
+
+  it('picks the body whose visible disc is under the tap, not a nearer enlarged proxy', () => {
+    const earth = proxy('earth', 0, 0, 3, 1);
+    const mars = proxy('mars', 2.5, -5, 2, 1.2);
+    expect(tapAt(mars.position, [earth, mars])).toBe('mars');
+  });
+
+  it('a nearer body whose visible disc covers the tap wins over one behind it', () => {
+    const earth = proxy('earth', 0, 0, 3, 2.5);
+    const mars = proxy('mars', 1, -5, 2, 1.2);
+    expect(tapAt(mars.position, [earth, mars])).toBe('earth');
+  });
+
+  it('a tap that misses every visible disc picks the proxy centred closest to it', () => {
+    const earth = proxy('earth', 0, 0, 3, 0.5);
+    const mars = proxy('mars', 2.5, -5, 3, 0.5);
+    const between = new THREE.Vector3(2.4, 0.8, -5);
+    expect(tapAt(between, [earth, mars])).toBe('mars');
+  });
+});
+
 describe('createLabels', () => {
   function labelSetup(getLang: () => 'vi' | 'en' = () => 'en', isMobile = false) {
     const tex = new Map<string, THREE.Texture>();

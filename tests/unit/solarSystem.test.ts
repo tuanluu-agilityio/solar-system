@@ -223,6 +223,8 @@ describe('overview boost', () => {
     expect(proxyR * earth.pickProxy.scale.x).toBeGreaterThanOrEqual(
       earth.radius * scaleOf(ss, 'earth'),
     );
+    expect(earth.pickProxy.userData.shownRadius).toBeCloseTo(earth.radius * scaleOf(ss, 'earth'));
+    expect(ss.bodies.get('sun')!.pickProxy.userData.shownRadius).toBe(ss.bodies.get('sun')!.radius);
     const ring = ss.root.getObjectByName('saturn-ring') as THREE.Mesh;
     const u = (ring.material as THREE.ShaderMaterial).uniforms.uPlanetRadius!;
     expect(u.value).toBeCloseTo(ss.bodies.get('saturn')!.radius * scaleOf(ss, 'saturn'), 6);

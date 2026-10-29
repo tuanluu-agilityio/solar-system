@@ -65,6 +65,8 @@ export function createPickProxy(id: BodyId, radius: number): THREE.Mesh {
   );
   proxy.name = `${id}-pick`;
   proxy.userData.bodyId = id;
+  // Radius of the visible body (updated by the overview boost); the picker prefers it.
+  proxy.userData.shownRadius = radius;
   return proxy;
 }
 
