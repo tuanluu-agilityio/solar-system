@@ -379,6 +379,7 @@ async function boot(): Promise<void> {
     sun.update(tSec);
     solar.update(tSec);
     rig.update(dt * rigTimeScale);
+    solar.applyOverviewBoost(camera, canvas.clientHeight || window.innerHeight);
     labels.update();
     subtitles.update();
     postfx.render();

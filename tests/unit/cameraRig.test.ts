@@ -1,7 +1,13 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
 import { AUTO_ORBIT_RAD_PER_SEC, createCameraRig } from '../../src/camera/cameraRig';
-import { focusDistance, focusScreenOffset } from '../../src/camera/framing';
+import {
+  focusDistance,
+  focusFill,
+  focusScreenOffset,
+  OVERVIEW_FIT_RADIUS,
+  overviewFrame,
+} from '../../src/camera/framing';
 
 const W = 1000;
 const H = 600;
@@ -33,14 +39,18 @@ const targetOf = (camera: THREE.PerspectiveCamera): THREE.Vector3 =>
   new THREE.Vector3(0, 0, -1).applyQuaternion(camera.quaternion);
 
 describe('createCameraRig', () => {
-  it('starts in overview looking at the origin with no view offset', () => {
+  it('starts in overview looking at the origin, framed by overviewFrame', () => {
     const { camera, rig } = setup();
     rig.update(0);
     expect(rig.getTarget()).toBeNull();
-    expect(camera.position.length()).toBeGreaterThan(30);
+    const f = overviewFrame(OVERVIEW_FIT_RADIUS, camera.fov, camera.aspect, Math.PI / 3);
+    expect(camera.position.length()).toBeCloseTo(f.distance, 3);
     const toOrigin = camera.position.clone().negate().normalize();
     expect(targetOf(camera).dot(toOrigin)).toBeCloseTo(1, 4);
-    expect(camera.view?.enabled ?? false).toBe(false);
+    // Only a vertical shift that centres the tilted orbit disc.
+    expect(camera.view?.enabled).toBe(true);
+    expect(camera.view?.offsetX).toBeCloseTo(0, 6);
+    expect(camera.view?.offsetY).toBeCloseTo((f.offsetY * H) / 2, 6);
   });
 
   it('flyTo resolves after the transition and frames the body at the focus distance', async () => {
@@ -86,7 +96,7 @@ describe('createCameraRig', () => {
     expect(camera.position.z - before.z).toBeCloseTo(0, 3);
   });
 
-  it('flyToOverview clears the target and the view offset', async () => {
+  it('flyToOverview clears the target and restores the overview view offset', async () => {
     const { camera, rig } = setup();
     rig.setLayout('desktop');
     void rig.flyTo(body(80, 0, 0));
@@ -98,7 +108,9 @@ describe('createCameraRig', () => {
     await Promise.resolve();
     expect(done).toBe(true);
     expect(rig.getTarget()).toBeNull();
-    expect(camera.view?.enabled ?? false).toBe(false);
+    const f = overviewFrame(OVERVIEW_FIT_RADIUS, camera.fov, camera.aspect, Math.PI / 3);
+    expect(camera.view?.offsetX).toBeCloseTo(0, 6);
+    expect(camera.view?.offsetY).toBeCloseTo((f.offsetY * H) / 2, 6);
     const toOrigin = camera.position.clone().negate().normalize();
     expect(targetOf(camera).dot(toOrigin)).toBeCloseTo(1, 3);
   });
@@ -115,6 +127,49 @@ describe('createCameraRig', () => {
     const m = focusScreenOffset('mobile');
     expect(camera.view?.offsetX).toBeCloseTo((-m.x * W) / 2, 6);
     expect(camera.view?.offsetY).toBeCloseTo((m.y * H) / 2, 6);
+  });
+
+  it('a mobile tour uses the tour offset and fill; desktop and leaving the tour restore them', () => {
+    const { camera, rig, size } = setup();
+    size.w = 300;
+    size.h = 600;
+    camera.aspect = 0.5;
+    camera.updateProjectionMatrix();
+    rig.setLayout('mobile');
+    const t = body(80, 0, 0);
+    void rig.flyTo(t);
+    rig.setTourMode(true);
+    run(rig, 3);
+    const tour = focusScreenOffset('mobile', true);
+    expect(camera.view?.offsetY).toBeCloseTo((tour.y * 600) / 2, 6);
+    expect(camera.position.distanceTo(t.object.position)).toBeCloseTo(
+      focusDistance(2, camera.fov, 0.5, focusFill('mobile', true)),
+      0,
+    );
+    rig.setTourMode(false);
+    run(rig, 3);
+    expect(camera.view?.offsetY).toBeCloseTo((focusScreenOffset('mobile').y * 600) / 2, 6);
+    expect(camera.position.distanceTo(t.object.position)).toBeCloseTo(
+      focusDistance(2, camera.fov, 0.5),
+      0,
+    );
+  });
+
+  it('a tour flight started while in tour mode is framed with the tour fill', () => {
+    const { camera, rig, size } = setup();
+    size.w = 300;
+    size.h = 600;
+    camera.aspect = 0.5;
+    camera.updateProjectionMatrix();
+    rig.setLayout('mobile');
+    rig.setTourMode(true);
+    const t = body(80, 0, 0);
+    void rig.flyTo(t);
+    run(rig, 3);
+    expect(camera.position.distanceTo(t.object.position)).toBeCloseTo(
+      focusDistance(2, camera.fov, 0.5, focusFill('mobile', true)),
+      0,
+    );
   });
 
   it('setLayout reframes the focused body for the new aspect', () => {
