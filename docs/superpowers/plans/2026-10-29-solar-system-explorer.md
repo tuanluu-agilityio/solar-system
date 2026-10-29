@@ -661,7 +661,7 @@ Values:
 
 Bloom is present in every tier (the quality floor).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
   - Table values for each tier.
   - `lowerTier('low') === 'low'`.
   - `initialTier({isMobile:true,dpr:3,cores:4})` → `'low'`.
