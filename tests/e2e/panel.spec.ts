@@ -73,3 +73,18 @@ test('resizing between layouts keeps the selection and switches the panel', asyn
     await page.evaluate(() => (window as unknown as AppWindow).__app.getState().selected),
   ).toBe('mars');
 });
+
+test('the disclaimer stays clear of the mobile sheet', async ({ page }) => {
+  await boot(page);
+  await page.setViewportSize({ width: 390, height: 664 });
+  await select(page, 'earth');
+  const panel = page.getByTestId('panel');
+  await expect(panel).toHaveAttribute('data-layout', 'mobile', { timeout: 25_000 });
+  await expect(panel).toBeVisible({ timeout: 25_000 });
+  const note = page.getByTestId('not-to-scale');
+  await expect(async () => {
+    const p = (await panel.boundingBox())!;
+    const n = (await note.boundingBox())!;
+    expect(n.y + n.height).toBeLessThanOrEqual(p.y + 1);
+  }).toPass({ timeout: 25_000 });
+});

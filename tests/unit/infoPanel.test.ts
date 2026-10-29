@@ -183,3 +183,27 @@ describe('createInfoPanel', () => {
     expect(root.querySelector('[data-testid="panel"]')).toBeNull();
   });
 });
+
+describe('createInfoPanel render guard and root state', () => {
+  it('does not rebuild when unrelated state changes', () => {
+    const root = document.createElement('div');
+    const store = makeStore({ selected: 'earth', view: 'focus', layout: 'mobile' });
+    createInfoPanel(root, store, () => undefined);
+    const title = root.querySelector('h2')!;
+    const facts = root.querySelector('.panel-facts')!.firstElementChild;
+    store.set({ ready: false });
+    expect(root.querySelector('.panel-facts')!.firstElementChild).toBe(facts);
+    expect(title.textContent).toBe('Earth');
+  });
+
+  it('exposes the sheet state on the root only while the mobile sheet is visible', () => {
+    const root = document.createElement('div');
+    const store = makeStore({ selected: 'earth', view: 'focus', layout: 'mobile' });
+    createInfoPanel(root, store, () => undefined);
+    expect(root.dataset.sheet).toBe('peek');
+    store.set({ layout: 'desktop' });
+    expect(root.dataset.sheet).toBeUndefined();
+    store.set({ layout: 'mobile', selected: null, view: 'overview' });
+    expect(root.dataset.sheet).toBeUndefined();
+  });
+});

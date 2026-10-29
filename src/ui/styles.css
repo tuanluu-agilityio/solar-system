@@ -307,6 +307,7 @@ body {
   height: 50dvh;
   border-radius: 16px 16px 0 0;
   border-bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom);
   transition: height 0.25s ease-out;
 }
 .info-panel[data-layout='mobile'][data-state='expanded'] {
@@ -332,6 +333,12 @@ body {
 .info-panel[data-layout='mobile'][data-state='peek'] .panel-scroll {
   overflow-y: hidden;
 }
-.info-panel[data-layout='mobile'] {
-  padding-bottom: env(safe-area-inset-bottom);
+/* Keep the disclaimer legible: lift it above the bottom sheet. */
+#app[data-sheet='peek'] .not-to-scale {
+  bottom: calc(50vh + 6px);
+  bottom: calc(50dvh + 6px);
+}
+#app[data-sheet='expanded'] .not-to-scale {
+  bottom: calc(88vh + 6px);
+  bottom: calc(88dvh + 6px);
 }

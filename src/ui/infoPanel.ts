@@ -134,14 +134,26 @@ export function createInfoPanel(
   root.append(panel);
 
   let sheet: SheetState = 'peek';
+  // The root carries the visible mobile sheet state so CSS can lift the disclaimer above it.
+  const syncRoot = (): void => {
+    const { selected, layout } = store.get();
+    if (selected !== null && layout === 'mobile') root.dataset.sheet = sheet;
+    else delete root.dataset.sheet;
+  };
   const setSheet = (s: SheetState): void => {
     sheet = s;
     panel.dataset.state = s;
+    syncRoot();
   };
 
+  let renderedKey = '';
   const render = (): void => {
     const s = store.get();
+    const key = `${s.selected}|${s.lang}|${s.layout}`;
+    if (key === renderedKey) return;
+    renderedKey = key;
     panel.dataset.layout = s.layout;
+    syncRoot();
     if (s.selected === null) {
       panel.hidden = true;
       return;
@@ -223,6 +235,7 @@ export function createInfoPanel(
   return {
     dispose() {
       unsub();
+      delete root.dataset.sheet;
       panel.remove();
     },
   };
