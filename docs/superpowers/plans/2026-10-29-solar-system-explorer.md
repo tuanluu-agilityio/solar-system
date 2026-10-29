@@ -483,20 +483,20 @@ Required UI keys:
 - `kind.*` for each `BodyKind`;
 - `lang.switch`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
   - For both languages and every `ContentId`: `name`, `kindLabel` and `description` are non-empty; `description` has 2–4 sentences; `facts.length` is between 3 and 5.
   - `Object.keys(UI_STRINGS.vi)` equals `Object.keys(UI_STRINGS.en)` (sorted).
   - No value contains `TODO` or is empty.
   - `getContent('pluto','vi').kindLabel` mentions "hành tinh lùn".
-- [ ] **Step 2:** Run it. Expected: FAIL.
-- [ ] **Step 3: Write the content**
+- [x] **Step 2:** Run it. Expected: FAIL.
+- [x] **Step 3: Write the content**
 
   Base it on NASA Science pages (fetch them), with friendly, specific, accurate wording. Write the English natively, not as a translation of the Vietnamese.
   - The Pluto content explains the 2006 IAU reclassification.
   - `asteroid-belt` content: location 2.2–3.2 AU, Ceres, total mass < Moon's.
   - Number formatting is not part of the content (done by the panel in Task 24).
-- [ ] **Step 4:** Run it. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 4:** Run it. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 7: Tour stops and narration scripts
 **Model:** opus
@@ -552,7 +552,7 @@ export interface AppState { lang: Lang; muted: boolean; selected: ContentId | nu
 ```
 `AppState` imports `Layout` from `src/ui/layout.ts` (Task 9), `QualityTier` from `src/quality/tiers.ts` (Task 11), `TourSnapshot` from `src/tour/tourMachine.ts` (Task 10) and `UiKey` from `src/i18n/strings.ts` (Task 6). All of these are merged before Task 8 starts (Wave Plan).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
   - `detectLang(['vi-VN','en'])` → `'vi'`; `detectLang(['en-US'])` → `'en'`; `detectLang([])` → `'en'`.
   - `loadPrefs` with an empty storage → `{lang: detected, muted: true, tourSeen: false}`.
   - Stored `sse.muted='false'` → `muted: false`. Stored `sse.lang='xx'` → falls back to the detected language.
@@ -560,10 +560,10 @@ export interface AppState { lang: Lang; muted: boolean; selected: ContentId | nu
   - `t('vi','tour.progress',{current:5,total:14})` contains `5` and `14`. An unknown param is left as-is.
   - `formatNumber('vi', 1392700)` → `'1.392.700'`; `formatNumber('en', 1392700)` → `'1,392,700'`.
   - Store: `set` notifies subscribers with `(next, prev)`; unsubscribe stops notifications; a `set` with identical values does not notify.
-- [ ] **Step 2:** Run them. Expected: FAIL.
-- [ ] **Step 3: Implement** (prefs wraps every storage call in try/catch).
-- [ ] **Step 4:** Run them. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run them. Expected: FAIL.
+- [x] **Step 3: Implement** (prefs wraps every storage call in try/catch).
+- [x] **Step 4:** Run them. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 9: Layout rule and framing math
 **Model:** sonnet
@@ -618,7 +618,7 @@ export function tourReducer(s: TourSnapshot, e: TourEvent, stops: TourStopDef[])
 export function shouldAutostart(tourSeen: boolean, isE2E: boolean, forceAutostart: boolean): boolean;
 ```
 
-- [ ] **Step 1: Write the failing tests** (state transitions with exact effects)
+- [x] **Step 1: Write the failing tests** (state transitions with exact effects)
   - `START` from `idle` → `flying` at index 0, effects `[cancelGap? none, flyTo(stops[0]), showPanel(null)]`. The intro/outro focus `'overview'` gives `showPanel(null)`; a body stop gives `showPanel(id)`.
   - `FLIGHT_DONE` in `flying` → `narrating`, effects include `playNarration(stopId)` and `autoOrbit(true)`.
   - `NARRATION_ENDED` → `gap` with `startGap(1500)`.
@@ -629,10 +629,10 @@ export function shouldAutostart(tourSeen: boolean, isE2E: boolean, forceAutostar
   - `EXIT` from any active state → `idle` with `[stopNarration, cancelGap, autoOrbit(false)]`.
   - `LANG_CHANGED` while `narrating` → stays `narrating` with `[stopNarration, playNarration(sameStop)]`. In other states → no effects.
   - `shouldAutostart(false,false,false)` → true; `shouldAutostart(true,false,false)` → false; `isE2E` true → false unless `forceAutostart`.
-- [ ] **Step 2:** Run them. Expected: FAIL.
-- [ ] **Step 3: Implement `tourReducer` as a pure switch**
-- [ ] **Step 4:** Run them. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run them. Expected: FAIL.
+- [x] **Step 3: Implement `tourReducer` as a pure switch**
+- [x] **Step 4:** Run them. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 11: Quality tiers and FPS monitor
 **Model:** sonnet
@@ -661,15 +661,15 @@ Values:
 
 Bloom is present in every tier (the quality floor).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
   - Table values for each tier.
   - `lowerTier('low') === 'low'`.
   - `initialTier({isMobile:true,dpr:3,cores:4})` → `'low'`.
   - FPS monitor: 3000 ms of 40 ms frames → `'downgrade'` exactly once, then `null` until `reset()`. 3000 ms of 16 ms frames → never. Fewer than 3000 ms of samples → `null`.
-- [ ] **Step 2:** Run them. Expected: FAIL.
-- [ ] **Step 3: Implement**
-- [ ] **Step 4:** Run them. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run them. Expected: FAIL.
+- [x] **Step 3: Implement**
+- [x] **Step 4:** Run them. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ---
 
@@ -724,20 +724,20 @@ Sources (verified 2026-10-29) are `https://www.solarsystemscope.com/textures/dow
 ```
 edge-tts 7.3 API: `edge_tts.Communicate(text, voice, boundary="SentenceBoundary")`; iterate `async for chunk in c.stream()`. `chunk["type"]` is one of `"audio"` (`chunk["data"]` bytes), `"SentenceBoundary"` and `"WordBoundary"`; `offset`/`duration` are in 100-ns units (ms = value / 10_000).
 
-- [ ] **Step 1: Write failing tests** (`unittest`) for the pure helpers:
+- [x] **Step 1: Write failing tests** (`unittest`) for the pure helpers:
   - `ticks_to_ms(12_340_000) == 1234`;
   - `text_hash(text, voice)` is stable and changes when either input changes;
   - `split_sentences("A. B! C?") == ["A.","B!","C?"]`;
   - `fallback_cues(sentences, duration_ms)` gives contiguous cues proportional to character counts, covering [0, duration_ms];
   - `needs_regen(manifest_entry, hash, mp3_exists)`.
-- [ ] **Step 2:** Run `.venv/Scripts/python -m unittest scripts/test_generate_narration.py` (create the venv first with `python -m venv .venv` and `.venv/Scripts/pip install -r scripts/requirements.txt`). Expected: FAIL.
-- [ ] **Step 3: Implement the helpers and `main()`**
+- [x] **Step 2:** Run `.venv/Scripts/python -m unittest scripts/test_generate_narration.py` (create the venv first with `python -m venv .venv` and `.venv/Scripts/pip install -r scripts/requirements.txt`). Expected: FAIL.
+- [x] **Step 3: Implement the helpers and `main()`**
   - Read `src/data/tour/{vi,en}.json`.
   - For each segment whose hash changed: stream it, write the mp3, and build cues from the `SentenceBoundary` events (fall back to `fallback_cues` if there are none).
   - `durationMs` = the last boundary offset + duration, else the mp3 length estimated at 48 kbps.
   - Retry 3× with backoff 2/4/8 s. On final failure, keep the old entry if there is one, print `FAILED <stopId>.<lang>`, and exit 1 after processing everything else.
-- [ ] **Step 4:** Run the unit tests. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 4:** Run the unit tests. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 14: Generate narration audio and the client-side manifest reader
 **Model:** haiku
