@@ -9,7 +9,12 @@ import { initialTier, tierSettings, type QualityTier } from './quality/tiers';
 import { initialTour } from './tour/tourMachine';
 import { TOUR_STOPS } from './data/tour/stops';
 import { createRenderer, isWebGLAvailable } from './scene/renderer';
-import { listTextureKeys, loadTextureSet, makeFallbackTexture } from './scene/textures';
+import {
+  listTextureKeys,
+  loadHighTextures,
+  loadTextureSet,
+  makeFallbackTexture,
+} from './scene/textures';
 import { aggregateProgress, skyKey, skySet } from './scene/textureKeys';
 import { createSky } from './scene/sky';
 import { startLoop } from './scene/loop';
@@ -147,6 +152,15 @@ async function boot(): Promise<void> {
     store.set({ selected: id, view: 'focus' });
     whoosh();
     await rig.flyTo(solar.getFocusTarget(id));
+    // Only the high tier swaps in the large maps, and only once the camera has arrived.
+    // A superseded flight resolves early, so also check the camera really is on this body.
+    const s = store.get();
+    const arrived = s.selected === id && s.view === 'focus' && cameraTargetId() === id;
+    if (arrived && id !== 'asteroid-belt' && tierSettings(s.quality).textureSet === 'high') {
+      loadHighTextures(id)
+        .then((tex) => solar.upgradeTextures(id, tex))
+        .catch(() => undefined);
+    }
   };
   const select = (id: ContentId): void => void selectBody(id);
   const contentIds: ContentId[] = [...solar.bodies.keys(), 'asteroid-belt'];

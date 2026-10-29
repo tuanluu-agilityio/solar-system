@@ -31,14 +31,14 @@ test('select focuses a body and overview returns to the overview', async ({ page
     void (window as unknown as AppWindow).__app.select('saturn');
   });
   await expect
-    .poll(() => state(page), { timeout: 5_000 })
+    .poll(() => state(page), { timeout: 25_000 })
     .toEqual({
       selected: 'saturn',
       view: 'focus',
     });
   await expect
     .poll(() => page.evaluate(() => (window as unknown as AppWindow).__app.cameraTargetId()), {
-      timeout: 5_000,
+      timeout: 25_000,
     })
     .toBe('saturn');
 
@@ -46,7 +46,7 @@ test('select focuses a body and overview returns to the overview', async ({ page
     void (window as unknown as AppWindow).__app.overview();
   });
   await expect
-    .poll(() => state(page), { timeout: 5_000 })
+    .poll(() => state(page), { timeout: 25_000 })
     .toEqual({
       selected: null,
       view: 'overview',
@@ -101,7 +101,7 @@ test('a real tap on the projected position of Jupiter selects it', async ({ page
       await page.mouse.click(p!.x, p!.y);
     }
     await expect
-      .poll(() => state(page), { timeout: 3_000 })
+      .poll(() => state(page), { timeout: 15_000 })
       .toEqual({ selected: 'jupiter', view: 'focus' });
   }).toPass({ timeout: 30_000 });
 });

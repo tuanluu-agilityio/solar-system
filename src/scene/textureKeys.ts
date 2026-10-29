@@ -1,4 +1,5 @@
 // Pure helpers for texture loading (no three.js, unit-testable).
+import type { BodyId } from '../data/types';
 
 // Per-body base colours (sRGB hex) used when a texture fails to load.
 const FALLBACK_COLORS: Record<string, number> = {
@@ -40,4 +41,16 @@ export function aggregateProgress(parts: ReadonlyArray<{ loaded: number; total: 
   if (total <= 0) return 0;
   const loaded = parts.reduce((a, p) => a + Math.min(p.loaded, p.total), 0);
   return loaded / total;
+}
+
+const EXTRA_KEYS: Partial<Record<BodyId, string[]>> = {
+  sun: [], // the sun has its own shader and is not part of the lazy upgrade
+  venus: ['venus_atmosphere', 'venus_surface'],
+  earth: ['earth_day', 'earth_night', 'earth_clouds'],
+  saturn: ['saturn', 'saturn_ring'],
+};
+
+/** Every texture key a body uses (earth: day, night, clouds). */
+export function textureKeysFor(id: BodyId): string[] {
+  return [...(EXTRA_KEYS[id] ?? [id])];
 }

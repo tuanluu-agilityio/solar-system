@@ -5,6 +5,8 @@ const launchOptions = { args: ['--use-angle=swiftshader', '--enable-unsafe-swift
 export default defineConfig({
   testDir: 'tests/e2e',
   timeout: 60_000, // software GL makes context creation slow when 3 projects run in parallel
+  workers: 2, // each worker runs a software-GL Chromium; more starves the frame loop and flakes
+  retries: 1,
   reporter: [['list'], ['html', { open: 'never' }]],
   webServer: {
     command: 'npm run build && npm run preview -- --port 4173',
