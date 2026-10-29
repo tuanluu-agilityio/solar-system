@@ -68,12 +68,16 @@ export function createPickProxy(id: BodyId, radius: number): THREE.Mesh {
   return proxy;
 }
 
-/** Builds one textured body (everything except the sun, whose surface is its own shader). */
+/**
+ * Builds one textured body (everything except the sun, whose surface is its own shader).
+ * `material` overrides the default lit material (Earth's day/night shader).
+ */
 export function createPlanet(
   id: BodyId,
   texture: THREE.Texture,
   s: TierSettings,
   parent: THREE.Object3D,
+  material?: THREE.Material,
 ): PlanetRig {
   const phys = BODIES[id].physical;
   const radius = displayRadius(phys.diameterKm);
@@ -96,7 +100,7 @@ export function createPlanet(
 
   const mesh = new THREE.Mesh(
     makeGeometry(radius, s),
-    new THREE.MeshStandardMaterial({ map: texture, roughness: 1, metalness: 0 }),
+    material ?? new THREE.MeshStandardMaterial({ map: texture, roughness: 1, metalness: 0 }),
   );
   mesh.name = id;
   if (isMoon) mesh.rotation.y = MOON_NEAR_SIDE_YAW;

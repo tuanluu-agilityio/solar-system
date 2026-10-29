@@ -28,7 +28,14 @@ export function makeFallbackTexture(key: string): THREE.DataTexture {
   const tex = new THREE.DataTexture(data, 2, 2, THREE.RGBAFormat);
   tex.colorSpace = THREE.SRGBColorSpace;
   tex.needsUpdate = true;
+  // Lets overlay layers (clouds, ring alpha) tell a solid stand-in from a real map.
+  tex.userData.isFallback = true;
   return tex;
+}
+
+/** True for the solid-colour stand-ins made by `makeFallbackTexture`. */
+export function isFallbackTexture(tex: THREE.Texture | undefined): boolean {
+  return tex?.userData.isFallback === true;
 }
 
 export async function loadTextureSet(
