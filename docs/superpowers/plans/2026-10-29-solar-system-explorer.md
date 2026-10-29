@@ -666,10 +666,10 @@ Bloom is present in every tier (the quality floor).
   - `lowerTier('low') === 'low'`.
   - `initialTier({isMobile:true,dpr:3,cores:4})` → `'low'`.
   - FPS monitor: 3000 ms of 40 ms frames → `'downgrade'` exactly once, then `null` until `reset()`. 3000 ms of 16 ms frames → never. Fewer than 3000 ms of samples → `null`.
-- [ ] **Step 2:** Run them. Expected: FAIL.
-- [ ] **Step 3: Implement**
-- [ ] **Step 4:** Run them. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run them. Expected: FAIL.
+- [x] **Step 3: Implement**
+- [x] **Step 4:** Run them. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ---
 
