@@ -8,10 +8,12 @@ import { initialTier, tierSettings, type QualityTier } from './quality/tiers';
 import { initialTour } from './tour/tourMachine';
 import { TOUR_STOPS } from './data/tour/stops';
 import { createRenderer, isWebGLAvailable } from './scene/renderer';
-import { listTextureKeys, loadTextureSet } from './scene/textures';
+import { listTextureKeys, loadTextureSet, makeFallbackTexture } from './scene/textures';
 import { aggregateProgress, skyKey, skySet } from './scene/textureKeys';
 import { createSky } from './scene/sky';
 import { startLoop } from './scene/loop';
+import { createPostFX } from './scene/postfx';
+import { createSun } from './bodies/sun';
 import { createLoadingScreen, showBootError, showWebglUnsupported } from './ui/loadingScreen';
 import { installE2EApi } from './debug/e2eApi';
 
@@ -64,10 +66,14 @@ async function boot(): Promise<void> {
   const renderer = createRenderer(canvas, settings);
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 20000);
-  camera.position.set(0, 0, 10);
+  // Temporary overview framing until the camera rig lands (Task 21).
+  camera.position.set(0, 45, 130);
+  camera.lookAt(0, 0, 0);
+  const postfx = createPostFX(renderer, scene, camera, settings);
 
   window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight, false);
+    postfx.setSize(window.innerWidth, window.innerHeight);
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     store.set({ layout: getLayout(window.innerWidth, window.innerHeight) });
@@ -92,7 +98,7 @@ async function boot(): Promise<void> {
   ];
   const report = (): void => loading.setProgress(aggregateProgress(parts));
   const sky = settings.skySize;
-  const [, skyTex] = await Promise.all([
+  const [lowTex, skyTex] = await Promise.all([
     loadTextureSet('low', lowKeys, (loaded, total) => {
       parts[0] = { loaded, total };
       report();
@@ -104,9 +110,12 @@ async function boot(): Promise<void> {
   ]);
   const skyTexture = skyTex.get(skyKey(sky));
   if (skyTexture) scene.add(createSky(skyTexture));
+  const sun = createSun(lowTex.get('sun') ?? makeFallbackTexture('sun'));
+  scene.add(sun.group);
 
-  startLoop(() => {
-    renderer.render(scene, camera);
+  startLoop((_dt, tSec) => {
+    sun.update(tSec);
+    postfx.render();
     if (!store.get().ready) {
       store.set({ ready: true });
       loading.hide();
