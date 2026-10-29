@@ -27,6 +27,7 @@ import { createCameraRig } from './camera/cameraRig';
 import { createLoadingScreen, showBootError, showWebglUnsupported } from './ui/loadingScreen';
 import { createControlBar } from './ui/controlBar';
 import { createCredits } from './ui/credits';
+import { createInfoPanel } from './ui/infoPanel';
 import { installE2EApi } from './debug/e2eApi';
 
 function safeStorage(): Storage | null {
@@ -125,6 +126,7 @@ async function boot(): Promise<void> {
     store.set({ selected: null, view: 'overview' });
     await rig.flyToOverview();
   };
+  createInfoPanel(root, store, () => void backToOverview());
   let cameraTargetId = (): ContentId | null => null;
   let projectBody: (id: ContentId) => { x: number; y: number } | null = () => null;
 
