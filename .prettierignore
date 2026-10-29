@@ -1,0 +1,11 @@
+dist
+node_modules
+package-lock.json
+playwright-report
+test-results
+.worktrees
+.venv
+.superpowers
+.claude
+docs
+README.md
