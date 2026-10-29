@@ -78,7 +78,7 @@ body {
   position: absolute;
   left: 0;
   top: 0;
-  margin: 6px 0 0;
+  margin: 0;
   padding: 0 4px;
   border: 0;
   background: none;
@@ -422,4 +422,45 @@ body {
   background: rgba(60, 110, 220, 0.9);
   border-color: rgba(160, 200, 255, 0.6);
   font-weight: 600;
+}
+
+/*
+ * Mobile tour (t28b): a short peek sheet and a compact dock (caption above one row with the
+ * icon-only unmute button and the tour controls), so the focused body shows in the band
+ * between the top bar and the dock (see focusScreenOffset(layout, tour)).
+ */
+#app[data-tour='active'] .info-panel[data-layout='mobile'][data-state='peek'] {
+  height: 22vh;
+  height: 22dvh;
+}
+#app[data-tour='active'][data-sheet='peek'] .not-to-scale {
+  bottom: calc(22vh + 6px);
+  bottom: calc(22dvh + 6px);
+}
+#app[data-tour='active'][data-sheet='peek'] .tour-dock {
+  bottom: calc(22vh + 24px);
+  bottom: calc(22dvh + 24px);
+}
+@media (max-width: 767px), (orientation: portrait) {
+  #app[data-tour='active'] .tour-dock {
+    flex-flow: row wrap;
+    justify-content: center;
+    gap: 6px;
+  }
+  #app[data-tour='active'] .subtitles-wrap {
+    display: contents;
+  }
+  #app[data-tour='active'] .subtitles {
+    flex-basis: 100%;
+    box-sizing: border-box;
+    padding: 6px 10px;
+    font-size: 0.85rem;
+    line-height: 1.35;
+  }
+  #app[data-tour='active'] .tour-unmute {
+    order: 1;
+  }
+  #app[data-tour='active'] .tour-controls {
+    order: 1;
+  }
 }

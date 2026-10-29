@@ -146,6 +146,9 @@ describe('subtitles', () => {
     expect(hint.textContent).toContain(t('en', 'tour.unmuteHint'));
     store.set({ lang: 'vi' });
     expect(hint.textContent).toContain(t('vi', 'tour.unmuteHint'));
+    // The text sits in a collapsible label (phones show only the icon); the name stays.
+    expect(hint.querySelector('.ctl-label')?.textContent).toBe(t('vi', 'tour.unmuteHint'));
+    expect(hint.getAttribute('aria-label')).toBe(t('vi', 'tour.unmuteHint'));
     hint.click();
     expect(onUnmute).toHaveBeenCalledTimes(1);
     store.set({ muted: false });

@@ -6,11 +6,15 @@ import {
   ASTEROID_BELT_MKM,
   EARTH_YEAR_DAYS,
   INITIAL_PHASE,
+  MOON_ORBIT_DISPLAY,
   displayOrbitRadius,
   displayRadius,
   orbitalAngle,
 } from '../config/scale';
+import { overviewBoost } from '../camera/framing';
 import {
+  PICK_MIN_RADIUS,
+  PICK_SCALE,
   createPickProxy,
   createPlanet,
   sphereSegments,
@@ -44,6 +48,12 @@ export interface SolarSystem {
   setTierSettings(s: TierSettings): void;
   /** Swaps in higher-resolution maps; fallback stand-ins are ignored. */
   upgradeTextures(id: BodyId, tex: Map<string, THREE.Texture>): void;
+  /**
+   * Screen-space minimum size: scales each far body up (`overviewBoost`) so it stays
+   * visible on a view `viewH` CSS px tall; a body the camera is near keeps its true size.
+   * Hides the Moon while a boosted Earth would cover its orbit.
+   */
+  applyOverviewBoost(camera: THREE.PerspectiveCamera, viewH: number): void;
 }
 
 const BELT_FOCUS_RADIUS = 12;
@@ -61,6 +71,12 @@ const EARTH_ATMOSPHERE = { color: '#4da6ff', intensity: 1.0 };
 const VENUS_ATMOSPHERE = { color: '#ffe9b0', intensity: 0.6 };
 const SATURN_RING = { inner: 1.24, outer: 2.3, opacity: 0.9, plainOpacity: 0.35 };
 const URANUS_RING = { inner: 1.6, outer: 2.0, opacity: 0.12 };
+/** The Moon hides while Earth's and its own shown radii would cover this share of its orbit. */
+const MOON_CLEARANCE = 0.8;
+/** A boosted pick proxy stays this much larger than the shown body. */
+const PICK_BOOST_MARGIN = 1.2;
+/** Layer the raycaster never tests: a hidden Moon cannot be picked. */
+const UNPICKABLE_LAYER = 1;
 /** The sun is the world origin. */
 const SUN_WORLD_POS = new THREE.Vector3(0, 0, 0);
 
@@ -95,6 +111,8 @@ interface Decorations {
   /** Swaps the cloud map and the Saturn ring strip when `tex` has real ones. */
   upgrade(tex: Map<string, THREE.Texture>): void;
   apply(s: TierSettings): void;
+  /** Keeps the ring shadow in step with Saturn's overview boost. */
+  setSaturnScale(k: number): void;
 }
 
 function decorate(
@@ -180,6 +198,9 @@ function decorate(
         (u.uOpacity as THREE.IUniform<number>).value = SATURN_RING.opacity;
       }
     },
+    setSaturnScale(k) {
+      (sMat.uniforms.uPlanetRadius as THREE.IUniform<number>).value = saturn.radius * k;
+    },
     apply(next) {
       for (const a of atmospheres) a.visible = next.atmosphere;
       const shadow = next.ringShadow ? 1 : 0;
@@ -252,6 +273,9 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
 
   const deco = decorate(bodies, tex, s);
   const pickables = [...bodies.values()].map((b) => b.pickProxy);
+  const camPos = new THREE.Vector3();
+  const bodyPos = new THREE.Vector3();
+  const boosts = new Map<BodyId, number>();
 
   const solar: SolarSystem = {
     root,
@@ -326,6 +350,30 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
           if (!used) used = materialsOf(o).some((m) => usesTexture(m, old));
         });
         if (!used) old.dispose();
+      }
+    },
+    applyOverviewBoost(camera, viewH) {
+      camera.getWorldPosition(camPos);
+      for (const b of bodies.values()) {
+        if (b.id === 'sun') continue;
+        b.mesh.getWorldPosition(bodyPos);
+        const k = overviewBoost(b.radius, bodyPos.distanceTo(camPos), camera.fov, viewH);
+        boosts.set(b.id, k);
+        b.tiltGroup.scale.setScalar(k);
+        const proxyR = Math.max(b.radius * PICK_SCALE, PICK_MIN_RADIUS);
+        b.pickProxy.scale.setScalar(Math.max(1, (b.radius * k * PICK_BOOST_MARGIN) / proxyR));
+        // The picker prefers the body whose visible disc is under the tap.
+        b.pickProxy.userData.shownRadius = b.radius * k;
+      }
+      deco.setSaturnScale(boosts.get('saturn') ?? 1);
+      const earth = bodies.get('earth');
+      const moon = bodies.get('moon');
+      if (earth && moon) {
+        const shown =
+          earth.radius * (boosts.get('earth') ?? 1) + moon.radius * (boosts.get('moon') ?? 1);
+        const visible = shown < MOON_ORBIT_DISPLAY * MOON_CLEARANCE;
+        moon.tiltGroup.visible = visible;
+        moon.pickProxy.layers.set(visible ? 0 : UNPICKABLE_LAYER);
       }
     },
     setTierSettings(next) {

@@ -186,6 +186,10 @@ async function boot(): Promise<void> {
   );
   const rig = createCameraRig(camera, canvas);
   rig.setLayout(store.get().layout);
+  // Tour stops on a phone are framed above the compact subtitle dock.
+  store.subscribe((s, prev) => {
+    if (s.tour.status !== prev.tour.status) rig.setTourMode(isTourActive(s.tour.status));
+  });
   const postfx = createPostFX(renderer, scene, camera, settings);
 
   // Runtime quality: the FPS monitor downgrades a tier; software rendering disables it (spec §11.4).
@@ -379,6 +383,7 @@ async function boot(): Promise<void> {
     sun.update(tSec);
     solar.update(tSec);
     rig.update(dt * rigTimeScale);
+    solar.applyOverviewBoost(camera, canvas.clientHeight || window.innerHeight);
     labels.update();
     subtitles.update();
     postfx.render();

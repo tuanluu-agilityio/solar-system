@@ -27,6 +27,13 @@ export function createSubtitles(
   unmute.className = 'ctl-btn glass tour-unmute';
   unmute.setAttribute('data-testid', 'tour-unmute');
   unmute.hidden = true;
+  // On phones only the icon shows (`.ctl-label` collapses), keeping the tour dock short.
+  const unmuteIcon = document.createElement('span');
+  unmuteIcon.setAttribute('aria-hidden', 'true');
+  unmuteIcon.textContent = '🔊';
+  const unmuteText = document.createElement('span');
+  unmuteText.className = 'ctl-label';
+  unmute.append(unmuteIcon, unmuteText);
   const caption = document.createElement('p');
   caption.className = 'subtitles glass';
   caption.setAttribute('data-testid', 'subtitles');
@@ -38,7 +45,9 @@ export function createSubtitles(
   let shown = '';
   const renderHint = (): void => {
     const { lang, muted, tour } = store.get();
-    unmute.textContent = `🔊 ${t(lang, 'tour.unmuteHint')}`;
+    const hint = t(lang, 'tour.unmuteHint');
+    unmuteText.textContent = hint;
+    unmute.setAttribute('aria-label', hint);
     unmute.hidden = !(muted && isTourActive(tour.status));
   };
   renderHint();

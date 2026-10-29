@@ -50,3 +50,12 @@ export const INITIAL_PHASE: Record<BodyId, number> = {
   neptune: 5.7,
   pluto: 0.1,
 };
+
+/**
+ * Overview legibility (spec 3.2 "pretty and easy to see"): a far body is drawn at least this
+ * many CSS px in radius when it has Earth's display radius; the minimum grows with the square
+ * root of the display radius, so the size order between bodies is kept.
+ */
+export const OVERVIEW_MIN_BODY_PX = 5;
+/** Upper bound of that screen-space scale-up. */
+export const OVERVIEW_MAX_BOOST = 8;

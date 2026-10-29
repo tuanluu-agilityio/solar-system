@@ -13,7 +13,14 @@ import {
 import CameraControls from 'camera-controls';
 import type { FocusTarget } from '../scene/solarSystem';
 import type { Layout } from '../ui/layout';
-import { OVERVIEW_FIT_RADIUS, focusDistance, focusScreenOffset } from './framing';
+import {
+  OVERVIEW_FIT_RADIUS,
+  focusDistance,
+  focusFill,
+  focusScreenOffset,
+  overviewFrame,
+  overviewPolar,
+} from './framing';
 
 CameraControls.install({
   THREE: { Vector2, Vector3, Vector4, Quaternion, Matrix4, Spherical, Box3, Sphere, Raycaster },
@@ -29,6 +36,8 @@ export interface CameraRig {
   setAutoOrbit(on: boolean): void;
   /** Re-applies focusScreenOffset and reframes the current target (call on every resize). */
   setLayout(layout: Layout): void;
+  /** Tour stops on a phone use a smaller fill and a lower offset (the subtitle dock). */
+  setTourMode(on: boolean): void;
   /** Fires on the controls' 'controlstart' (user drag or pinch). Returns an unsubscribe. */
   onUserInteract(cb: () => void): () => void;
   /** The focus target the camera is on or flying to; null in overview. */
@@ -44,7 +53,6 @@ const DRAGGING_SMOOTH_TIME = 0.1;
 const FLIGHT_SMOOTH_TIME = 0.6;
 /** A flight counts as done at the controls' rest event or after this long, whichever comes first. */
 const FLIGHT_MAX_SEC = 2.5;
-const OVERVIEW_POLAR = Math.PI / 3;
 const OVERVIEW_MIN_DISTANCE = 30;
 const OVERVIEW_MAX_DISTANCE = 1600;
 const FOCUS_MIN_FACTOR = 1.3;
@@ -79,6 +87,9 @@ export function createCameraRig(camera: PerspectiveCamera, dom: HTMLElement): Ca
 
   let target: FocusTarget | null = null;
   let layout: Layout = 'desktop';
+  let tourMode = false;
+  /** NDC shift that centres the overview disc; recomputed with the overview distance. */
+  let overviewOffsetY = 0;
   let autoOrbit = false;
   let flight: Flight | null = null;
   const lastPos = new Vector3();
@@ -111,25 +122,28 @@ export function createCameraRig(camera: PerspectiveCamera, dom: HTMLElement): Ca
   });
 
   const applyViewOffset = (): void => {
-    if (!target) {
-      camera.clearViewOffset();
-      return;
-    }
     const { w, h } = viewSize();
-    const o = focusScreenOffset(layout);
+    const o = target ? focusScreenOffset(layout, tourMode) : { x: 0, y: overviewOffsetY };
     // Shifting the view window by -x moves the centred target right by x (and +y moves it up).
     camera.setViewOffset(w, h, (-o.x * w) / 2, (o.y * h) / 2, w, h);
   };
 
   const focusLimits = (t: FocusTarget): number => {
-    const d = focusDistance(t.radius, camera.fov, camera.aspect);
+    const d = focusDistance(t.radius, camera.fov, camera.aspect, focusFill(layout, tourMode));
     controls.minDistance = t.radius * FOCUS_MIN_FACTOR;
     controls.maxDistance = Math.max(t.radius * FOCUS_MAX_FACTOR, d);
     return d;
   };
 
   const overviewLimits = (): number => {
-    const d = controls.getDistanceToFitSphere(OVERVIEW_FIT_RADIUS);
+    const frame = overviewFrame(
+      OVERVIEW_FIT_RADIUS,
+      camera.fov,
+      camera.aspect,
+      overviewPolar(camera.aspect),
+    );
+    const d = frame.distance;
+    overviewOffsetY = frame.offsetY;
     controls.minDistance = OVERVIEW_MIN_DISTANCE;
     controls.maxDistance = Math.max(OVERVIEW_MAX_DISTANCE, d);
     return d;
@@ -155,12 +169,19 @@ export function createCameraRig(camera: PerspectiveCamera, dom: HTMLElement): Ca
 
   const overviewPose = (enableTransition: boolean): void => {
     const d = overviewLimits();
-    pos.setFromSphericalCoords(d, OVERVIEW_POLAR, controls.azimuthAngle);
+    pos.setFromSphericalCoords(d, overviewPolar(camera.aspect), controls.azimuthAngle);
     void controls.setLookAt(pos.x, pos.y, pos.z, 0, 0, 0, enableTransition);
   };
 
   overviewPose(false);
+  applyViewOffset();
   controls.update(0);
+
+  const reframe = (): void => {
+    const d = target ? focusLimits(target) : overviewLimits();
+    applyViewOffset();
+    void controls.dollyTo(d, true);
+  };
 
   return {
     flyTo(t) {
@@ -200,9 +221,12 @@ export function createCameraRig(camera: PerspectiveCamera, dom: HTMLElement): Ca
     },
     setLayout(next) {
       layout = next;
-      applyViewOffset();
-      const d = target ? focusLimits(target) : overviewLimits();
-      void controls.dollyTo(d, true);
+      reframe();
+    },
+    setTourMode(on) {
+      if (on === tourMode) return;
+      tourMode = on;
+      if (target) reframe();
     },
     onUserInteract(cb) {
       const listener = (): void => cb();
