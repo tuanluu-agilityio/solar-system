@@ -724,20 +724,20 @@ Sources (verified 2026-10-29) are `https://www.solarsystemscope.com/textures/dow
 ```
 edge-tts 7.3 API: `edge_tts.Communicate(text, voice, boundary="SentenceBoundary")`; iterate `async for chunk in c.stream()`. `chunk["type"]` is one of `"audio"` (`chunk["data"]` bytes), `"SentenceBoundary"` and `"WordBoundary"`; `offset`/`duration` are in 100-ns units (ms = value / 10_000).
 
-- [ ] **Step 1: Write failing tests** (`unittest`) for the pure helpers:
+- [x] **Step 1: Write failing tests** (`unittest`) for the pure helpers:
   - `ticks_to_ms(12_340_000) == 1234`;
   - `text_hash(text, voice)` is stable and changes when either input changes;
   - `split_sentences("A. B! C?") == ["A.","B!","C?"]`;
   - `fallback_cues(sentences, duration_ms)` gives contiguous cues proportional to character counts, covering [0, duration_ms];
   - `needs_regen(manifest_entry, hash, mp3_exists)`.
-- [ ] **Step 2:** Run `.venv/Scripts/python -m unittest scripts/test_generate_narration.py` (create the venv first with `python -m venv .venv` and `.venv/Scripts/pip install -r scripts/requirements.txt`). Expected: FAIL.
-- [ ] **Step 3: Implement the helpers and `main()`**
+- [x] **Step 2:** Run `.venv/Scripts/python -m unittest scripts/test_generate_narration.py` (create the venv first with `python -m venv .venv` and `.venv/Scripts/pip install -r scripts/requirements.txt`). Expected: FAIL.
+- [x] **Step 3: Implement the helpers and `main()`**
   - Read `src/data/tour/{vi,en}.json`.
   - For each segment whose hash changed: stream it, write the mp3, and build cues from the `SentenceBoundary` events (fall back to `fallback_cues` if there are none).
   - `durationMs` = the last boundary offset + duration, else the mp3 length estimated at 48 kbps.
   - Retry 3× with backoff 2/4/8 s. On final failure, keep the old entry if there is one, print `FAILED <stopId>.<lang>`, and exit 1 after processing everything else.
-- [ ] **Step 4:** Run the unit tests. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 4:** Run the unit tests. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 14: Generate narration audio and the client-side manifest reader
 **Model:** haiku
