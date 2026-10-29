@@ -884,9 +884,9 @@ export function createRing(innerR: number, outerR: number, tex: THREE.Texture | 
 - Uranus ring: inner `radius*1.6`, outer `radius*2.0`, no texture, opacity 0.12. It sits in Uranus' tilt group, so it is ~vertical.
 - Atmospheres: Earth `#4da6ff` intensity 1.0; Venus uses the `venus_atmosphere` texture as its surface map plus a pale-yellow atmosphere at intensity 0.6. Skip atmospheres when `atmosphere=false`.
 
-- [ ] **Step 1: Implement**
-- [ ] **Step 2:** Run `npm run typecheck && npm test && npm run test:e2e`. Expected: PASS.
-- [ ] **Step 3: Screenshot check**
+- [x] **Step 1: Implement**
+- [x] **Step 2:** Run `npm run typecheck && npm test && npm run test:e2e`. Expected: PASS.
+- [x] **Step 3: Screenshot check**
 
   Use `window.__app.select('earth')` after Task 21 exists. For now, set a temporary camera via `?e2e=1&debugCam=earth` (handled in `e2eApi.ts`; remove it in Task 21), then Read the PNG.
 
@@ -897,7 +897,7 @@ export function createRing(innerR: number, outerR: number, tex: THREE.Texture | 
   - Saturn's rings are translucent.
 
   Log the result in PROGRESS (the task's progress file).
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ### Task 19: Asteroid belt
 **Model:** sonnet

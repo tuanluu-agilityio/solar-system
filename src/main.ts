@@ -16,7 +16,7 @@ import { createPostFX } from './scene/postfx';
 import { createSun } from './bodies/sun';
 import { createSolarSystem } from './scene/solarSystem';
 import { createLoadingScreen, showBootError, showWebglUnsupported } from './ui/loadingScreen';
-import { installE2EApi } from './debug/e2eApi';
+import { debugCamTarget, installE2EApi } from './debug/e2eApi';
 
 function safeStorage(): Storage | null {
   try {
@@ -116,9 +116,29 @@ async function boot(): Promise<void> {
   const solar = createSolarSystem(lowTex, settings);
   scene.add(solar.root);
 
+  // Temporary close-up for screenshot checks; replaced by the camera rig in Task 21.
+  const debugBody = debugCamTarget();
+  const debugCam = debugBody ? solar.getFocusTarget(debugBody) : null;
+  const debugPos = new THREE.Vector3();
+  const sunDir = new THREE.Vector3();
+  const side = new THREE.Vector3();
+
   startLoop((_dt, tSec) => {
     sun.update(tSec);
     solar.update(tSec);
+    if (debugCam) {
+      // Look at the body from beside its orbit so the terminator and the rings both show.
+      debugCam.object.getWorldPosition(debugPos);
+      sunDir.copy(debugPos).negate().normalize();
+      side.crossVectors(camera.up, sunDir).normalize();
+      const dist = debugCam.radius * (debugBody === 'saturn' ? 7 : 4);
+      camera.position
+        .copy(debugPos)
+        .addScaledVector(sunDir, dist * 0.5)
+        .addScaledVector(side, dist * 0.8)
+        .addScaledVector(camera.up, dist * 0.35);
+      camera.lookAt(debugPos);
+    }
     postfx.render();
     if (!store.get().ready) {
       store.set({ ready: true });
