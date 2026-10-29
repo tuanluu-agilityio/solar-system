@@ -406,7 +406,7 @@ export const INITIAL_PHASE: Record<BodyId, number>;   // radians, spread so no t
 ```
 The formulas above are the default. They may be retuned after the screenshots in Task 28 if the constraints below still hold; log any change as an ADR.
 
-- [ ] **Step 1: Write the failing tests** in `tests/unit/scale.test.ts`
+- [x] **Step 1: Write the failing tests** in `tests/unit/scale.test.ts`
   - `displayRadius` is strictly increasing. Using the Task 5 diameters (literal values here): sun > jupiter > saturn > uranus > neptune > earth > venus > mars > mercury > moon > pluto.
   - `displayOrbitRadius(57.9)` ≈ 48; Neptune's (4515) < Pluto's (5906.4); the planet orbit order is preserved.
   - `displayRadius(1392700) < displayOrbitRadius(57.9) - 5`: the Sun doesn't swallow Mercury.
@@ -414,13 +414,13 @@ The formulas above are the default. They may be retuned after the screenshots in
   - `orbitalAngle(365.25, 60, 0)` ≈ 2π (±1e-6); the ratio of `orbitalAngle` for Mars (687) to Earth over the same t ≈ 365.25/687.
   - `rotationAngle(-5832.5, 10) < 0`; `rotationAngle(23.93, EARTH_DAY_SECONDS)` ≈ 2π.
   - Belt inner/outer display radii fall strictly between the Mars and Jupiter orbits.
-- [ ] **Step 2:** Run `npx vitest run tests/unit/scale.test.ts`. Expected: FAIL (module missing).
-- [ ] **Step 3: Implement the types and the scale functions with the formulas above**
+- [x] **Step 2:** Run `npx vitest run tests/unit/scale.test.ts`. Expected: FAIL (module missing).
+- [x] **Step 3: Implement the types and the scale functions with the formulas above**
 
   - `orbitalAngle = phase + 2π · tSeconds / (EARTH_YEAR_SECONDS · periodDays / 365.25)`.
   - `rotationAngle = 2π · tSeconds / (EARTH_DAY_SECONDS · hours / 23.93)`; the sign follows the sign of the period.
-- [ ] **Step 4:** Run the same command. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 4:** Run the same command. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 5: Body physical data (NASA)
 **Model:** sonnet
