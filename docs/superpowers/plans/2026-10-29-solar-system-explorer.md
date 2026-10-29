@@ -821,15 +821,15 @@ export function createPostFX(renderer: THREE.WebGLRenderer, scene: THREE.Scene, 
 - Bloom: strength 1.2, radius 0.6, threshold 0.85; resolution × `bloomResolutionScale`.
 - The only test here is a visual check: verify with a temporary e2e that `getState().ready` stays true. Real visual checks happen in Task 28.
 
-- [ ] **Step 1: Implement `createSun`, `createPostFX`, and wire them in `main.ts`**
-- [ ] **Step 2: Verify**
+- [x] **Step 1: Implement `createSun`, `createPostFX`, and wire them in `main.ts`**
+- [x] **Step 2: Verify**
 
   Run: `npm run typecheck && npx playwright test tests/e2e/boot.spec.ts`
   Expected: PASS.
-- [ ] **Step 3: Take a screenshot and check it**
+- [x] **Step 3: Take a screenshot and check it**
 
   Run `npx playwright screenshot --viewport-size=1440,900 "http://localhost:4173/solar-system/?e2e=1" .cache/sun.png`, with `npm run preview` running. Then open the PNG (Read tool) and check the sun glows and is not a flat disc. Log the result in PROGRESS (the task's progress file).
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ### Task 17: Planets, orbits, Moon, solar system assembly
 **Model:** sonnet
