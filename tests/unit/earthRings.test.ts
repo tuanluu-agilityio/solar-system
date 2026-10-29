@@ -4,7 +4,6 @@ import { createAtmosphere, createCloudLayer, createEarthMaterial } from '../../s
 import { createRing } from '../../src/bodies/rings';
 import { createSolarSystem } from '../../src/scene/solarSystem';
 import { tierSettings } from '../../src/quality/tiers';
-import { debugCamTarget } from '../../src/debug/e2eApi';
 import { isFallbackTexture, makeFallbackTexture } from '../../src/scene/textures';
 
 function tex(): THREE.DataTexture {
@@ -34,15 +33,6 @@ function allTextures(): Map<string, THREE.Texture> {
 function radiusOf(m: THREE.Mesh): number {
   return (m.geometry as THREE.SphereGeometry).parameters.radius;
 }
-
-describe('debugCamTarget', () => {
-  it('returns a body id only with e2e and a known debugCam', () => {
-    expect(debugCamTarget('?e2e=1&debugCam=earth')).toBe('earth');
-    expect(debugCamTarget('?debugCam=earth')).toBeNull();
-    expect(debugCamTarget('?e2e=1&debugCam=nowhere')).toBeNull();
-    expect(debugCamTarget('?e2e=1')).toBeNull();
-  });
-});
 
 describe('createEarthMaterial', () => {
   it('blends day and night maps lit from the sun position', () => {

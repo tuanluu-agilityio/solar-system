@@ -18,8 +18,9 @@ import { createSun } from './bodies/sun';
 import { createSolarSystem } from './scene/solarSystem';
 import { createPicker } from './interaction/picker';
 import { createLabels } from './ui/labels';
+import { createCameraRig } from './camera/cameraRig';
 import { createLoadingScreen, showBootError, showWebglUnsupported } from './ui/loadingScreen';
-import { debugCamTarget, installE2EApi } from './debug/e2eApi';
+import { installE2EApi } from './debug/e2eApi';
 
 function safeStorage(): Storage | null {
   try {
@@ -69,10 +70,14 @@ async function boot(): Promise<void> {
 
   const renderer = createRenderer(canvas, settings);
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 20000);
-  // Temporary overview framing until the camera rig lands (Task 21).
-  camera.position.set(0, 45, 130);
-  camera.lookAt(0, 0, 0);
+  const camera = new THREE.PerspectiveCamera(
+    50,
+    window.innerWidth / window.innerHeight,
+    0.1,
+    20000,
+  );
+  const rig = createCameraRig(camera, canvas);
+  rig.setLayout(store.get().layout);
   const postfx = createPostFX(renderer, scene, camera, settings);
 
   window.addEventListener('resize', () => {
@@ -80,13 +85,29 @@ async function boot(): Promise<void> {
     postfx.setSize(window.innerWidth, window.innerHeight);
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
-    store.set({ layout: getLayout(window.innerWidth, window.innerHeight) });
+    const layout = getLayout(window.innerWidth, window.innerHeight);
+    store.set({ layout });
+    // Every resize (not only a layout switch) changes the aspect, so re-frame each time.
+    rig.setLayout(layout);
   });
+
+  // Selection flow; `selectBody` is replaced once the solar system exists.
+  let selectBody = async (id: ContentId): Promise<void> => {
+    store.set({ selected: id, view: 'focus' });
+  };
+  const backToOverview = async (): Promise<void> => {
+    store.set({ selected: null, view: 'overview' });
+    await rig.flyToOverview();
+  };
+  let cameraTargetId = (): ContentId | null => null;
+  let projectBody: (id: ContentId) => { x: number; y: number } | null = () => null;
 
   installE2EApi({
     getState: () => store.get(),
-    select: async (id) => store.set({ selected: id, view: 'focus' }),
-    overview: async () => store.set({ selected: null, view: 'overview' }),
+    select: (id) => selectBody(id),
+    overview: backToOverview,
+    cameraTargetId: () => cameraTargetId(),
+    projectBody: (id) => projectBody(id),
     tour: () => {
       // Wired by the tour controller task.
     },
@@ -119,7 +140,34 @@ async function boot(): Promise<void> {
   const solar = createSolarSystem(lowTex, settings);
   scene.add(solar.root);
 
-  const select = (id: ContentId): void => store.set({ selected: id, view: 'focus' });
+  const whoosh = (): void => {
+    // Fly-to whoosh; wired by the audio engine task.
+  };
+  selectBody = async (id) => {
+    store.set({ selected: id, view: 'focus' });
+    whoosh();
+    await rig.flyTo(solar.getFocusTarget(id));
+  };
+  const select = (id: ContentId): void => void selectBody(id);
+  const contentIds: ContentId[] = [...solar.bodies.keys(), 'asteroid-belt'];
+  cameraTargetId = () => {
+    const t = rig.getTarget();
+    return t
+      ? (contentIds.find((id) => solar.getFocusTarget(id).object === t.object) ?? null)
+      : null;
+  };
+  const projected = new THREE.Vector3();
+  projectBody = (id) => {
+    solar.getFocusTarget(id).object.getWorldPosition(projected);
+    camera.updateMatrixWorld();
+    projected.project(camera);
+    if (Math.abs(projected.z) > 1) return null;
+    const rect = canvas.getBoundingClientRect();
+    return {
+      x: rect.left + ((projected.x + 1) / 2) * rect.width,
+      y: rect.top + ((1 - projected.y) / 2) * rect.height,
+    };
+  };
   const labels = createLabels(root, solar.bodies, camera, () => store.get().lang, {
     onSelect: select,
     isMobile: () => store.get().layout === 'mobile',
@@ -130,30 +178,11 @@ async function boot(): Promise<void> {
     if (s.view !== prev.view) labels.setVisible(s.view === 'overview');
   });
 
-  // Temporary close-up for screenshot checks; replaced by the camera rig in Task 21.
-  const debugBody = debugCamTarget();
-  const debugCam = debugBody ? solar.getFocusTarget(debugBody) : null;
-  const debugPos = new THREE.Vector3();
-  const sunDir = new THREE.Vector3();
-  const side = new THREE.Vector3();
-
-  startLoop((_dt, tSec) => {
+  startLoop((dt, tSec) => {
     sun.update(tSec);
     solar.update(tSec);
+    rig.update(dt);
     labels.update();
-    if (debugCam) {
-      // Look at the body from beside its orbit so the terminator and the rings both show.
-      debugCam.object.getWorldPosition(debugPos);
-      sunDir.copy(debugPos).negate().normalize();
-      side.crossVectors(camera.up, sunDir).normalize();
-      const dist = debugCam.radius * (debugBody === 'saturn' ? 7 : 4);
-      camera.position
-        .copy(debugPos)
-        .addScaledVector(sunDir, dist * 0.5)
-        .addScaledVector(side, dist * 0.8)
-        .addScaledVector(camera.up, dist * 0.35);
-      camera.lookAt(debugPos);
-    }
     postfx.render();
     if (!store.get().ready) {
       store.set({ ready: true });
