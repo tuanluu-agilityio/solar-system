@@ -99,9 +99,30 @@ describe('createSolarSystem', () => {
         THREE.MathUtils.degToRad(BODIES[id].physical.axialTiltDeg),
       );
     }
-    expect(ss.bodies.get('venus')!.mesh.rotation.y).toBeLessThan(0);
-    expect(ss.bodies.get('uranus')!.mesh.rotation.y).toBeLessThan(0);
-    expect(ss.bodies.get('earth')!.mesh.rotation.y).toBeGreaterThan(0);
+  });
+
+  it('spins Venus, Uranus and Pluto retrograde and the others prograde as seen from world up', () => {
+    const ss = make();
+    ss.update(10);
+    ss.root.updateMatrixWorld(true);
+    const retro = new Set<BodyId>(['venus', 'uranus', 'pluto']);
+    for (const id of [
+      'mercury',
+      'venus',
+      'earth',
+      'mars',
+      'jupiter',
+      'saturn',
+      'uranus',
+      'neptune',
+      'pluto',
+    ] as BodyId[]) {
+      const b = ss.bodies.get(id)!;
+      const axis = new THREE.Vector3(0, 1, 0).transformDirection(b.tiltGroup.matrixWorld);
+      // Angular velocity about world up = (spin sign) * (spin axis . up); positive = prograde (counter-clockwise from above).
+      const visible = Math.sign(b.mesh.rotation.y) * axis.y;
+      expect(visible > 0, id).toBe(!retro.has(id));
+    }
   });
 
   it('draws 256-segment orbit lines for the 8 planets and Pluto', () => {

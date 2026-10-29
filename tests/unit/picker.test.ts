@@ -79,6 +79,16 @@ describe('createPicker', () => {
     expect(onPick).not.toHaveBeenCalled();
   });
 
+  it('does not select when a drag wanders past 8 px and returns to the start', () => {
+    const { dom, onPick, picker } = setup();
+    cleanup = picker.dispose;
+    dom.dispatchEvent(pointer('pointerdown', 1, 100, 100));
+    dom.dispatchEvent(pointer('pointermove', 1, 130, 100));
+    dom.dispatchEvent(pointer('pointermove', 1, 101, 100));
+    dom.dispatchEvent(pointer('pointerup', 1, 101, 100));
+    expect(onPick).not.toHaveBeenCalled();
+  });
+
   it('does not select when a second pointer joined the gesture', () => {
     const { dom, onPick, picker } = setup();
     cleanup = picker.dispose;

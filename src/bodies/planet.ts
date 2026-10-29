@@ -109,6 +109,10 @@ export function createPlanet(
   const pickProxy = createPickProxy(id, radius);
   offset.add(pickProxy);
 
+  // A tilt above 90 deg already flips the spin axis, which renders the retrograde direction.
+  // Data keeps the negative period; using it here too would double-count and spin prograde.
+  const spinHours =
+    phys.axialTiltDeg > 90 ? Math.abs(phys.rotationPeriodHours) : phys.rotationPeriodHours;
   const period = orbitPeriodDays(id);
   const phase = INITIAL_PHASE[id];
   return {
@@ -118,7 +122,7 @@ export function createPlanet(
     update(tSec) {
       orbitPivot.rotation.y = orbitalAngle(period, tSec, phase);
       // The Moon is tidally locked: its fixed yaw rides along with the rotating pivot.
-      if (!isMoon) mesh.rotation.y = rotationAngle(phys.rotationPeriodHours, tSec);
+      if (!isMoon) mesh.rotation.y = rotationAngle(spinHours, tSec);
     },
     setSegments(next) {
       const old = mesh.geometry;

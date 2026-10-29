@@ -24,6 +24,8 @@ async function hintKey(page: Page): Promise<'hintMobile' | 'hintDesktop'> {
 }
 
 test('language toggle switches texts and persists across reload', async ({ page }) => {
+  // Reload-based and close to the 60 s limit under load on software GL.
+  test.slow();
   await open(page);
   const initial = await page.evaluate(() => document.documentElement.lang);
   const next = initial === 'vi' ? 'en' : 'vi';
@@ -57,6 +59,8 @@ test('sound button toggles mute state', async ({ page }) => {
 });
 
 test('credits modal shows the required credits and closes', async ({ page }) => {
+  // Reload-based and close to the 60 s limit under load on software GL.
+  test.slow();
   await open(page);
   await page.getByTestId('credits').click();
   const dialog = page.getByRole('dialog');
