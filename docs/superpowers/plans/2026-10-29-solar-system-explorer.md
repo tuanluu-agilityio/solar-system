@@ -945,15 +945,15 @@ export function createLabels(container: HTMLElement, bodies: Map<BodyId, BodyObj
   - all labels hidden in `focus` view.
 - Labels are clickable too (select that body). Label font 12px; tap area padding ≥ 44px height via `::before` hit-area.
 
-- [ ] **Step 1: Write the failing tests** (Review Focus 1)
+- [x] **Step 1: Write the failing tests** (Review Focus 1)
   - `isTap({0,0,0},{3,4,200})` → true (moved 5 px);
   - `isTap({0,0,0},{10,0,100})` → false;
   - `isTap({0,0,0},{0,0,400})` → false;
   - with a synthetic jsdom pointer sequence (down, move 30 px, up) over the canvas, `onPick` is never called. Stub the raycast by passing a pickable whose raycast always hits.
-- [ ] **Step 2:** Run them. Expected: FAIL.
-- [ ] **Step 3: Implement**
-- [ ] **Step 4:** Run them. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run them. Expected: FAIL.
+- [x] **Step 3: Implement**
+- [x] **Step 4:** Run them. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 21: Camera rig (fly-to, follow, overview, auto-orbit)
 **Model:** opus
