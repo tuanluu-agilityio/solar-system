@@ -1346,14 +1346,14 @@ export function createTourController(deps: TourDeps): { dispatch(e: TourEvent): 
 ### Task 32: Final whole-project review
 **Model:** opus (`final-reviewer`)
 
-- [ ] **Step 1: Run the full gate**
+- [x] **Step 1: Run the full gate**
 
   Run: `npm run lint && npm run typecheck && npm test && npm run test:e2e && npm run build && npm run check:budget`
   Expected: all green.
-- [ ] **Step 2: Review against the spec**
+- [x] **Step 2: Review against the spec**
 
   Go through spec §2 (goals and anti-goals) and §11 item by item, plus the Review Focus list. Produce `docs/FINAL_REVIEW.md` with each item marked ✅ / ⚠️ (and a pointer to KNOWN_ISSUES) / ❌.
-- [ ] **Step 3: Fix any ❌ that takes ≤ 30 min, then re-run the gate.** Everything else goes to KNOWN_ISSUES.
-- [ ] **Step 4: Final commit**
+- [x] **Step 3: Fix any ❌ that takes ≤ 30 min, then re-run the gate.** Everything else goes to KNOWN_ISSUES.
+- [x] **Step 4: Final commit**
 
   Commit `chore(t32): final review` and finish the per-task flow (PR, CI, merge). `docs/progress/t32.md` ends with "RUN COMPLETE — see docs/HUMAN_REVIEW.md". List any open (blocked) PRs from `gh pr list --state open` in `docs/FINAL_REVIEW.md`.

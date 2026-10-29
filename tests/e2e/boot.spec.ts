@@ -9,15 +9,21 @@ test('boots, renders a canvas, hides loading screen, no console errors', async (
   });
   page.on('pageerror', (e) => errors.push(String(e)));
   await page.goto('./?e2e=1');
-  await page.waitForFunction(() => (window as unknown as AppWindow).__app?.getState().ready === true, null, {
-    timeout: 20_000,
-  });
+  await page.waitForFunction(
+    () => (window as unknown as AppWindow).__app?.getState().ready === true,
+    null,
+    {
+      timeout: 20_000,
+    },
+  );
   await expect(page.locator('canvas')).toBeVisible();
   await expect(page.locator('#loading-screen')).toBeHidden();
   expect(errors).toEqual([]);
 });
 
-test('shows webglUnsupported in the detected language when WebGL is unavailable', async ({ browser }) => {
+test('shows webglUnsupported in the detected language when WebGL is unavailable', async ({
+  browser,
+}) => {
   const ctx = await browser.newContext({ locale: 'vi-VN' });
   const page = await ctx.newPage();
   await page.addInitScript(() => {

@@ -62,10 +62,7 @@ async function toWebp(pipeline, outPath) {
 
 async function cloudsBuffer(src) {
   // White clouds on transparent: luminance becomes alpha.
-  const { data, info } = await sharp(src)
-    .greyscale()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
+  const { data, info } = await sharp(src).greyscale().raw().toBuffer({ resolveWithObject: true });
   return { data, width: info.width, height: info.height };
 }
 
@@ -156,7 +153,8 @@ async function main() {
   const plutoHigh = resolve(OUT, 'high/pluto.webp');
   record('high', 'pluto', await toWebp(await plutoPipeline(), plutoHigh));
 
-  const ordered = (set) => Object.fromEntries(Object.entries(set).sort(([a], [b]) => a.localeCompare(b)));
+  const ordered = (set) =>
+    Object.fromEntries(Object.entries(set).sort(([a], [b]) => a.localeCompare(b)));
   writeFileSync(
     resolve(OUT, 'manifest.json'),
     JSON.stringify({ low: ordered(manifest.low), high: ordered(manifest.high) }, null, 2) + '\n',

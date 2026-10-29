@@ -89,9 +89,17 @@ test('tapping Mars then immediately Jupiter ends on Jupiter (Review Focus 2)', a
       timeout: POLL,
     })
     .toEqual({ s: 'jupiter', c: 'jupiter' });
+  // The second body's panel is the one shown (Review Focus 2).
+  await expect(page.getByTestId('panel').locator('h2')).toHaveText(
+    getContent('jupiter', (await state(page)).lang).name,
+    { timeout: POLL },
+  );
   await page.waitForTimeout(3_000);
   expect((await state(page)).selected).toBe('jupiter');
   expect(await cameraTarget(page)).toBe('jupiter');
+  await expect(page.getByTestId('panel').locator('h2')).toHaveText(
+    getContent('jupiter', (await state(page)).lang).name,
+  );
 });
 
 const cameraTarget = (page: Page) =>
