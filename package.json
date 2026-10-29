@@ -19,7 +19,7 @@
     "check:budget": "node scripts/check-budget.mjs"
   },
   "dependencies": {
-    "camera-controls": "^3.1.2",
+    "camera-controls": "3.1.2",
     "three": "^0.186.1"
   },
   "devDependencies": {
