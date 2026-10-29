@@ -1204,13 +1204,13 @@ export function createTourController(deps: TourDeps): { dispatch(e: TourEvent): 
 - The FPS monitor samples every frame **only when the tab is visible and not during camera transitions**. A `'downgrade'` result → `store.set({quality: lowerTier(q)})` → apply the settings: pixel ratio, bloom scale, asteroid count, sky size (keep the loaded sky; never reload a lower one), and `ringShadow`. Then log `console.info('[quality] downgraded to …')`.
 - The FPS monitor is disabled when the renderer reports software rendering (`WEBGL_debug_renderer_info` string contains `SwiftShader`, `llvmpipe` or `Software`), per spec §11.4.
 
-- [ ] **Step 1: Write the failing e2e**
+- [x] **Step 1: Write the failing e2e**
 
   `?e2e=1&quality=low` → `getState().quality === 'low'` and `renderer.getPixelRatio() <= 1.5` (add `pixelRatio()` to `E2EApi`). Under SwiftShader, after 6 s the quality is unchanged (the monitor is disabled).
-- [ ] **Step 2:** Run it. Expected: FAIL.
-- [ ] **Step 3: Implement**
-- [ ] **Step 4:** Run it. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run it. Expected: FAIL.
+- [x] **Step 3: Implement**
+- [x] **Step 4:** Run it. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 28: Full e2e pass, screenshots and visual review
 **Model:** sonnet

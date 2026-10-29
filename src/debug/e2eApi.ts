@@ -1,6 +1,7 @@
 import type { ContentId } from '../data/types';
 import type { AppState } from '../state/appState';
 import type { TourEvent } from '../tour/tourMachine';
+import type { QualityTier } from '../quality/tiers';
 
 export interface E2EApi {
   getState(): AppState;
@@ -8,6 +9,12 @@ export interface E2EApi {
   overview(): Promise<void>;
   tour(e: TourEvent): void;
   setTimeScale(n: number): void;
+  /** Renderer pixel ratio currently in use. */
+  pixelRatio(): number;
+  /** Runs one runtime downgrade (same path as the FPS monitor); returns the new tier or null at the floor. */
+  downgradeQuality(): QualityTier | null;
+  /** Visible asteroid instances. */
+  asteroidCount(): number;
   /** The body the camera rig is focused on (or flying to); null in overview. */
   cameraTargetId(): ContentId | null;
   /** Screen position of a body's centre in CSS px (viewport coordinates); null when behind the camera. */
