@@ -791,18 +791,18 @@ export function installE2EApi(api: E2EApi): void; // only when location.search h
 - Missing texture fallback: if a texture key fails to load, use a 2×2 solid-colour `DataTexture` (per-body base colour) and log a warning. The scene must still render.
 - `AppState.ready` becomes true when the low set and sky are loaded and the first frame has rendered.
 
-- [ ] **Step 1: Write the failing e2e** (`?e2e=1`)
+- [x] **Step 1: Write the failing e2e** (`?e2e=1`)
   - within 20 s `window.__app.getState().ready === true`;
   - a `canvas` is visible;
   - zero `console.error` messages;
   - the loading screen is hidden;
   - with WebGL disabled (a separate test, `page.addInitScript` stubbing `getContext` to return null) the `webglUnsupported` text is shown in the detected language.
-- [ ] **Step 2:** Run `npx playwright test tests/e2e/boot.spec.ts`. Expected: FAIL.
-- [ ] **Step 3: Implement**
+- [x] **Step 2:** Run `npx playwright test tests/e2e/boot.spec.ts`. Expected: FAIL.
+- [x] **Step 3: Implement**
 
   The loading screen shows `t('loading')` and a % bar driven by `onProgress`. Full-viewport canvas; `touch-action: none` on the canvas; `<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">`.
-- [ ] **Step 4:** Run it. Expected: PASS on 3 projects.
-- [ ] **Step 5: Commit**
+- [x] **Step 4:** Run it. Expected: PASS on 3 projects.
+- [x] **Step 5: Commit**
 
 ### Task 16: Sun, light and bloom
 **Model:** opus
