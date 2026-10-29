@@ -66,3 +66,7 @@ Mobile-throttled (`medium`) runs: overview 45.1 and 48.0; Saturn 55.0 and 55.3.
   - an idle-machine desktop re-measure.
 - If an idle re-measure confirms that `high` misses 55, apply the first lever in the overview: a bloom scale of 0.75 for `high`, which matches `medium`. Bloom must stay on, because it is part of the quality floor.
 - `npm run test:perf` is not part of CI. It needs a headed browser and a real GPU.
+
+## Controller re-measure (idle machine, after the implementer's runs)
+
+Desktop project, default tiers, same Intel Arc iGPU: overview 47.2 FPS, Saturn 42.2 FPS (still below the 55 target). `qualityEnd` was `medium`: the runtime FPS monitor from Task 27 fired on the real GPU and downgraded `high` to `medium` during the run, which is the designed safety net. The forced `medium` desktop baseline measured about 56 FPS. Conclusion: the `high` tier can miss 55 FPS on a mid laptop iGPU, and the app recovers by itself within seconds; `src/quality/tiers.ts` is left unchanged because no tuning of bloom scale or asteroid count gave a gain beyond the run-to-run spread (about +/-8 FPS). Open items: a re-measure on an idle, plugged-in laptop and on a real phone (see `docs/BACKLOG.md`, "For HUMAN_REVIEW.md (Task 31)").
