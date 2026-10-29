@@ -77,8 +77,16 @@ const highCache = new Map<BodyId, Promise<Map<string, THREE.Texture>>>();
 export function loadHighTextures(id: BodyId): Promise<Map<string, THREE.Texture>> {
   let p = highCache.get(id);
   if (!p) {
-    p = loadTextureSet('high', textureKeysFor(id), () => {});
-    highCache.set(id, p);
+    const loading = loadTextureSet('high', textureKeysFor(id), () => {});
+    p = loading;
+    highCache.set(id, loading);
+    // An all-fallback result is a transient failure: forget it so the next focus retries.
+    void loading.then(
+      (tex) => {
+        if ([...tex.values()].every((t) => isFallbackTexture(t))) highCache.delete(id);
+      },
+      () => highCache.delete(id),
+    );
   }
   return p;
 }

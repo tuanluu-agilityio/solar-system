@@ -153,8 +153,13 @@ async function boot(): Promise<void> {
     whoosh();
     await rig.flyTo(solar.getFocusTarget(id));
     // Only the high tier swaps in the large maps, and only once the camera has arrived.
-    if (id !== 'asteroid-belt' && tierSettings(store.get().quality).textureSet === 'high') {
-      void loadHighTextures(id).then((tex) => solar.upgradeTextures(id, tex));
+    // A superseded flight resolves early, so also check the camera really is on this body.
+    const s = store.get();
+    const arrived = s.selected === id && s.view === 'focus' && cameraTargetId() === id;
+    if (arrived && id !== 'asteroid-belt' && tierSettings(s.quality).textureSet === 'high') {
+      loadHighTextures(id)
+        .then((tex) => solar.upgradeTextures(id, tex))
+        .catch(() => undefined);
     }
   };
   const select = (id: ContentId): void => void selectBody(id);

@@ -1,8 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import { createSolarSystem } from '../../src/scene/solarSystem';
-import { textureKeysFor } from '../../src/scene/textures';
-import { makeFallbackTexture } from '../../src/scene/textures';
+import {
+  isFallbackTexture,
+  loadHighTextures,
+  makeFallbackTexture,
+  textureKeysFor,
+} from '../../src/scene/textures';
 import { tierSettings } from '../../src/quality/tiers';
 import { BODY_IDS } from '../../src/data/types';
 
@@ -110,5 +114,19 @@ describe('SolarSystem.upgradeTextures', () => {
     ss.upgradeTextures('jupiter', new Map([['jupiter', makeFallbackTexture('jupiter')]]));
     const m = ss.bodies.get('jupiter')!.mesh.material as THREE.MeshStandardMaterial;
     expect(m.map).toBe(low.get('jupiter'));
+  });
+});
+
+describe('loadHighTextures', () => {
+  it('does not cache an all-fallback result, so a later focus retries', async () => {
+    vi.stubGlobal('fetch', () => Promise.reject(new Error('offline')));
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => undefined);
+    const first = await loadHighTextures('mars');
+    expect([...first.values()].every((t) => isFallbackTexture(t))).toBe(true);
+    await Promise.resolve();
+    const second = await loadHighTextures('mars');
+    expect(second).not.toBe(first);
+    warn.mockRestore();
+    vi.unstubAllGlobals();
   });
 });

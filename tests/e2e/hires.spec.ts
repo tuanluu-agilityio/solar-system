@@ -55,3 +55,21 @@ test('mobile (low/medium tier) never requests high-res body maps', async ({ page
   await page.waitForTimeout(5_000);
   expect(urls).toEqual([]);
 });
+
+test('a superseded selection does not load the first body high-res map', async ({ page }, info) => {
+  test.skip(info.project.name !== 'desktop', 'high tier is the desktop default');
+  test.setTimeout(150_000);
+  const urls = trackBodyHighRequests(page);
+  await boot(page);
+  // Select Jupiter, then Mars before the camera arrives: only Mars may load.
+  await page.evaluate(() => {
+    const app = (window as unknown as AppWindow).__app;
+    void app.select('jupiter');
+    void app.select('mars');
+  });
+  await expect
+    .poll(() => urls.some((u) => u.endsWith('textures/high/mars.webp')), { timeout: 90_000 })
+    .toBe(true);
+  await page.waitForTimeout(1_000);
+  expect(urls.some((u) => u.endsWith('textures/high/jupiter.webp'))).toBe(false);
+});
