@@ -511,18 +511,18 @@ export const TOUR_STOPS: TourStopDef[]; // TourStopDef comes from src/data/types
 ```
 JSON shape (both files, read by Python in Task 13): `{ "<stopId>": { "text": "<narration>" } }`. Sentences end with `.`, `!` or `?`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
   - `TOUR_STOPS.length === 14`, with the ids in exactly the order above.
   - Both JSON files have exactly those 14 keys.
   - Word count (split on whitespace): vi between 60 and 110, en between 50 and 100.
   - Every text has ≥ 2 sentences.
   - Each body stop's text contains the body's localized name from `getContent`.
-- [ ] **Step 2:** Run it. Expected: FAIL.
-- [ ] **Step 3: Write the scripts**
+- [x] **Step 2:** Run it. Expected: FAIL.
+- [x] **Step 3: Write the scripts**
 
   Tone: friendly science presenter, concrete numbers and one surprising fact per stop, consistent with the Task 5 data and Task 6 content. Intro welcomes and explains the controls briefly; outro invites free exploration. English is written natively.
-- [ ] **Step 4:** Run it. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 4:** Run it. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 8: Prefs, i18n and the app store
 **Model:** sonnet
