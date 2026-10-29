@@ -695,20 +695,20 @@ Sources (verified 2026-10-29) are `https://www.solarsystemscope.com/textures/dow
 - `8k_jupiter.jpg`, `8k_saturn.jpg`, `8k_saturn_ring_alpha.png`;
 - `2k_uranus.jpg`, `2k_neptune.jpg`, `8k_stars_milky_way.jpg`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
   Every key exists in both `low` and `high` (sky keys only in `low`). Every referenced file exists on disk. `low` files are ≤ 2048 px wide (check with `sharp(...).metadata()`), `high` files are ≤ 4096. The sum of `low` sizes + `sky_2048` ≤ 5.5 MB.
-- [ ] **Step 2:** Run it. Expected: FAIL.
-- [ ] **Step 3: Implement `fetch-textures.mjs`**
+- [x] **Step 2:** Run it. Expected: FAIL.
+- [x] **Step 3: Implement `fetch-textures.mjs`**
   - Download to `.cache/textures-src/` (skip files already cached).
   - With sharp, write `low` (2048×1024; uranus/neptune at their native 2048) and `high` (4096×2048, never upscaled) as WebP q=82. The ring is a PNG→WebP with alpha, 2048 wide in both sets.
   - Earth clouds: convert the source luminance to the alpha channel (white clouds on transparent).
   - **Pluto (no source):** generate a 2048×1024 procedural equirectangular map with sharp from SVG noise: base tan/beige, darker reddish equatorial band (Cthulhu region), and a lighter heart-shaped patch (Tombaugh Regio) centred at lon ≈ 180°. Use the same file for both sets. Add a BACKLOG line "replace procedural Pluto texture with a New Horizons global map".
   - The script is idempotent and prints a size summary.
-- [ ] **Step 4:** Run `npm run fetch:textures` then `npx vitest run tests/unit/textureManifest.test.ts`. Expected: PASS.
+- [x] **Step 4:** Run `npm run fetch:textures` then `npx vitest run tests/unit/textureManifest.test.ts`. Expected: PASS.
 
   If the download fails after 3 retries: KNOWN_ISSUES entry, mark `[blocked]`, and continue. Task 15 has a fallback.
-- [ ] **Step 5: Commit** (including the generated assets; the `.cache` folder stays ignored)
+- [x] **Step 5: Commit** (including the generated assets; the `.cache` folder stays ignored)
 
 ### Task 13: Narration generation script
 **Model:** sonnet
