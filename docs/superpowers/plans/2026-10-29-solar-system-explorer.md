@@ -618,7 +618,7 @@ export function tourReducer(s: TourSnapshot, e: TourEvent, stops: TourStopDef[])
 export function shouldAutostart(tourSeen: boolean, isE2E: boolean, forceAutostart: boolean): boolean;
 ```
 
-- [ ] **Step 1: Write the failing tests** (state transitions with exact effects)
+- [x] **Step 1: Write the failing tests** (state transitions with exact effects)
   - `START` from `idle` → `flying` at index 0, effects `[cancelGap? none, flyTo(stops[0]), showPanel(null)]`. The intro/outro focus `'overview'` gives `showPanel(null)`; a body stop gives `showPanel(id)`.
   - `FLIGHT_DONE` in `flying` → `narrating`, effects include `playNarration(stopId)` and `autoOrbit(true)`.
   - `NARRATION_ENDED` → `gap` with `startGap(1500)`.
@@ -629,10 +629,10 @@ export function shouldAutostart(tourSeen: boolean, isE2E: boolean, forceAutostar
   - `EXIT` from any active state → `idle` with `[stopNarration, cancelGap, autoOrbit(false)]`.
   - `LANG_CHANGED` while `narrating` → stays `narrating` with `[stopNarration, playNarration(sameStop)]`. In other states → no effects.
   - `shouldAutostart(false,false,false)` → true; `shouldAutostart(true,false,false)` → false; `isE2E` true → false unless `forceAutostart`.
-- [ ] **Step 2:** Run them. Expected: FAIL.
-- [ ] **Step 3: Implement `tourReducer` as a pure switch**
-- [ ] **Step 4:** Run them. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run them. Expected: FAIL.
+- [x] **Step 3: Implement `tourReducer` as a pure switch**
+- [x] **Step 4:** Run them. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 11: Quality tiers and FPS monitor
 **Model:** sonnet
