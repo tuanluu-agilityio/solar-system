@@ -35,6 +35,7 @@ export function createPicker(
   const active = new Set<number>();
   let down: Sample | null = null;
   let multi = false;
+  let dragged = false;
 
   function pick(clientX: number, clientY: number): BodyId | null {
     const rect = dom.getBoundingClientRect();
@@ -53,6 +54,7 @@ export function createPicker(
     active.clear();
     down = null;
     multi = false;
+    dragged = false;
   };
 
   const onDown = (e: PointerEvent): void => {
@@ -61,19 +63,25 @@ export function createPicker(
       multi = true;
       return;
     }
+    dragged = false;
     down = { x: e.clientX, y: e.clientY, t: performance.now() };
   };
   const onUp = (e: PointerEvent): void => {
     if (!active.delete(e.pointerId)) return;
     const start = down;
     const wasMulti = multi;
+    const wasDragged = dragged;
     if (active.size === 0) reset();
-    if (wasMulti || !start) return;
+    if (wasMulti || wasDragged || !start) return;
     if (!isTap(start, { x: e.clientX, y: e.clientY, t: performance.now() })) return;
     const id = pick(e.clientX, e.clientY);
     if (id) onPick(id);
   };
   const onMove = (e: PointerEvent): void => {
+    // A drag that wanders past the tap radius never counts as a tap, even if it returns.
+    if (down && active.has(e.pointerId)) {
+      if (Math.hypot(e.clientX - down.x, e.clientY - down.y) >= TAP_MAX_MOVE_PX) dragged = true;
+    }
     if (!onHover || e.pointerType !== 'mouse' || active.size > 0) return;
     onHover(pick(e.clientX, e.clientY));
   };
