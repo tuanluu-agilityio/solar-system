@@ -1,0 +1,863 @@
+{
+  "version": 1,
+  "voices": {
+    "vi": "vi-VN-HoaiMyNeural",
+    "en": "en-US-AvaNeural"
+  },
+  "segments": {
+    "intro": {
+      "vi": {
+        "file": "audio/narration/intro.vi.mp3",
+        "durationMs": 25875,
+        "hash": "a6f2a8bc5490e52c0d3b8cf57133d2a74c5dd78ef1cd0251343cbcfd43001430",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 3400,
+            "text": "Chào mừng bạn đến với Khám phá Hệ Mặt Trời!"
+          },
+          {
+            "startMs": 3400,
+            "endMs": 8212,
+            "text": "Mình sẽ dẫn bạn đi từ Mặt Trời rực lửa ra tới rìa băng giá của hệ hành tinh."
+          },
+          {
+            "startMs": 8212,
+            "endMs": 14462,
+            "text": "Bạn có thể kéo để xoay, chụm hai ngón để phóng to, và chạm vào một thiên thể để bay tới đó."
+          },
+          {
+            "startMs": 14462,
+            "endMs": 18800,
+            "text": "Chạm vào cảnh sẽ tạm dừng tour, bấm Tiếp tục khi bạn sẵn sàng."
+          },
+          {
+            "startMs": 18800,
+            "endMs": 23325,
+            "text": "Lưu ý nhỏ: kích thước và khoảng cách ở đây không theo đúng tỉ lệ."
+          },
+          {
+            "startMs": 23325,
+            "endMs": 25875,
+            "text": "Nào, mình xuất phát thôi!"
+          }
+        ]
+      },
+      "en": {
+        "file": "audio/narration/intro.en.mp3",
+        "durationMs": 25387,
+        "hash": "6f32e6bf2f3ff6030fe64c0a0e1583e5b4962de2843ed27e3f6cea47145760dd",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 2625,
+            "text": "Welcome to the Solar System Explorer!"
+          },
+          {
+            "startMs": 2625,
+            "endMs": 8087,
+            "text": "I'm your guide on a journey from our blazing star out to the icy edge of the planets."
+          },
+          {
+            "startMs": 8087,
+            "endMs": 15338,
+            "text": "Along the way, drag to look around, pinch or scroll to zoom, and tap any world to fly straight to it."
+          },
+          {
+            "startMs": 15338,
+            "endMs": 19500,
+            "text": "Touching the scene pauses the tour, and you can pick it up again whenever you like."
+          },
+          {
+            "startMs": 19500,
+            "endMs": 23562,
+            "text": "One quick note: sizes and distances here are not to scale."
+          },
+          {
+            "startMs": 23562,
+            "endMs": 24362,
+            "text": "Ready?"
+          },
+          {
+            "startMs": 24362,
+            "endMs": 25387,
+            "text": "Let's go!"
+          }
+        ]
+      }
+    },
+    "sun": {
+      "vi": {
+        "file": "audio/narration/sun.vi.mp3",
+        "durationMs": 22413,
+        "hash": "f9174c97a0bb8fa061431e3e43bdf9f27440c28bb3431ca71da0731f6f77eea9",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 3975,
+            "text": "Đây là Mặt Trời, ngôi sao ở trung tâm của cả hệ."
+          },
+          {
+            "startMs": 3975,
+            "endMs": 9375,
+            "text": "Đường kính của nó gần 1,4 triệu kilômét, đủ chứa khoảng 1,3 triệu Trái Đất."
+          },
+          {
+            "startMs": 9375,
+            "endMs": 22413,
+            "text": "Trong lõi, phản ứng tổng hợp hạt nhân biến hydro thành heli ở khoảng 15 triệu độ C, còn bề mặt chỉ khoảng năm nghìn rưỡi độ C. Điều bất ngờ là ánh sáng mất khoảng 8 phút mới tới Trái Đất, nên Mặt Trời bạn thấy luôn là hình ảnh của 8 phút trước."
+          }
+        ]
+      },
+      "en": {
+        "file": "audio/narration/sun.en.mp3",
+        "durationMs": 28600,
+        "hash": "c5db679d4da5320c6d8c2d54e5bbcbb1668f99e3bfa25cf8fb9110aaa2b2b636",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 3212,
+            "text": "Meet the Sun, the star at the heart of it all."
+          },
+          {
+            "startMs": 3212,
+            "endMs": 9724,
+            "text": "It is about one point four million kilometers across, and roughly one point three million Earths could fit inside."
+          },
+          {
+            "startMs": 9724,
+            "endMs": 21350,
+            "text": "Deep in its core, nuclear fusion turns hydrogen into helium at around 15 million degrees Celsius, while the glowing surface is a mere 5,500 degrees."
+          },
+          {
+            "startMs": 21350,
+            "endMs": 28600,
+            "text": "Here's the surprise: sunlight takes about eight minutes to reach Earth, so you always see the Sun as it was eight minutes ago."
+          }
+        ]
+      }
+    },
+    "mercury": {
+      "vi": {
+        "file": "audio/narration/mercury.vi.mp3",
+        "durationMs": 25575,
+        "hash": "890524be79262a5ad8001c2f662b8f6626ea545095c243693d6da3e5ea1fc229",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 6212,
+            "text": "Tiếp theo là Sao Thủy, hành tinh nhỏ nhất và gần Mặt Trời nhất, cách khoảng 58 triệu kilômét."
+          },
+          {
+            "startMs": 6212,
+            "endMs": 13124,
+            "text": "Nó chỉ rộng gần năm nghìn kilômét, lớn hơn Mặt Trăng một chút, và chạy hết một vòng quanh Mặt Trời trong 88 ngày."
+          },
+          {
+            "startMs": 13124,
+            "endMs": 19775,
+            "text": "Không có khí quyển giữ nhiệt, ban ngày nóng khoảng 430 độ C, ban đêm lạnh tới âm 180 độ."
+          },
+          {
+            "startMs": 19775,
+            "endMs": 25575,
+            "text": "Thú vị hơn, từ lúc mặt trời mọc đến lần mọc kế tiếp mất tới 176 ngày Trái Đất."
+          }
+        ]
+      },
+      "en": {
+        "file": "audio/narration/mercury.en.mp3",
+        "durationMs": 34375,
+        "hash": "ce31fd04bd35e7ab61cd4deff5857fb4e77643a302f77f83d19a064835bd4815",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 7812,
+            "text": "Next up is Mercury, the smallest planet and the closest to the Sun, only about 58 million kilometers away."
+          },
+          {
+            "startMs": 7812,
+            "endMs": 17000,
+            "text": "It is just 4,879 kilometers wide, barely bigger than our Moon, and it races around the Sun in only 88 Earth days."
+          },
+          {
+            "startMs": 17000,
+            "endMs": 25750,
+            "text": "With almost no air to hold the heat, days reach about 430 degrees Celsius and nights plunge to minus 180."
+          },
+          {
+            "startMs": 25750,
+            "endMs": 34375,
+            "text": "And here's a twist: one sunrise to the next on Mercury takes 176 Earth days, a full two Mercury years."
+          }
+        ]
+      }
+    },
+    "venus": {
+      "vi": {
+        "file": "audio/narration/venus.vi.mp3",
+        "durationMs": 25900,
+        "hash": "35d87da54fab6e3fdcaf8804bc549ad5ed172c83655c0a0cd7699bbe9d4d72a7",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 6600,
+            "text": "Giờ chúng ta tới Sao Kim, gần như song sinh với Trái Đất về kích thước, rộng khoảng 12 nghìn kilômét."
+          },
+          {
+            "startMs": 6600,
+            "endMs": 15750,
+            "text": "Nhưng lớp khí cacbonic dày đặc và mây axit sunfuric gây hiệu ứng nhà kính mất kiểm soát, khiến bề mặt nóng khoảng 465 độ C, đủ làm chảy chì."
+          },
+          {
+            "startMs": 15750,
+            "endMs": 25900,
+            "text": "Lạ hơn nữa, Sao Kim tự quay ngược chiều nên Mặt Trời mọc ở phía tây, và một ngày ở đây dài 243 ngày Trái Đất, lâu hơn cả một năm 225 ngày của nó."
+          }
+        ]
+      },
+      "en": {
+        "file": "audio/narration/venus.en.mp3",
+        "durationMs": 32662,
+        "hash": "59000b5e20ff1b452137e330ba1778c736ade262f1f26eb0c860cad7b72d5328",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 6938,
+            "text": "Now we arrive at Venus, almost Earth's twin in size at 12,104 kilometers across."
+          },
+          {
+            "startMs": 6938,
+            "endMs": 8613,
+            "text": "But don't pack your bags."
+          },
+          {
+            "startMs": 8613,
+            "endMs": 20700,
+            "text": "Thick carbon dioxide air and clouds of sulfuric acid trap heat in a runaway greenhouse effect, pushing the surface to about 465 degrees Celsius, hot enough to melt lead."
+          },
+          {
+            "startMs": 20700,
+            "endMs": 32662,
+            "text": "Stranger still, Venus spins backwards, so the Sun rises in the west, and a single day there, 243 Earth days, lasts longer than its 225-day year."
+          }
+        ]
+      }
+    },
+    "earth": {
+      "vi": {
+        "file": "audio/narration/earth.vi.mp3",
+        "durationMs": 24362,
+        "hash": "1a55746ca71d1a831443ab07e77832e8bf94e8e8d61b9d9d630edd241c432358",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 2050,
+            "text": "Chào mừng về nhà!"
+          },
+          {
+            "startMs": 2050,
+            "endMs": 8362,
+            "text": "Đây là Trái Đất, rộng gần 12 nghìn 800 kilômét và cách Mặt Trời gần 150 triệu kilômét."
+          },
+          {
+            "startMs": 8362,
+            "endMs": 13687,
+            "text": "Đây là nơi duy nhất ta biết có sự sống, với nước lỏng phủ khoảng 70 phần trăm bề mặt."
+          },
+          {
+            "startMs": 13687,
+            "endMs": 18750,
+            "text": "Trục quay nghiêng khoảng 23,4 độ, chính độ nghiêng này tạo ra các mùa."
+          },
+          {
+            "startMs": 18750,
+            "endMs": 24362,
+            "text": "Một điều bất ngờ: Trái Đất là hành tinh duy nhất không mang tên một vị thần Hy Lạp hay La Mã."
+          }
+        ]
+      },
+      "en": {
+        "file": "audio/narration/earth.en.mp3",
+        "durationMs": 31462,
+        "hash": "8eca4931a4d11d574d4ce868388fd02860e79e25fb131960d07d4f9dabcf7b1c",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 1400,
+            "text": "Welcome home!"
+          },
+          {
+            "startMs": 1400,
+            "endMs": 10212,
+            "text": "This is Earth, 12,756 kilometers wide and about 150 million kilometers from the Sun."
+          },
+          {
+            "startMs": 10212,
+            "endMs": 18762,
+            "text": "It is the only world we know of with life, and the only one with liquid water on its surface, covering about 70 percent of the planet."
+          },
+          {
+            "startMs": 18762,
+            "endMs": 25212,
+            "text": "Its axis is tilted by about 23 and a half degrees, and that tilt is what gives us the seasons."
+          },
+          {
+            "startMs": 25212,
+            "endMs": 31462,
+            "text": "Fun fact: Earth is the only planet in our system not named after a Greek or Roman god."
+          }
+        ]
+      }
+    },
+    "mars": {
+      "vi": {
+        "file": "audio/narration/mars.vi.mp3",
+        "durationMs": 26738,
+        "hash": "bd36bb83fdbdee598852f69992c20b6a53fff5c0746ccb0dc1842bcfde2e640d",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 5700,
+            "text": "Đây là Sao Hỏa, Hành Tinh Đỏ, cách Mặt Trời khoảng 228 triệu kilômét."
+          },
+          {
+            "startMs": 5700,
+            "endMs": 12838,
+            "text": "Màu đỏ đến từ khoáng chất sắt bị gỉ trong bụi, và nó chỉ rộng khoảng 6 nghìn 800 kilômét, cỡ một nửa Trái Đất."
+          },
+          {
+            "startMs": 12838,
+            "endMs": 26738,
+            "text": "Một ngày ở đây dài hơn 24,6 giờ, nhưng một năm kéo dài 687 ngày, nhiệt độ trung bình khoảng âm 65 độ C. Sao Hỏa còn có Olympus Mons, ngọn núi lửa lớn nhất Hệ Mặt Trời, cao gần gấp ba đỉnh Everest."
+          }
+        ]
+      },
+      "en": {
+        "file": "audio/narration/mars.en.mp3",
+        "durationMs": 35563,
+        "hash": "2f2f614a53d6feff578289a5b6f8f7924e46a0b364a0d1e2ec9af95d912e7e5f",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 6275,
+            "text": "Here is Mars, the Red Planet, about 228 million kilometers from the Sun."
+          },
+          {
+            "startMs": 6275,
+            "endMs": 15700,
+            "text": "Its rusty color comes from iron minerals in the dust, and at 6,792 kilometers across, it is about half the size of Earth."
+          },
+          {
+            "startMs": 15700,
+            "endMs": 27375,
+            "text": "A day here lasts just over 24 and a half hours, but a year takes 687 Earth days, and the average temperature is a chilly minus 65 degrees Celsius."
+          },
+          {
+            "startMs": 27375,
+            "endMs": 35563,
+            "text": "Mars is also home to Olympus Mons, the largest volcano in the Solar System, about three times the height of Mount Everest."
+          }
+        ]
+      }
+    },
+    "asteroid-belt": {
+      "vi": {
+        "file": "audio/narration/asteroid-belt.vi.mp3",
+        "durationMs": 25150,
+        "hash": "0879ecc2e6f4e773a3ecfbdc1d4502752d72087899e4a7f45d7ae062536d4342",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 7062,
+            "text": "Giữa Sao Hỏa và Sao Mộc là Vành đai tiểu hành tinh, nơi chứa những khối đá còn sót lại từ thời các hành tinh hình thành."
+          },
+          {
+            "startMs": 7062,
+            "endMs": 12787,
+            "text": "Các nhà khoa học ước tính có từ 1,1 đến 1,9 triệu tiểu hành tinh lớn hơn một kilômét."
+          },
+          {
+            "startMs": 12787,
+            "endMs": 16726,
+            "text": "Lực hấp dẫn của Sao Mộc đã ngăn chúng kết thành một hành tinh."
+          },
+          {
+            "startMs": 16726,
+            "endMs": 25150,
+            "text": "Bất ngờ là gộp tất cả lại, khối lượng vẫn nhỏ hơn Mặt Trăng, và vành đai phần lớn là khoảng trống, tàu vũ trụ bay qua mà không va phải gì."
+          }
+        ]
+      },
+      "en": {
+        "file": "audio/narration/asteroid-belt.en.mp3",
+        "durationMs": 29650,
+        "hash": "56913b60d85e4e3723099180113523c307b1e775edfcad77788d453126246a8c",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 7788,
+            "text": "Between Mars and Jupiter lies the Asteroid Belt, a wide ring of rocky leftovers from the birth of the planets."
+          },
+          {
+            "startMs": 7788,
+            "endMs": 15163,
+            "text": "Scientists estimate it holds between one point one and one point nine million asteroids larger than a kilometer across."
+          },
+          {
+            "startMs": 15163,
+            "endMs": 19762,
+            "text": "Jupiter's powerful gravity kept them from ever forming a planet."
+          },
+          {
+            "startMs": 19762,
+            "endMs": 23212,
+            "text": "Yet put them all together and they still weigh less than our Moon."
+          },
+          {
+            "startMs": 23212,
+            "endMs": 29650,
+            "text": "And unlike in the movies, the belt is mostly empty space, so spacecraft fly right through it."
+          }
+        ]
+      }
+    },
+    "jupiter": {
+      "vi": {
+        "file": "audio/narration/jupiter.vi.mp3",
+        "durationMs": 27612,
+        "hash": "ae745897c18e498006fa8ab1cb19c635b2ccb7aef4e8aba0085798734973b4bd",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 3738,
+            "text": "Xin chào Sao Mộc, gã khổng lồ của Hệ Mặt Trời!"
+          },
+          {
+            "startMs": 3738,
+            "endMs": 12088,
+            "text": "Nó rộng gần 143 nghìn kilômét, khoảng một nghìn Trái Đất có thể lọt vừa bên trong, và nặng hơn gấp đôi tất cả các hành tinh khác cộng lại."
+          },
+          {
+            "startMs": 12088,
+            "endMs": 17000,
+            "text": "Dù to lớn, Sao Mộc lại quay nhanh nhất, một ngày chỉ khoảng 10 giờ."
+          },
+          {
+            "startMs": 17000,
+            "endMs": 22100,
+            "text": "Vết Đỏ Lớn là cơn bão rộng hơn cả Trái Đất, đã kéo dài hơn 300 năm."
+          },
+          {
+            "startMs": 22100,
+            "endMs": 27612,
+            "text": "Sao Mộc có 115 mặt trăng đã biết, trong đó có Ganymede, mặt trăng lớn nhất."
+          }
+        ]
+      },
+      "en": {
+        "file": "audio/narration/jupiter.en.mp3",
+        "durationMs": 32988,
+        "hash": "eb40bf21668e0ad90173313398c4e761c4e61d1d725960c7f5552190d8a80f3d",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 3850,
+            "text": "Say hello to Jupiter, the giant of the Solar System."
+          },
+          {
+            "startMs": 3850,
+            "endMs": 14600,
+            "text": "It is nearly 143,000 kilometers wide, about 1,000 Earths could fit inside, and it is more than twice as massive as all the other planets combined."
+          },
+          {
+            "startMs": 14600,
+            "endMs": 20975,
+            "text": "Even so, it spins faster than any other planet, so a day lasts only about ten hours."
+          },
+          {
+            "startMs": 20975,
+            "endMs": 26787,
+            "text": "Its Great Red Spot is a storm wider than Earth that has raged for more than 300 years."
+          },
+          {
+            "startMs": 26787,
+            "endMs": 32988,
+            "text": "Jupiter has 115 known moons, including Ganymede, the largest moon of all."
+          }
+        ]
+      }
+    },
+    "saturn": {
+      "vi": {
+        "file": "audio/narration/saturn.vi.mp3",
+        "durationMs": 24524,
+        "hash": "1af16a5d1c0517a6964330eff6aeadbd761314657868252fccfbbbc82856b7c6",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 5388,
+            "text": "Và đây là Sao Thổ với hệ vành đai rực rỡ, gồm hàng tỉ mảnh băng và đá."
+          },
+          {
+            "startMs": 5388,
+            "endMs": 10138,
+            "text": "Vành đai trải rộng hàng trăm nghìn kilômét nhưng nhiều chỗ chỉ dày khoảng 10 mét."
+          },
+          {
+            "startMs": 10138,
+            "endMs": 17813,
+            "text": "Sao Thổ rộng khoảng 120 nghìn kilômét và có 293 mặt trăng đã biết, trong đó Titan có những hồ metan lỏng."
+          },
+          {
+            "startMs": 17813,
+            "endMs": 24524,
+            "text": "Điều bất ngờ nhất: Sao Thổ có mật độ nhỏ hơn nước, nên nếu có một bồn tắm đủ lớn, nó sẽ nổi!"
+          }
+        ]
+      },
+      "en": {
+        "file": "audio/narration/saturn.en.mp3",
+        "durationMs": 30150,
+        "hash": "0b151f0eaf7f2137cf2c8f30e24d8965c4391af236efa281b39e3ad9d4fa64ea",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 3488,
+            "text": "And here is Saturn, the jewel of the Solar System."
+          },
+          {
+            "startMs": 3488,
+            "endMs": 14188,
+            "text": "Its dazzling rings are made of billions of chunks of ice and rock, stretching hundreds of thousands of kilometers across, yet in many places they are only about ten meters thick."
+          },
+          {
+            "startMs": 14188,
+            "endMs": 23626,
+            "text": "Saturn is about 120,000 kilometers wide and has 293 known moons, among them Titan, with lakes of liquid methane."
+          },
+          {
+            "startMs": 23626,
+            "endMs": 25375,
+            "text": "The most surprising thing?"
+          },
+          {
+            "startMs": 25375,
+            "endMs": 30150,
+            "text": "Saturn is less dense than water, so in a big enough bathtub, it would float!"
+          }
+        ]
+      }
+    },
+    "uranus": {
+      "vi": {
+        "file": "audio/narration/uranus.vi.mp3",
+        "durationMs": 26800,
+        "hash": "d2810a564df1cb2e1b78accfc2b9caa09e7908c99729cd8f0e4621c587fa56ba",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 8088,
+            "text": "Ra xa hơn, ta gặp Sao Thiên Vương, hành tinh băng khổng lồ rộng khoảng 51 nghìn kilômét, có màu xanh lam nhạt nhờ khí metan."
+          },
+          {
+            "startMs": 8088,
+            "endMs": 13963,
+            "text": "Điều đặc biệt nhất là trục của nó nghiêng khoảng 98 độ, nên hành tinh như đang lăn quanh Mặt Trời."
+          },
+          {
+            "startMs": 13963,
+            "endMs": 21174,
+            "text": "Một vòng quỹ đạo mất khoảng 84 năm, vì vậy mỗi cực có khoảng 21 năm ngày liên tục rồi 21 năm đêm dài."
+          },
+          {
+            "startMs": 21174,
+            "endMs": 26800,
+            "text": "Đây cũng là hành tinh đầu tiên được tìm thấy bằng kính thiên văn, năm 1781."
+          }
+        ]
+      },
+      "en": {
+        "file": "audio/narration/uranus.en.mp3",
+        "durationMs": 34400,
+        "hash": "32ef3537f6e28d98936eee3cb29d33ea173a8a2c0d0596ea9361013ef8a4f263",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 6338,
+            "text": "Out in the cold, we find Uranus, an ice giant about 51,000 kilometers wide."
+          },
+          {
+            "startMs": 6338,
+            "endMs": 9676,
+            "text": "Methane in its air gives it that soft blue-green color."
+          },
+          {
+            "startMs": 9676,
+            "endMs": 17225,
+            "text": "Its strangest feature is its tilt: Uranus is knocked over by about 98 degrees, so it rolls around the Sun on its side."
+          },
+          {
+            "startMs": 17225,
+            "endMs": 27437,
+            "text": "One orbit takes about 84 years, which means each pole gets around 21 years of nonstop sunlight, followed by 21 years of darkness."
+          },
+          {
+            "startMs": 27437,
+            "endMs": 34400,
+            "text": "Uranus was also the first planet discovered with a telescope, by William Herschel in 1781."
+          }
+        ]
+      }
+    },
+    "neptune": {
+      "vi": {
+        "file": "audio/narration/neptune.vi.mp3",
+        "durationMs": 25437,
+        "hash": "f2c50104ad2c06ef79c10799f9706bf7819bea0e2b8e8a7decf27894b305a0ab",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 5875,
+            "text": "Tiếp theo là Sao Hải Vương, hành tinh xa nhất, cách Mặt Trời khoảng 4,5 tỉ kilômét."
+          },
+          {
+            "startMs": 5875,
+            "endMs": 11675,
+            "text": "Thế giới xanh thẫm này có những cơn gió nhanh nhất Hệ Mặt Trời, hơn 2 nghìn kilômét mỗi giờ."
+          },
+          {
+            "startMs": 11675,
+            "endMs": 15563,
+            "text": "Một vòng quanh Mặt Trời mất khoảng 165 năm Trái Đất."
+          },
+          {
+            "startMs": 15563,
+            "endMs": 25437,
+            "text": "Đặc biệt, đây là hành tinh đầu tiên được tìm ra nhờ toán học: các nhà thiên văn tính trước vị trí của nó, và Johann Galle đã nhìn thấy nó năm 1846."
+          }
+        ]
+      },
+      "en": {
+        "file": "audio/narration/neptune.en.mp3",
+        "durationMs": 31900,
+        "hash": "6b75fcbfe2fa7fe3597633397b00a87604f97d5440804ef0c3ca3cd83ef2c7fa",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 7488,
+            "text": "Next is Neptune, the most distant major planet, about four and a half billion kilometers from the Sun."
+          },
+          {
+            "startMs": 7488,
+            "endMs": 14776,
+            "text": "This deep blue world is whipped by the fastest winds in the Solar System, at more than 2,000 kilometers per hour."
+          },
+          {
+            "startMs": 14776,
+            "endMs": 19187,
+            "text": "One trip around the Sun takes about 165 Earth years."
+          },
+          {
+            "startMs": 19187,
+            "endMs": 31900,
+            "text": "Neptune was the first planet found with mathematics: astronomers predicted where it had to be from the way it tugged on Uranus, and Johann Galle spotted it in 1846 on his very first night of searching."
+          }
+        ]
+      }
+    },
+    "pluto": {
+      "vi": {
+        "file": "audio/narration/pluto.vi.mp3",
+        "durationMs": 25562,
+        "hash": "88420d9c6b5332c0185c4d1b9f066d5f22fd95a8569640ef92a8156f5578b935",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 7575,
+            "text": "Điểm dừng cuối là Sao Diêm Vương, một thế giới băng nhỏ bé, rộng khoảng 2 nghìn 400 kilômét, còn nhỏ hơn Mặt Trăng."
+          },
+          {
+            "startMs": 7575,
+            "endMs": 19150,
+            "text": "Được phát hiện năm 1930, nó là hành tinh thứ chín suốt 76 năm, cho tới năm 2006 thì bị xếp lại thành hành tinh lùn, vì chưa dọn sạch quỹ đạo trong Vành đai Kuiper đông đúc."
+          },
+          {
+            "startMs": 19150,
+            "endMs": 25562,
+            "text": "Năm 2015, tàu New Horizons bay ngang qua và phát hiện một sông băng khổng lồ hình trái tim."
+          }
+        ]
+      },
+      "en": {
+        "file": "audio/narration/pluto.en.mp3",
+        "durationMs": 35026,
+        "hash": "9382e4a92c33043b80b9c904d79deda4de9042bbfe358a046ad28924d84317c6",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 8825,
+            "text": "Our final stop is Pluto, an icy little world just 2,376 kilometers across, smaller than our own Moon."
+          },
+          {
+            "startMs": 8825,
+            "endMs": 14000,
+            "text": "Discovered in 1930, it was called the ninth planet for 76 years."
+          },
+          {
+            "startMs": 14000,
+            "endMs": 23600,
+            "text": "Then, in 2006, astronomers reclassified it as a dwarf planet, because it has not cleared its orbit of other objects in the crowded Kuiper Belt."
+          },
+          {
+            "startMs": 23600,
+            "endMs": 27338,
+            "text": "One lap around the Sun takes about 248 years."
+          },
+          {
+            "startMs": 27338,
+            "endMs": 35026,
+            "text": "When New Horizons flew past in 2015, it revealed icy mountains and a giant heart-shaped glacier."
+          }
+        ]
+      }
+    },
+    "outro": {
+      "vi": {
+        "file": "audio/narration/outro.vi.mp3",
+        "durationMs": 24663,
+        "hash": "08af3569bdaad782dbb0f5744d49432405e884b775df25b1f6f92401dead16fe",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 3450,
+            "text": "Chuyến tham quan của chúng ta đến đây là kết thúc!"
+          },
+          {
+            "startMs": 3450,
+            "endMs": 8875,
+            "text": "Từ Mặt Trời rực lửa tới Sao Diêm Vương băng giá, ta đã đi qua gần 6 tỉ kilômét."
+          },
+          {
+            "startMs": 8875,
+            "endMs": 11700,
+            "text": "Giờ thì Hệ Mặt Trời là của bạn."
+          },
+          {
+            "startMs": 11700,
+            "endMs": 18112,
+            "text": "Hãy chạm vào một hành tinh để bay tới và đọc bảng thông tin, kéo để xoay, chụm hai ngón để phóng to."
+          },
+          {
+            "startMs": 18112,
+            "endMs": 22374,
+            "text": "Bạn có thể bấm nút Tour bất cứ lúc nào để đi lại hành trình này."
+          },
+          {
+            "startMs": 22374,
+            "endMs": 24663,
+            "text": "Cảm ơn bạn đã đồng hành!"
+          }
+        ]
+      },
+      "en": {
+        "file": "audio/narration/outro.en.mp3",
+        "durationMs": 26712,
+        "hash": "3f425cb4c73ea7cc62624f00f6fafd1af67a1167562f3aed831fed5bb79ea92f",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 2325,
+            "text": "And that brings our tour to an end!"
+          },
+          {
+            "startMs": 2325,
+            "endMs": 8087,
+            "text": "From the blazing Sun to frozen Pluto, we have crossed nearly six billion kilometers."
+          },
+          {
+            "startMs": 8087,
+            "endMs": 11313,
+            "text": "Now the Solar System is yours to explore."
+          },
+          {
+            "startMs": 11313,
+            "endMs": 18512,
+            "text": "Tap any planet to fly to it and read its info panel, drag to look around, and pinch to zoom in on the details."
+          },
+          {
+            "startMs": 18512,
+            "endMs": 23962,
+            "text": "You can switch languages at the top, and press the Tour button whenever you want to take this trip again."
+          },
+          {
+            "startMs": 23962,
+            "endMs": 26712,
+            "text": "Thanks for flying with me, and keep looking up!"
+          }
+        ]
+      }
+    },
+    "moon": {
+      "en": {
+        "file": "audio/narration/moon.en.mp3",
+        "durationMs": 35426,
+        "hash": "94a3b2776794639ebea7cfe45d4edd8e7a013c99580089bad741f60307b41d3c",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 8000,
+            "text": "Right next door is the Moon, Earth's only natural satellite, about 384,000 kilometers away."
+          },
+          {
+            "startMs": 8000,
+            "endMs": 17288,
+            "text": "It is 3,475 kilometers across and probably formed from debris blasted out when a Mars-sized body slammed into the young Earth."
+          },
+          {
+            "startMs": 17288,
+            "endMs": 24650,
+            "text": "The Moon spins once every 27 days, exactly the time it takes to orbit us, so it always shows us the same face."
+          },
+          {
+            "startMs": 24650,
+            "endMs": 29838,
+            "text": "Twelve astronauts walked on it between 1969 and 1972."
+          },
+          {
+            "startMs": 29838,
+            "endMs": 35426,
+            "text": "Surprisingly, it is slowly drifting away, by almost four centimeters every year."
+          }
+        ]
+      },
+      "vi": {
+        "file": "audio/narration/moon.vi.mp3",
+        "durationMs": 26238,
+        "hash": "8520183766267a6f654b92f6a78ab6f6e87e3e92a302bd72f4ae62be03a0ba88",
+        "cues": [
+          {
+            "startMs": 0,
+            "endMs": 6912,
+            "text": "Ngay bên cạnh là Mặt Trăng, vệ tinh tự nhiên duy nhất của Trái Đất, cách chúng ta khoảng 384 nghìn kilômét."
+          },
+          {
+            "startMs": 6912,
+            "endMs": 15450,
+            "text": "Nó rộng gần 3 nghìn 500 kilômét và tự quay đúng một vòng trong 27 ngày, bằng thời gian quay quanh Trái Đất, nên luôn hướng một mặt về phía ta."
+          },
+          {
+            "startMs": 15450,
+            "endMs": 21588,
+            "text": "Mười hai phi hành gia đã đặt chân lên đây từ năm 1969 đến 1972."
+          },
+          {
+            "startMs": 21588,
+            "endMs": 26238,
+            "text": "Bất ngờ là Mặt Trăng đang xa dần, khoảng 3,8 xentimét mỗi năm."
+          }
+        ]
+      }
+    }
+  }
+}
