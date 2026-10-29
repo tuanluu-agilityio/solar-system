@@ -197,11 +197,11 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
 **Interfaces:**
 - Produces: `node .claude/hooks/session-start.mjs` prints the resume summary to stdout and exits 0, even when files are missing.
 
-- [ ] **Step 1: Read the permission-rule syntax**
+- [x] **Step 1: Read the permission-rule syntax**
 
   Fetch https://code.claude.com/docs/en/settings and https://code.claude.com/docs/en/hooks, then use the current syntax.
 
-- [ ] **Step 2: Write `.claude/settings.json`**
+- [x] **Step 2: Write `.claude/settings.json`**
 
   `permissions.allow` gets one rule per command family from spec §12.3:
   - npm: `npm install`, `npm ci`, `npm run *`;
@@ -223,7 +223,7 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
 
   `hooks.SessionStart`: command `node .claude/hooks/session-start.mjs`. `hooks.Stop`: command `node .claude/hooks/stop-check.mjs` (the script arrives in Task 3; until then the hook fails harmlessly and Claude Code continues).
 
-- [ ] **Step 3: Write `session-start.mjs`**
+- [x] **Step 3: Write `session-start.mjs`**
 
   Plain Node, no dependencies. It prints at most 40 lines:
   1. the newest file in `docs/superpowers/plans/`;
@@ -234,23 +234,23 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
 
   It catches every error and exits 0.
 
-- [ ] **Step 4: Create the docs**
+- [x] **Step 4: Create the docs**
 
   - `docs/progress/README.md`: explains the one-file-per-task log (`t<NN>.md` with Status / Summary / Verification / Decisions / Review).
   - `KNOWN_ISSUES.md`: heading plus the entry format `## <title>` / `Task:` / `Symptom:` / `Tried:` / `Status:`.
   - `BACKLOG.md`: the spec §15 items as bullets.
   - ADR 0001: the format to use (Context / Decision / Consequences).
 
-- [ ] **Step 5: Update `.gitignore`**
+- [x] **Step 5: Update `.gitignore`**
 
   Append `node_modules/`, `dist/`, `.venv/`, `.cache/`, `.worktrees/`, `test-results/`, `playwright-report/`, `__pycache__/`.
 
-- [ ] **Step 6: Verify**
+- [x] **Step 6: Verify**
 
   Run: `node .claude/hooks/session-start.mjs`
   Expected: it prints the plan path, "Task 1" as the current task, and exits 0.
 
-- [ ] **Step 7: Commit** (format from the "How this plan is executed" section)
+- [x] **Step 7: Commit** (format from the "How this plan is executed" section)
 
 ### Task 2: Project scaffold and toolchain
 **Model:** sonnet
