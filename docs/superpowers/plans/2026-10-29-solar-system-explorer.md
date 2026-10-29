@@ -1297,12 +1297,12 @@ export function createTourController(deps: TourDeps): { dispatch(e: TourEvent): 
 - No TTS or texture fetching; the assets are committed.
 - Enable Pages for Actions builds: run `gh api -X POST repos/tuanluu-agilityio/solar-system/pages -f build_type=workflow`. If Pages already exists, use `-X PUT` with the same field instead. If that fails (permissions), add "Settings → Pages → Source: GitHub Actions" to `HUMAN_REVIEW.md` and continue. The first deploy runs when this PR merges.
 
-- [ ] **Step 1: Write the workflow**
-- [ ] **Step 2: Verify**
+- [x] **Step 1: Write the workflow**
+- [x] **Step 2: Verify**
 
   Run: `npx --yes yaml-lint .github/workflows/deploy.yml || node -e "require('fs').readFileSync('.github/workflows/deploy.yml','utf8')"`, then simulate the build: `BASE_PATH=/solar-system/ npm run build` (PowerShell: `$env:BASE_PATH='/solar-system/'; npm run build`).
   Expected: `dist/index.html` references `/solar-system/assets/...`.
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ### Task 31: Finalize the AI harness and human docs
 **Model:** sonnet
