@@ -1042,14 +1042,14 @@ export function createCameraRig(camera: THREE.PerspectiveCamera, dom: HTMLElemen
 - `toggleLang` persists `sse.lang` and updates `store.lang`. Every UI module re-renders text on lang change.
 - `resize` / `orientationchange` → `store.set({ layout: getLayout(innerWidth, innerHeight) })` and `rig.setLayout`.
 
-- [ ] **Step 1: Write the failing e2e**
+- [x] **Step 1: Write the failing e2e**
   - Clicking `lang` switches `document.documentElement.lang` and visible texts (e.g. the hint text changes between the vi and en strings from `UI_STRINGS`). After a reload the choice persists.
   - Credits open with "Solar System Scope", "CC BY 4.0", "NASA" and "Edge TTS" visible, and close again.
   - Every `[data-testid]` button's bounding box is ≥ 44×44.
-- [ ] **Step 2:** Run it. Expected: FAIL.
-- [ ] **Step 3: Implement**
-- [ ] **Step 4:** Run it. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run it. Expected: FAIL.
+- [x] **Step 3: Implement**
+- [x] **Step 4:** Run it. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 24: Info panel (desktop left panel, mobile bottom sheet)
 **Model:** sonnet
