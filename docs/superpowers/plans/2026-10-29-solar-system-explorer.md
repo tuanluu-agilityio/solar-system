@@ -19,8 +19,14 @@
   2. this plan file with that task's checkboxes ticked;
   3. one line appended to `docs/PROGRESS.md`: `- YYYY-MM-DD HH:MM T<NN> done — <one-line summary>` (plus any `DECISION:` lines).
 
-  Commit message: `T<NN>: <summary>` followed by the attribution trailer `Co-Authored-By: Claude <noreply@anthropic.com>`.
-- **Resume after interruption:** run `/resume-work` (Task 3). The first unticked task is the current one.
+  Commit message: Conventional Commits with the task id, e.g. `feat(t04): add display scale math`, followed by the attribution trailer `Co-Authored-By: Claude <noreply@anthropic.com>`. The commit goes on the task branch, then the branch is merged (see the branch rules below).
+- **One branch per task** (requested by the user). Branch names follow `<type>/t<NN>-<kebab-slug>`, where `<type>` is a Conventional Commits type (`feat`, `fix`, `chore`, `docs`, `test`, `perf`, `ci`, `refactor`), `NN` is the zero-padded task number, and the slug is ≤ 5 lowercase words. Use exactly the names in the Branch Map below. Per task:
+  1. `git switch main`, then `git switch -c <branch>` (or `git switch <branch>` if it already exists from an interrupted run).
+  2. Work and commit on the branch. Commit messages use Conventional Commits with the task id: `feat(t04): add display scale math`. Intermediate commits are fine; the final commit of the task contains the ticked checkboxes and the PROGRESS line.
+  3. After the task's verification passes and the reviewer approves: `git switch main`, then `git merge --no-ff <branch> -m "Merge <branch> (T<NN>)"`, then `git branch -d <branch>`.
+  4. Never merge a branch whose tests fail. If a task ends `[blocked]`, leave its branch unmerged (log the branch name in KNOWN_ISSUES) and start the next task from `main`.
+  5. Pushing and opening pull requests are the user's job. The AI never pushes. The `--no-ff` merges keep one merge commit per task, so `git log --first-parent main` reads as the task list.
+- **Resume after interruption:** run `/resume-work` (Task 3). The first unticked task is the current one. If the current git branch is a task branch, that task is the one in progress.
 - **Never ask the user mid-run** (§12.6):
   - Unspecified detail: choose the option most faithful to the spec, log `DECISION:` in PROGRESS (or write an ADR in `docs/decisions/` if it is architectural), and continue.
   - Blocked: add an entry to `docs/KNOWN_ISSUES.md`, mark the task heading `[blocked]`, and continue with the next independent task.
@@ -28,6 +34,43 @@
   - `git push`;
   - edit `.claude/settings.json` after Task 1;
   - delete or weaken a passing test to get green.
+
+## Branch Map
+
+| Task | Branch |
+|---|---|
+| 1 | `chore/t01-agent-permissions-hooks` |
+| 2 | `chore/t02-project-scaffold` |
+| 3 | `chore/t03-agent-context-files` |
+| 4 | `feat/t04-scale-math` |
+| 5 | `feat/t05-body-data` |
+| 6 | `feat/t06-bilingual-content` |
+| 7 | `feat/t07-tour-scripts` |
+| 8 | `feat/t08-prefs-i18n-store` |
+| 9 | `feat/t09-layout-framing` |
+| 10 | `feat/t10-tour-state-machine` |
+| 11 | `feat/t11-quality-tiers` |
+| 12 | `feat/t12-texture-pipeline` |
+| 13 | `feat/t13-narration-script` |
+| 14 | `feat/t14-narration-audio` |
+| 15 | `feat/t15-renderer-sky-loading` |
+| 16 | `feat/t16-sun-bloom` |
+| 17 | `feat/t17-planets-orbits` |
+| 18 | `feat/t18-earth-rings-atmosphere` |
+| 19 | `feat/t19-asteroid-belt` |
+| 20 | `feat/t20-picking-labels` |
+| 21 | `feat/t21-camera-rig` |
+| 22 | `perf/t22-lazy-hires-textures` |
+| 23 | `feat/t23-control-bar` |
+| 24 | `feat/t24-info-panel` |
+| 25 | `feat/t25-audio-engine` |
+| 26 | `feat/t26-tour-controller` |
+| 27 | `perf/t27-runtime-quality` |
+| 28 | `test/t28-e2e-visual-review` |
+| 29 | `perf/t29-budget-fps` |
+| 30 | `ci/t30-pages-deploy` |
+| 31 | `docs/t31-agent-harness-final` |
+| 32 | `chore/t32-final-review` |
 
 ## Global Constraints
 
@@ -128,12 +171,12 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
   - npx: `npx playwright *`, `npx vitest *`, `npx tsc *`, `npx eslint *`, `npx prettier *`;
   - Python: `python -m venv .venv`, `.venv/Scripts/python *`, `.venv/Scripts/pip install *`;
   - Node: `node scripts/*`, `node .claude/hooks/*`;
-  - git: `init`, `add`, `commit`, `status`, `diff`, `log`, `branch`, `checkout`, `switch`, `stash`, `rev-parse`, `show`;
+  - git: `init`, `add`, `commit`, `status`, `diff`, `log`, `branch`, `checkout`, `switch`, `stash`, `rev-parse`, `show`, `merge --no-ff *`;
   - file tools: `Read`, `Edit`, `Write`, `Glob`, `Grep`;
   - `WebFetch` for these domains: `www.solarsystemscope.com`, `nasa.gov` subdomains, `nssdc.gsfc.nasa.gov`, `science.nasa.gov`, `code.claude.com`, `registry.npmjs.org`, `pypi.org`.
 
   `permissions.deny`:
-  - `git push *`, `git remote *`, `git reset --hard *`, `git clean *`;
+  - `git push *`, `git remote *`, `git reset --hard *`, `git clean *`, `git branch -D *` (force delete), `git rebase *`;
   - `npm install -g *`, `pip install *` outside `.venv`;
   - `rm -rf /*`, `rm -rf ~*`;
   - `Edit(.claude/settings.json)`, `Write(.claude/settings.json)`.
@@ -147,7 +190,7 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
   2. the first heading `### Task N` that still has an unticked `- [ ]` under it;
   3. the last 15 lines of `docs/PROGRESS.md`;
   4. the titles of open entries in `docs/KNOWN_ISSUES.md` (`## ` headings without `(resolved)`);
-  5. `git status --porcelain` (first 10 lines).
+  5. the current branch (`git branch --show-current`) and `git status --porcelain` (first 10 lines).
 
   It catches every error and exits 0.
 
@@ -229,7 +272,7 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
   - commands;
   - folder map (from File Structure);
   - Invariants (copy the Global Constraints);
-  - Workflow: per-task commit, PROGRESS line, the `DECISION:` rule, the blocked rule, and archiving: when `docs/PROGRESS.md` passes ~200 lines, move older entries to `docs/progress-archive/`;
+  - Workflow: per-task branch (naming rule + Branch Map location), Conventional Commits, `--no-ff` merge, PROGRESS line, the `DECISION:` rule, the blocked rule, and archiving: when `docs/PROGRESS.md` passes ~200 lines, move older entries to `docs/progress-archive/`;
   - How to resume;
   - Where things go (ADRs, KNOWN_ISSUES, BACKLOG).
 
@@ -247,7 +290,7 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
 
   Steps:
   1. read the session-start summary (or run the hook);
-  2. `git status`: if there are uncommitted changes, decide whether they belong to the current task. Finish and commit if tests pass, otherwise `git stash push -m "T<NN>-partial"` and log it;
+  2. `git branch --show-current` and `git status`. If on a task branch, that task is in progress: if there are uncommitted changes, finish and commit them if the tests pass, otherwise `git stash push -m "T<NN>-partial"` and log it. If on `main` with a ticked task whose branch is not merged yet (`git branch --no-merged main`), verify and merge it first;
   3. continue the plan from the first unticked task using superpowers:subagent-driven-development.
 
 - [ ] **Step 4: Write `status.md`**
@@ -1235,7 +1278,7 @@ export function createTourController(deps: TourDeps): { dispatch(e: TourEvent): 
   - test on a real phone (iOS + Android) for FPS, touch and the sheet;
   - review the screenshots in `docs/screenshots/`;
   - check the KNOWN_ISSUES items;
-  - deploy steps: create a GitHub repo, `git remote add origin …`, `git push -u origin main`, Settings → Pages → Source: GitHub Actions; if the repo name ≠ `solar-system` nothing changes (the workflow uses the repo name);
+  - deploy steps: the repo already exists at https://github.com/tuanluu-agilityio/solar-system with `origin` set. Run `git push origin main` (optionally push task branches too), then Settings → Pages → Source: GitHub Actions. The site will be at https://tuanluu-agilityio.github.io/solar-system/;
   - optionally tighten `settings.json`.
 
 - [ ] **Step 1: Write the files**
@@ -1257,4 +1300,4 @@ export function createTourController(deps: TourDeps): { dispatch(e: TourEvent): 
 - [ ] **Step 3: Fix any ❌ that takes ≤ 30 min, then re-run the gate.** Everything else goes to KNOWN_ISSUES.
 - [ ] **Step 4: Final commit**
 
-  Commit `T32: final review`. Append to PROGRESS: "RUN COMPLETE — see docs/HUMAN_REVIEW.md".
+  Commit `chore(t32): final review` on the task branch and merge it into `main`. Append to PROGRESS: "RUN COMPLETE — see docs/HUMAN_REVIEW.md". Run `git branch --no-merged main` and list any leftover (blocked) branches in `docs/FINAL_REVIEW.md`.

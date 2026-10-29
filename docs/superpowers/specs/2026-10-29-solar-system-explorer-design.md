@@ -422,11 +422,13 @@ Quy tắc tiết kiệm token:
 - Gặp lỗi chặn (dịch vụ ngoài lỗi, công cụ không cài được): thử cách thay thế. Nếu vẫn không được thì ghi `docs/KNOWN_ISSUES.md`, đánh dấu task `[blocked]`, chuyển sang task độc lập tiếp theo.
 - **Không** được làm vỡ test đang pass để "cho xong". Không sửa/xoá test để né lỗi.
 - **Không** push lên remote, không tạo repo GitHub. Đó là việc của người dùng (mục 13).
+- **Mỗi task một branch** (người dùng yêu cầu). Tên branch: `<type>/t<NN>-<slug>`, trong đó `<type>` theo Conventional Commits (`feat`, `fix`, `chore`, `docs`, `test`, `perf`, `ci`, `refactor`). Commit message theo Conventional Commits kèm mã task, ví dụ `feat(t04): ...`. Task xong, kiểm tra pass và review duyệt thì merge `--no-ff` vào `main`, rồi xoá branch local. Task bị chặn thì giữ branch, không merge. AI không push và không tạo PR; người dùng tự push.
 
 ## 13. Deploy
 - GitHub Actions workflow: build rồi deploy lên **GitHub Pages**, chạy khi push lên nhánh `main`. Workflow không gọi TTS.
 - Vite `base` cấu hình theo tên repo (ví dụ `/solar-system/`), dễ đổi trong một chỗ.
-- **Việc của người dùng sau khi AI chạy xong** (ghi trong `HUMAN_REVIEW.md` kèm hướng dẫn từng bước): tạo repo trên GitHub, thêm remote, push, bật Pages (Source: GitHub Actions).
+- Repo GitHub đã có sẵn: https://github.com/tuanluu-agilityio/solar-system (remote `origin` đã cấu hình).
+- **Việc của người dùng sau khi AI chạy xong** (ghi trong `HUMAN_REVIEW.md`): `git push origin main`, bật Pages (Source: GitHub Actions). Trang sẽ ở https://tuanluu-agilityio.github.io/solar-system/.
 - **Nhánh:** repo hiện ở nhánh `master`, chưa có commit. Builder đổi tên/tạo nhánh `main` làm nhánh chính trước commit đầu tiên, và thêm `.superpowers/` vào `.gitignore`.
 
 ## 14. Rủi ro và cách giảm
