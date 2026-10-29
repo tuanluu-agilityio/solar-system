@@ -62,7 +62,7 @@ export const BODIES: Record<BodyId, BodyDef> = {
     rotationPeriodHours: 655.7,
     axialTiltDeg: 6.7,
     meanTempC: -20,
-    distanceFromParentMkm: 0.384,
+    distanceFromParentMkm: 0.3844,
     orbitalPeriodDays: 27.3,
   }),
   mars: def('mars', 'terrestrial', 'sun', 4, {

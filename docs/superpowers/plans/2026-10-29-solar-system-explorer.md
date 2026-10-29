@@ -1083,17 +1083,17 @@ export function createInfoPanel(root: HTMLElement, store: Store<AppState>, onBac
 - Asteroid belt (tour only): name, description and facts, no fields.
 - Re-renders on `lang`, `selected` or `layout` change.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
   - `panelFields(BODIES.sun,'en')` has no `distance`/`orbitalPeriod`/`moons`.
   - `panelFields(BODIES.venus,'vi')` rotation value contains "quay ngược".
   - Moon distance contains `384`.
   - e2e: on `desktop`, `select('earth')` → the panel is visible and its bounding box `x < 400`. On `iphone13` → the panel bounding box `y > viewport.height * 0.4`.
   - Switching lang while it is open changes the panel title from "Earth" to "Trái Đất".
   - The `back` button returns to overview.
-- [ ] **Step 2:** Run them. Expected: FAIL.
-- [ ] **Step 3: Implement**
-- [ ] **Step 4:** Run them. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run them. Expected: FAIL.
+- [x] **Step 3: Implement**
+- [x] **Step 4:** Run them. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 25: Audio engine (ambient, whoosh, narration, ducking)
 **Model:** opus
