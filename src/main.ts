@@ -6,7 +6,22 @@ import type { AppState } from './state/appState';
 import { loadPrefs, savePref } from './state/prefs';
 import { getLayout } from './ui/layout';
 import { initialTier, tierSettings, type QualityTier } from './quality/tiers';
-import { initialTour } from './tour/tourMachine';
+import {
+  autostartStillWanted,
+  initialTour,
+  shouldAutostart,
+  type TourEvent,
+} from './tour/tourMachine';
+import {
+  TOUR_AUTOSTART_DELAY_MS,
+  createTourController,
+  type TourController,
+  type TourDeps,
+} from './tour/tourController';
+import { createScaledTimers } from './tour/scaledTimers';
+import type { NarrationManifest } from './tour/narration';
+import tourScriptsEn from './data/tour/en.json';
+import tourScriptsVi from './data/tour/vi.json';
 import { TOUR_STOPS } from './data/tour/stops';
 import { createRenderer, isWebGLAvailable } from './scene/renderer';
 import {
@@ -28,6 +43,8 @@ import { createLoadingScreen, showBootError, showWebglUnsupported } from './ui/l
 import { createControlBar } from './ui/controlBar';
 import { createCredits } from './ui/credits';
 import { createInfoPanel } from './ui/infoPanel';
+import { createTourControls, isTourActive } from './ui/tourControls';
+import { createSubtitles } from './ui/subtitles';
 import { installE2EApi } from './debug/e2eApi';
 import { createAudioEngine } from './audio/audioEngine';
 
@@ -47,6 +64,17 @@ function pickTier(search: string): QualityTier {
     dpr: window.devicePixelRatio || 1,
     cores: navigator.hardwareConcurrency || 4,
   });
+}
+
+async function loadNarrationManifest(): Promise<NarrationManifest | null> {
+  // A missing or broken manifest only costs the audio: every stop falls back to
+  // estimated timing with subtitles (Review Focus 4).
+  try {
+    const res = await fetch(`${import.meta.env.BASE_URL}audio/narration/manifest.json`);
+    return res.ok ? ((await res.json()) as NarrationManifest) : null;
+  } catch {
+    return null;
+  }
 }
 
 async function boot(): Promise<void> {
@@ -73,11 +101,45 @@ async function boot(): Promise<void> {
   const settings = tierSettings(store.get().quality);
 
   const storage = safeStorage();
+  const params = new URLSearchParams(window.location.search);
+  const isE2E = params.has('e2e');
+  const manifestPromise = loadNarrationManifest();
+  // Tour timers and camera-rig time; the e2e `setTimeScale` speeds both up.
+  let rigTimeScale = 1;
+  const tourTimers = createScaledTimers({
+    setTimeout: (fn, ms) => window.setTimeout(fn, ms),
+    clearTimeout: (id) => window.clearTimeout(id),
+    now: () => performance.now(),
+  });
+  // Created once the solar system exists; the loading screen covers the UI until then.
+  let tour: TourController | null = null;
+  const dispatchTour = (e: TourEvent): void => tour?.dispatch(e);
+  // A manual tap, drag, zoom, selection or back pauses a running tour (spec §3.8),
+  // and also cancels a pending first-visit autostart.
+  let userInteracted = false;
+  const interruptTour = (): void => {
+    userInteracted = true;
+    dispatchTour({ type: 'USER_INTERACTED' });
+  };
+  let tourSeen = prefs.tourSeen;
+  const startTour = (): void => {
+    // The "seen" flag is set when a tour starts, so autostart happens at most once.
+    tourSeen = true;
+    savePref(storage, 'tourSeen', true);
+    dispatchTour({ type: 'START' });
+  };
   // Audio starts only after a user gesture (spec §3.7). Every pointerdown re-runs the
   // idempotent unlock, which also resumes a context iOS suspended after an interruption.
   const audio = createAudioEngine();
   audio.setMuted(store.get().muted);
   window.addEventListener('pointerdown', () => void audio.unlock(), { capture: true });
+  const setMuted = (muted: boolean): void => {
+    // unlock() creates/resumes the context synchronously inside this click.
+    void audio.unlock();
+    audio.setMuted(muted);
+    savePref(storage, 'muted', muted);
+    store.set({ muted });
+  };
   const credits = createCredits(root, store);
   createControlBar(root, store, {
     toggleLang() {
@@ -85,24 +147,27 @@ async function boot(): Promise<void> {
       savePref(storage, 'lang', lang);
       store.set({ lang });
     },
-    toggleMute() {
-      const muted = !store.get().muted;
-      // unlock() creates/resumes the context synchronously inside this click.
-      void audio.unlock();
-      audio.setMuted(muted);
-      savePref(storage, 'muted', muted);
-      store.set({ muted });
-    },
+    toggleMute: () => setMuted(!store.get().muted),
     toggleTour() {
-      // Wired by the tour controller task.
+      if (isTourActive(store.get().tour.status)) dispatchTour({ type: 'EXIT' });
+      else startTour();
     },
     openCredits: () => credits.open(),
+  });
+
+  createTourControls(root, store, dispatchTour);
+  const subtitles = createSubtitles(root, store, {
+    currentCue: () => tour?.currentCue() ?? null,
+    onUnmute: () => setMuted(false),
   });
 
   const loading = createLoadingScreen(root, prefs.lang);
   const canvas = document.createElement('canvas');
   canvas.id = 'scene';
   root.prepend(canvas);
+  // camera-controls reports drags (controlstart) but not taps or wheel zoom.
+  canvas.addEventListener('pointerdown', interruptTour);
+  canvas.addEventListener('wheel', interruptTour, { passive: true });
 
   const renderer = createRenderer(canvas, settings);
   const scene = new THREE.Scene();
@@ -131,7 +196,12 @@ async function boot(): Promise<void> {
   let selectBody = async (id: ContentId): Promise<void> => {
     store.set({ selected: id, view: 'focus' });
   };
+  const userSelect = (id: ContentId): Promise<void> => {
+    interruptTour();
+    return selectBody(id);
+  };
   const backToOverview = async (): Promise<void> => {
+    interruptTour();
     store.set({ selected: null, view: 'overview' });
     audio.playWhoosh();
     await rig.flyToOverview();
@@ -142,15 +212,17 @@ async function boot(): Promise<void> {
 
   installE2EApi({
     getState: () => store.get(),
-    select: (id) => selectBody(id),
+    select: userSelect,
     overview: backToOverview,
     cameraTargetId: () => cameraTargetId(),
     projectBody: (id) => projectBody(id),
-    tour: () => {
-      // Wired by the tour controller task.
-    },
-    setTimeScale: () => {
-      // Wired by the time-control task.
+    tour: dispatchTour,
+    // e2e only: speeds up the tour timers (narration, gap) and camera-rig time (flights,
+    // auto-orbit), which is frame-bound and slow on software GL. Orbits keep real time.
+    setTimeScale: (n) => {
+      if (!Number.isFinite(n) || n <= 0) return;
+      tourTimers.setScale(n);
+      rigTimeScale = n;
     },
   });
 
@@ -161,7 +233,7 @@ async function boot(): Promise<void> {
   ];
   const report = (): void => loading.setProgress(aggregateProgress(parts));
   const sky = settings.skySize;
-  const [lowTex, skyTex] = await Promise.all([
+  const [lowTex, skyTex, manifest] = await Promise.all([
     loadTextureSet('low', lowKeys, (loaded, total) => {
       parts[0] = { loaded, total };
       report();
@@ -170,6 +242,7 @@ async function boot(): Promise<void> {
       parts[1] = { loaded, total };
       report();
     }),
+    manifestPromise,
   ]);
   const skyTexture = skyTex.get(skyKey(sky));
   if (skyTexture) scene.add(createSky(skyTexture));
@@ -182,8 +255,11 @@ async function boot(): Promise<void> {
     store.set({ selected: id, view: 'focus' });
     audio.playWhoosh();
     await rig.flyTo(solar.getFocusTarget(id));
-    // Only the high tier swaps in the large maps, and only once the camera has arrived.
-    // A superseded flight resolves early, so also check the camera really is on this body.
+    upgradeOnArrival(id);
+  };
+  // Only the high tier swaps in the large maps, and only once the camera has arrived.
+  // A superseded flight resolves early, so also check the camera really is on this body.
+  const upgradeOnArrival = (id: ContentId): void => {
     const s = store.get();
     const arrived = s.selected === id && s.view === 'focus' && cameraTargetId() === id;
     if (arrived && id !== 'asteroid-belt' && tierSettings(s.quality).textureSet === 'high') {
@@ -192,7 +268,7 @@ async function boot(): Promise<void> {
         .catch(() => undefined);
     }
   };
-  const select = (id: ContentId): void => void selectBody(id);
+  const select = (id: ContentId): void => void userSelect(id);
   const contentIds: ContentId[] = [...solar.bodies.keys(), 'asteroid-belt'];
   cameraTargetId = () => {
     const t = rig.getTarget();
@@ -222,15 +298,52 @@ async function boot(): Promise<void> {
     if (s.view !== prev.view) labels.setVisible(s.view === 'overview');
   });
 
+  // Tour flights get the same whoosh and high-res upgrade as a manual selection.
+  const tourRig: TourDeps['rig'] = {
+    async flyTo(target) {
+      audio.playWhoosh();
+      await rig.flyTo(target);
+      const id = cameraTargetId();
+      if (id) upgradeOnArrival(id);
+    },
+    flyToOverview() {
+      audio.playWhoosh();
+      return rig.flyToOverview();
+    },
+    setAutoOrbit: (on) => rig.setAutoOrbit(on),
+    onUserInteract: (cb) => rig.onUserInteract(cb),
+  };
+  tour = createTourController({
+    rig: tourRig,
+    system: solar,
+    audio,
+    store,
+    manifest,
+    scripts: { vi: tourScriptsVi, en: tourScriptsEn },
+    timers: tourTimers,
+    audioUrl: (file) => `${import.meta.env.BASE_URL}${file}`,
+  });
+  const scheduleAutostart = (): void => {
+    if (!shouldAutostart(tourSeen, isE2E, params.has('autostart'))) return;
+    window.setTimeout(() => {
+      // Skip if the user started a tour, touched the scene or selected a body meanwhile.
+      if (autostartStillWanted({ tourSeen, userInteracted, selected: store.get().selected })) {
+        startTour();
+      }
+    }, TOUR_AUTOSTART_DELAY_MS);
+  };
+
   startLoop((dt, tSec) => {
     sun.update(tSec);
     solar.update(tSec);
-    rig.update(dt);
+    rig.update(dt * rigTimeScale);
     labels.update();
+    subtitles.update();
     postfx.render();
     if (!store.get().ready) {
       store.set({ ready: true });
       loading.hide();
+      scheduleAutostart();
     }
   });
 }
