@@ -552,7 +552,7 @@ export interface AppState { lang: Lang; muted: boolean; selected: ContentId | nu
 ```
 `AppState` imports `Layout` from `src/ui/layout.ts` (Task 9), `QualityTier` from `src/quality/tiers.ts` (Task 11), `TourSnapshot` from `src/tour/tourMachine.ts` (Task 10) and `UiKey` from `src/i18n/strings.ts` (Task 6). All of these are merged before Task 8 starts (Wave Plan).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
   - `detectLang(['vi-VN','en'])` → `'vi'`; `detectLang(['en-US'])` → `'en'`; `detectLang([])` → `'en'`.
   - `loadPrefs` with an empty storage → `{lang: detected, muted: true, tourSeen: false}`.
   - Stored `sse.muted='false'` → `muted: false`. Stored `sse.lang='xx'` → falls back to the detected language.
@@ -560,10 +560,10 @@ export interface AppState { lang: Lang; muted: boolean; selected: ContentId | nu
   - `t('vi','tour.progress',{current:5,total:14})` contains `5` and `14`. An unknown param is left as-is.
   - `formatNumber('vi', 1392700)` → `'1.392.700'`; `formatNumber('en', 1392700)` → `'1,392,700'`.
   - Store: `set` notifies subscribers with `(next, prev)`; unsubscribe stops notifications; a `set` with identical values does not notify.
-- [ ] **Step 2:** Run them. Expected: FAIL.
-- [ ] **Step 3: Implement** (prefs wraps every storage call in try/catch).
-- [ ] **Step 4:** Run them. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run them. Expected: FAIL.
+- [x] **Step 3: Implement** (prefs wraps every storage call in try/catch).
+- [x] **Step 4:** Run them. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 9: Layout rule and framing math
 **Model:** sonnet
