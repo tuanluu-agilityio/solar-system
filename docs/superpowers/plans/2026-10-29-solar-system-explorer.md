@@ -315,7 +315,7 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
 **Interfaces:**
 - `CLAUDE.md` = the line `@AGENTS.md` plus a short section of Claude-only notes (model tiers, commands). `AGENTS.md` is the single source.
 
-- [ ] **Step 1: Write `AGENTS.md`** (under 150 lines)
+- [x] **Step 1: Write `AGENTS.md`** (under 150 lines)
 
   - one-paragraph purpose;
   - links to the spec and plan;
@@ -326,7 +326,7 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
   - How to resume;
   - Where things go (ADRs, KNOWN_ISSUES, BACKLOG).
 
-- [ ] **Step 2: Write the five subagent files**
+- [x] **Step 2: Write the five subagent files**
 
   Each has frontmatter `name`, `description` and `model`: `implementer-light` haiku, `implementer` sonnet, `implementer-heavy` opus, `reviewer` sonnet, `final-reviewer` opus. The body tells the agent to:
   - read `AGENTS.md`, the given task and the referenced spec sections only;
@@ -336,7 +336,7 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
 
   `reviewer` checks spec compliance and code quality, then returns APPROVE or a list of required fixes.
 
-- [ ] **Step 3: Write `resume-work.md`**
+- [x] **Step 3: Write `resume-work.md`**
 
   Steps:
   1. read the session-start summary (or run the hook);
@@ -346,20 +346,20 @@ playwright.config.ts, playwright.perf.config.ts, vite.config.ts, tsconfig.json, 
      - uncommitted changes in a worktree: commit them if that task's tests pass, otherwise `git stash push -m "t<NN>-partial"` and redo the task's implementation step;
   3. continue with the Wave Plan (respect dependencies and the ≤ 3 parallel limit) using superpowers:subagent-driven-development.
 
-- [ ] **Step 4: Write `status.md`**
+- [x] **Step 4: Write `status.md`**
 
   It prints done/total task counts, the current wave and in-flight tasks, open PRs with check status, open issues, and the latest 5 progress files.
 
-- [ ] **Step 5: Write `stop-check.mjs` and register it**
+- [x] **Step 5: Write `stop-check.mjs` and register it**
 
   The hook runs `npm run typecheck` only when `git diff --name-only` contains `.ts` files. It prints a short failure summary and exits 0 (it informs, it does not block). It is already registered under `hooks.Stop` by Task 1. If that entry is missing, log it in KNOWN_ISSUES for the user; do not edit settings.
 
-- [ ] **Step 6: Verify**
+- [x] **Step 6: Verify**
 
   Run: `node .claude/hooks/stop-check.mjs && node .claude/hooks/session-start.mjs`
   Expected: both exit 0; the second shows Task 3 as current.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ---
 
