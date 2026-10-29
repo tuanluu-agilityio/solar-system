@@ -27,3 +27,9 @@ Task: 28
 Symptom: in the overview the Mercury, Venus, Earth and Moon labels (and "The Sun" on mobile) overlap around the Sun; they are not readable until the user zooms in.
 Tried: not attempted (needs label collision logic).
 Status: open
+
+## Overview planets are only 1-2 px dots
+Task: 28
+Symptom: at overview (desktop 1280x720 and iPhone 13) every planet is a 1-2 px dot on a thin orbit ring; textures and sizes are not discernible, so the "beautiful, easy to see everything" overview goal is not met (see `docs/screenshots/desktop-overview.png`). Only the Sun and the labels are visible.
+Tried: reviewed screenshots only (needs a larger overview display size for bodies or a closer overview camera).
+Status: open
