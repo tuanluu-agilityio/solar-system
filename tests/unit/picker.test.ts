@@ -176,4 +176,36 @@ describe('createLabels', () => {
     el('earth')?.click();
     expect(onSelect).toHaveBeenCalledWith('earth');
   });
+
+  it('hides labels that would overlap a higher-priority one; Earth always stays', () => {
+    const w = vi.spyOn(HTMLElement.prototype, 'offsetWidth', 'get').mockReturnValue(60);
+    const h = vi.spyOn(HTMLElement.prototype, 'offsetHeight', 'get').mockReturnValue(16);
+    try {
+      const { labels, el, camera, container } = labelSetup(() => 'en', true);
+      // Far away: the inner bodies crowd around the Sun.
+      camera.position.set(0, 1200, 2000);
+      camera.lookAt(0, 0, 0);
+      camera.updateMatrixWorld(true);
+      labels.update();
+      const shown = [...container.querySelectorAll<HTMLElement>('.body-label')].filter(
+        (e) => !e.hidden,
+      );
+      expect(el('earth')?.hidden).toBe(false);
+      expect(shown.length).toBeLessThan(11);
+      const rects = shown.map((e) => {
+        const m = /translate\((-?[\d.]+)px, (-?[\d.]+)px\)/.exec(e.style.transform)!;
+        return { x: Number(m[1]), y: Number(m[2]) };
+      });
+      for (let i = 0; i < rects.length; i++)
+        for (let j = i + 1; j < rects.length; j++) {
+          const a = rects[i]!;
+          const b = rects[j]!;
+          const overlap = Math.abs(a.x - b.x) < 60 && Math.abs(a.y - b.y) < 16;
+          expect(overlap).toBe(false);
+        }
+    } finally {
+      w.mockRestore();
+      h.mockRestore();
+    }
+  });
 });
