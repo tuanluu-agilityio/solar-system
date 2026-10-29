@@ -483,20 +483,20 @@ Required UI keys:
 - `kind.*` for each `BodyKind`;
 - `lang.switch`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
   - For both languages and every `ContentId`: `name`, `kindLabel` and `description` are non-empty; `description` has 2–4 sentences; `facts.length` is between 3 and 5.
   - `Object.keys(UI_STRINGS.vi)` equals `Object.keys(UI_STRINGS.en)` (sorted).
   - No value contains `TODO` or is empty.
   - `getContent('pluto','vi').kindLabel` mentions "hành tinh lùn".
-- [ ] **Step 2:** Run it. Expected: FAIL.
-- [ ] **Step 3: Write the content**
+- [x] **Step 2:** Run it. Expected: FAIL.
+- [x] **Step 3: Write the content**
 
   Base it on NASA Science pages (fetch them), with friendly, specific, accurate wording. Write the English natively, not as a translation of the Vietnamese.
   - The Pluto content explains the 2006 IAU reclassification.
   - `asteroid-belt` content: location 2.2–3.2 AU, Ceres, total mass < Moon's.
   - Number formatting is not part of the content (done by the panel in Task 24).
-- [ ] **Step 4:** Run it. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 4:** Run it. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 7: Tour stops and narration scripts
 **Model:** opus
@@ -618,7 +618,7 @@ export function tourReducer(s: TourSnapshot, e: TourEvent, stops: TourStopDef[])
 export function shouldAutostart(tourSeen: boolean, isE2E: boolean, forceAutostart: boolean): boolean;
 ```
 
-- [ ] **Step 1: Write the failing tests** (state transitions with exact effects)
+- [x] **Step 1: Write the failing tests** (state transitions with exact effects)
   - `START` from `idle` → `flying` at index 0, effects `[cancelGap? none, flyTo(stops[0]), showPanel(null)]`. The intro/outro focus `'overview'` gives `showPanel(null)`; a body stop gives `showPanel(id)`.
   - `FLIGHT_DONE` in `flying` → `narrating`, effects include `playNarration(stopId)` and `autoOrbit(true)`.
   - `NARRATION_ENDED` → `gap` with `startGap(1500)`.
@@ -629,10 +629,10 @@ export function shouldAutostart(tourSeen: boolean, isE2E: boolean, forceAutostar
   - `EXIT` from any active state → `idle` with `[stopNarration, cancelGap, autoOrbit(false)]`.
   - `LANG_CHANGED` while `narrating` → stays `narrating` with `[stopNarration, playNarration(sameStop)]`. In other states → no effects.
   - `shouldAutostart(false,false,false)` → true; `shouldAutostart(true,false,false)` → false; `isE2E` true → false unless `forceAutostart`.
-- [ ] **Step 2:** Run them. Expected: FAIL.
-- [ ] **Step 3: Implement `tourReducer` as a pure switch**
-- [ ] **Step 4:** Run them. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run them. Expected: FAIL.
+- [x] **Step 3: Implement `tourReducer` as a pure switch**
+- [x] **Step 4:** Run them. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 11: Quality tiers and FPS monitor
 **Model:** sonnet
@@ -661,15 +661,15 @@ Values:
 
 Bloom is present in every tier (the quality floor).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
   - Table values for each tier.
   - `lowerTier('low') === 'low'`.
   - `initialTier({isMobile:true,dpr:3,cores:4})` → `'low'`.
   - FPS monitor: 3000 ms of 40 ms frames → `'downgrade'` exactly once, then `null` until `reset()`. 3000 ms of 16 ms frames → never. Fewer than 3000 ms of samples → `null`.
-- [ ] **Step 2:** Run them. Expected: FAIL.
-- [ ] **Step 3: Implement**
-- [ ] **Step 4:** Run them. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run them. Expected: FAIL.
+- [x] **Step 3: Implement**
+- [x] **Step 4:** Run them. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ---
 
