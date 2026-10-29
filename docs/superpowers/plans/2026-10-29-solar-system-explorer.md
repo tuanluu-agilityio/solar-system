@@ -581,17 +581,17 @@ export function focusScreenOffset(layout: Layout): { x: number; y: number }; // 
 export const OVERVIEW_FIT_RADIUS: number; // displayOrbitRadius(5906.4) + 10
 ```
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
   - `getLayout(390,844)` → `'mobile'`; `getLayout(1024,1366)` → `'mobile'` (portrait); `getLayout(1440,900)` → `'desktop'`; `getLayout(767,500)` → `'mobile'`.
   - `focusDistance` grows linearly with radius.
   - A narrower aspect gives a larger distance.
   - `focusDistance(1,50,1)` > 1 (the camera stays outside the body).
-- [ ] **Step 2:** Run them. Expected: FAIL.
-- [ ] **Step 3: Implement**
+- [x] **Step 2:** Run them. Expected: FAIL.
+- [x] **Step 3: Implement**
 
   `focusDistance = radius / Math.sin(atan(tan(fov/2) · min(1, aspect)) · fill)`. Clamp it to ≥ `radius * 1.6`.
-- [ ] **Step 4:** Run them. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 4:** Run them. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 10: Tour state machine
 **Model:** opus
