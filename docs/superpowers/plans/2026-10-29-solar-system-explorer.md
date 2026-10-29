@@ -451,15 +451,15 @@ Reference values (NASA Planetary Fact Sheet; massEarths is derived from 10²⁴ 
 
 `orderFromSun`: mercury = 1 … neptune = 8, pluto = 9; sun and moon are `null`. `parent`: moon → earth; everything else → sun; sun → `null`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
   For each row, every field equals the table (`toBeCloseTo` with 2 significant digits for massEarths). Also:
   - every body except sun/moon has `parent === 'sun'`;
   - kinds: mercury/venus/earth/mars terrestrial; jupiter/saturn gas-giant; uranus/neptune ice-giant; pluto dwarf-planet; moon moon; sun star.
-- [ ] **Step 2:** Run it. Expected: FAIL.
-- [ ] **Step 3: Implement `bodies.ts`**
-- [ ] **Step 4:** Run it. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run it. Expected: FAIL.
+- [x] **Step 3: Implement `bodies.ts`**
+- [x] **Step 4:** Run it. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 6: Bilingual body content and UI strings
 **Model:** opus (content writing, §12.5)
