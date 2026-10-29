@@ -30,6 +30,7 @@ const EN = {
   'credits.close': 'Close',
 
   loading: 'Loading the Solar System…',
+  'error.boot': 'Something went wrong while starting the app. Please reload the page.',
   webglUnsupported:
     'Your browser or device does not support WebGL, which is needed to show the Solar System.',
 
@@ -83,6 +84,7 @@ const VI: Record<UiKey, string> = {
   'credits.close': 'Đóng',
 
   loading: 'Đang tải Hệ Mặt Trời…',
+  'error.boot': 'Đã có lỗi khi khởi động ứng dụng. Vui lòng tải lại trang.',
   webglUnsupported:
     'Trình duyệt hoặc thiết bị của bạn không hỗ trợ WebGL, cần có để hiển thị Hệ Mặt Trời.',
 

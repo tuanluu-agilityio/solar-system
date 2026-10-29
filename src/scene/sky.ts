@@ -4,10 +4,10 @@ export const SKY_RADIUS = 5000;
 
 export function createSky(tex: THREE.Texture): THREE.Mesh {
   const geo = new THREE.SphereGeometry(SKY_RADIUS, 64, 32);
-  geo.scale(-1, 1, 1); // invert so the texture faces inward
+  geo.scale(-1, 1, 1); // mirror: flips winding so front faces point inward
   const mat = new THREE.MeshBasicMaterial({
     map: tex,
-    side: THREE.BackSide,
+    side: THREE.FrontSide, // the mirrored geometry has inward-facing front faces
     depthWrite: false,
     toneMapped: false,
   });

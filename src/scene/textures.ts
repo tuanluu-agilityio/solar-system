@@ -18,11 +18,12 @@ export async function listTextureKeys(set: 'low' | 'high'): Promise<string[]> {
 }
 
 export function makeFallbackTexture(key: string): THREE.DataTexture {
-  const c = new THREE.Color(fallbackColor(key));
+  // Write the hex bytes as-is: the texture is tagged sRGB, so no linear conversion.
+  const hex = fallbackColor(key);
   const data = new Uint8Array(4 * 4);
-  const r = Math.round(c.r * 255);
-  const g = Math.round(c.g * 255);
-  const b = Math.round(c.b * 255);
+  const r = (hex >> 16) & 255;
+  const g = (hex >> 8) & 255;
+  const b = hex & 255;
   for (let i = 0; i < 4; i++) data.set([r, g, b, 255], i * 4);
   const tex = new THREE.DataTexture(data, 2, 2, THREE.RGBAFormat);
   tex.colorSpace = THREE.SRGBColorSpace;

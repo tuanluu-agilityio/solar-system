@@ -54,3 +54,12 @@ export function showWebglUnsupported(parent: HTMLElement, lang: Lang): void {
   el.textContent = t(lang, 'webglUnsupported');
   parent.append(el);
 }
+
+export function showBootError(parent: HTMLElement, lang: Lang): void {
+  parent.querySelector('#loading-screen')?.remove();
+  const el = document.createElement('div');
+  el.id = 'boot-error';
+  el.setAttribute('role', 'alert');
+  el.textContent = t(lang, 'error.boot');
+  parent.append(el);
+}

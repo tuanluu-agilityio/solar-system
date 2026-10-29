@@ -11,8 +11,11 @@ export function startLoop(tick: (dtSec: number, tSec: number) => void): { stop()
     const t = nowMs / 1000;
     const dt = last === null ? 0 : Math.min(t - last, MAX_DT);
     last = t;
-    tick(dt, t);
-    if (!stopped && !document.hidden && raf === 0) raf = requestAnimationFrame(frame);
+    try {
+      tick(dt, t);
+    } finally {
+      if (!stopped && !document.hidden && raf === 0) raf = requestAnimationFrame(frame);
+    }
   };
   const onVisibility = (): void => {
     if (document.hidden) {

@@ -12,7 +12,7 @@ import { listTextureKeys, loadTextureSet } from './scene/textures';
 import { aggregateProgress, skyKey, skySet } from './scene/textureKeys';
 import { createSky } from './scene/sky';
 import { startLoop } from './scene/loop';
-import { createLoadingScreen, showWebglUnsupported } from './ui/loadingScreen';
+import { createLoadingScreen, showBootError, showWebglUnsupported } from './ui/loadingScreen';
 import { installE2EApi } from './debug/e2eApi';
 
 function safeStorage(): Storage | null {
@@ -114,4 +114,8 @@ async function boot(): Promise<void> {
   });
 }
 
-void boot();
+boot().catch((err: unknown) => {
+  console.warn('Boot failed', err);
+  const root = document.getElementById('app');
+  if (root) showBootError(root, loadPrefs(safeStorage(), navigator.languages ?? []).lang);
+});

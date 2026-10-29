@@ -23,7 +23,8 @@ body {
   touch-action: none;
 }
 #loading-screen,
-#webgl-unsupported {
+#webgl-unsupported,
+#boot-error {
   position: absolute;
   inset: 0;
   display: flex;
