@@ -25,7 +25,7 @@ Agent không nghe được âm thanh, không cầm điện thoại thật và kh
 
 ## 4. Hiệu năng desktop
 
-- [ ] Đo lại FPS trên laptop rảnh (cắm điện, không chạy gì khác): `npm run test:perf -- --project=desktop`. Task 29 đo bậc `high` khoảng 50-54 FPS ở tổng quan trên Intel Arc iGPU, 1440x900, dao động lớn giữa các lần chạy (xem `docs/KNOWN_ISSUES.md`). Nếu xác nhận dưới 55 FPS, hạ `bloomResolutionScale` của bậc `high` xuống 0.75 trong `src/quality/tiers.ts` trước tiên. Kết quả ghi ở `docs/perf-results.json`.
+- [ ] Đo lại FPS trên laptop rảnh (cắm điện, không chạy gì khác): `npm run test:perf -- --project=desktop`. Task 29 đo bậc `high` khoảng 45-54 FPS ở tổng quan (lần đo lại của controller: 47,2 FPS tổng quan, 42,2 FPS Sao Thổ, bộ đo FPS tự hạ xuống `medium`) trên Intel Arc iGPU, 1440x900, dao động lớn giữa các lần chạy (xem `docs/KNOWN_ISSUES.md`). Nếu xác nhận dưới 55 FPS, hạ `bloomResolutionScale` của bậc `high` xuống 0.75 trong `src/quality/tiers.ts` trước tiên. Kết quả ghi ở `docs/perf-results.json`.
 
 ## 5. Xem ảnh chụp
 

@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { detectLang, loadPrefs, savePref, PREF_KEYS, type KeyValueStorage } from '../../src/state/prefs';
+import {
+  detectLang,
+  loadPrefs,
+  savePref,
+  PREF_KEYS,
+  type KeyValueStorage,
+} from '../../src/state/prefs';
 
-function mem(init: Record<string, string> = {}): KeyValueStorage & { data: Record<string, string> } {
+function mem(
+  init: Record<string, string> = {},
+): KeyValueStorage & { data: Record<string, string> } {
   const data = { ...init };
   return {
     data,

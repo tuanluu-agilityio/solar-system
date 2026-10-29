@@ -33,8 +33,10 @@ describe.runIf(existsSync(MANIFEST_PATH))('narration assets', () => {
     expect(Object.keys(manifest.segments).sort()).toEqual([...STOP_IDS].sort());
     for (const id of STOP_IDS) {
       for (const lang of LANGS) {
-        expect(manifest.segments[id as keyof typeof manifest.segments]?.[lang], `${id}.${lang}`)
-          .toBeDefined();
+        expect(
+          manifest.segments[id as keyof typeof manifest.segments]?.[lang],
+          `${id}.${lang}`,
+        ).toBeDefined();
       }
     }
   });

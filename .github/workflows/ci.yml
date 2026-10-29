@@ -23,6 +23,8 @@ jobs:
       - run: npm test
       - run: npx playwright install --with-deps chromium
       - run: npm run test:e2e
+      # The e2e web server ran `npm run build`, so dist/ is ready for the load budget gate.
+      - run: npm run check:budget
       - name: Check for narration script tests
         id: narration
         run: |

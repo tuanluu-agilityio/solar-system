@@ -9,7 +9,11 @@ export interface Prefs {
   muted: boolean;
   tourSeen: boolean;
 }
-export const PREF_KEYS = { lang: 'sse.lang', muted: 'sse.muted', tourSeen: 'sse.tourSeen' } as const;
+export const PREF_KEYS = {
+  lang: 'sse.lang',
+  muted: 'sse.muted',
+  tourSeen: 'sse.tourSeen',
+} as const;
 
 export function detectLang(languages: readonly string[]): Lang {
   return languages.some((l) => l.toLowerCase().startsWith('vi')) ? 'vi' : 'en';
@@ -26,7 +30,8 @@ function read(storage: KeyValueStorage | null, key: string): string | null {
 
 export function loadPrefs(storage: KeyValueStorage | null, languages: readonly string[]): Prefs {
   const storedLang = read(storage, PREF_KEYS.lang);
-  const lang: Lang = storedLang === 'vi' || storedLang === 'en' ? storedLang : detectLang(languages);
+  const lang: Lang =
+    storedLang === 'vi' || storedLang === 'en' ? storedLang : detectLang(languages);
   return {
     lang,
     muted: read(storage, PREF_KEYS.muted) !== 'false',

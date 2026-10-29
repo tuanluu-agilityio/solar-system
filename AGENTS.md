@@ -14,8 +14,8 @@ Solar System Explorer: a mobile-first, bilingual (vi/en) three.js web app showin
 ## Commands
 
 - `npm ci` install; `npm run dev` dev server; `npm run build` typecheck + build (set `BASE_PATH=/solar-system/` to mimic Pages).
-- `npm run lint`, `npm run typecheck`, `npm test` (Vitest), `npm run test:e2e` (Playwright). CI (`verify` job) runs all four.
-- `npm run format` (Prettier write); `npm run format -- --check` to verify. Never run `format` on the whole repo for a docs or small change.
+- `npm run lint`, `npm run typecheck`, `npm test` (Vitest), `npm run test:e2e` (Playwright). CI (`verify` job) runs all four, then `check:budget` on the e2e build.
+- `npm run format` always writes (the script is `prettier --write .`, so `-- --check` still writes). Verify with `npx prettier --check .` (on a Windows checkout with `core.autocrlf=true` add `--end-of-line auto`, else every file reports CRLF). Never run `format` on the whole repo for a docs or small change.
 - `npm run fetch:textures` (`scripts/fetch-textures.mjs`, needs network, writes `public/textures/{low,high}` + `manifest.json`).
 - `npm run narration` (`scripts/generate-narration.py` in `.venv`, needs network for Edge TTS; regenerates only changed text).
 - `npm run check:budget` (`scripts/check-budget.mjs`, run after `npm run build`; initial payload and JS gzip budgets).
