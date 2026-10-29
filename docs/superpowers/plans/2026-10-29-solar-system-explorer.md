@@ -483,20 +483,20 @@ Required UI keys:
 - `kind.*` for each `BodyKind`;
 - `lang.switch`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
   - For both languages and every `ContentId`: `name`, `kindLabel` and `description` are non-empty; `description` has 2–4 sentences; `facts.length` is between 3 and 5.
   - `Object.keys(UI_STRINGS.vi)` equals `Object.keys(UI_STRINGS.en)` (sorted).
   - No value contains `TODO` or is empty.
   - `getContent('pluto','vi').kindLabel` mentions "hành tinh lùn".
-- [ ] **Step 2:** Run it. Expected: FAIL.
-- [ ] **Step 3: Write the content**
+- [x] **Step 2:** Run it. Expected: FAIL.
+- [x] **Step 3: Write the content**
 
   Base it on NASA Science pages (fetch them), with friendly, specific, accurate wording. Write the English natively, not as a translation of the Vietnamese.
   - The Pluto content explains the 2006 IAU reclassification.
   - `asteroid-belt` content: location 2.2–3.2 AU, Ceres, total mass < Moon's.
   - Number formatting is not part of the content (done by the panel in Task 24).
-- [ ] **Step 4:** Run it. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 4:** Run it. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 7: Tour stops and narration scripts
 **Model:** opus
