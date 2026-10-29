@@ -989,15 +989,15 @@ export function createCameraRig(camera: THREE.PerspectiveCamera, dom: HTMLElemen
   The back action does `flyToOverview` and sets `{selected:null, view:'overview'}`.
 - Rapid re-selection: the latest call wins (a generation counter).
 
-- [ ] **Step 1: Write the failing e2e** (`?e2e=1`, all 3 projects)
+- [x] **Step 1: Write the failing e2e** (`?e2e=1`, all 3 projects)
   - `select('saturn')`: within 5 s `getState()` gives `{selected:'saturn', view:'focus'}`;
   - `overview()` gives `{selected:null, view:'overview'}`;
   - **Review Focus 2:** `select('mars')` immediately followed by `select('jupiter')`: within 5 s `selected === 'jupiter'` and `window.__app.cameraTargetId()` is `'jupiter'`. Add `cameraTargetId(): ContentId | null` to `E2EApi`.
   - A real tap on the screen-projected position of Jupiter (computed via `__app.projectBody('jupiter')` → `{x,y}` in CSS px; add it to `E2EApi`) selects Jupiter.
-- [ ] **Step 2:** Run it. Expected: FAIL.
-- [ ] **Step 3: Implement**
-- [ ] **Step 4:** Run it. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run it. Expected: FAIL.
+- [x] **Step 3: Implement**
+- [x] **Step 4:** Run it. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 22: Lazy high-resolution textures on focus
 **Model:** sonnet
