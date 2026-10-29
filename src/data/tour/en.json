@@ -1,0 +1,44 @@
+{
+  "intro": {
+    "text": "Welcome to the Solar System Explorer! I'm your guide on a journey from our blazing star out to the icy edge of the planets. Along the way, drag to look around, pinch or scroll to zoom, and tap any world to fly straight to it. Touching the scene pauses the tour, and you can pick it up again whenever you like. One quick note: sizes and distances here are not to scale. Ready? Let's go!"
+  },
+  "sun": {
+    "text": "Meet the Sun, the star at the heart of it all. It is about one point four million kilometers across, and roughly one point three million Earths could fit inside. Deep in its core, nuclear fusion turns hydrogen into helium at around 15 million degrees Celsius, while the glowing surface is a mere 5,500 degrees. Here's the surprise: sunlight takes about eight minutes to reach Earth, so you always see the Sun as it was eight minutes ago."
+  },
+  "mercury": {
+    "text": "Next up is Mercury, the smallest planet and the closest to the Sun, only about 58 million kilometers away. It is just 4,879 kilometers wide, barely bigger than our Moon, and it races around the Sun in only 88 Earth days. With almost no air to hold the heat, days reach about 430 degrees Celsius and nights plunge to minus 180. And here's a twist: one sunrise to the next on Mercury takes 176 Earth days, a full two Mercury years."
+  },
+  "venus": {
+    "text": "Now we arrive at Venus, almost Earth's twin in size at 12,104 kilometers across. But don't pack your bags. Thick carbon dioxide air and clouds of sulfuric acid trap heat in a runaway greenhouse effect, pushing the surface to about 465 degrees Celsius, hot enough to melt lead. Stranger still, Venus spins backwards, so the Sun rises in the west, and a single day there, 243 Earth days, lasts longer than its 225-day year."
+  },
+  "earth": {
+    "text": "Welcome home! This is Earth, 12,756 kilometers wide and about 150 million kilometers from the Sun. It is the only world we know of with life, and the only one with liquid water on its surface, covering about 70 percent of the planet. Its axis is tilted by about 23 and a half degrees, and that tilt is what gives us the seasons. Fun fact: Earth is the only planet in our system not named after a Greek or Roman god."
+  },
+  "moon": {
+    "text": "Right next door is the Moon, Earth's only natural satellite, about 384,000 kilometers away. It is 3,475 kilometers across and probably formed from debris blasted out when a Mars-sized body slammed into the young Earth. The Moon spins once every 27 days, exactly the time it takes to orbit us, so it always shows us the same face. Twelve astronauts walked on it between 1969 and 1972. Surprisingly, it is slowly drifting away, by almost four centimeters every year."
+  },
+  "mars": {
+    "text": "Here is Mars, the Red Planet, about 228 million kilometers from the Sun. Its rusty color comes from iron minerals in the dust, and at 6,792 kilometers across, it is about half the size of Earth. A day here lasts just over 24 and a half hours, but a year takes 687 Earth days, and the average temperature is a chilly minus 65 degrees Celsius. Mars is also home to Olympus Mons, the largest volcano in the Solar System, about three times the height of Mount Everest."
+  },
+  "asteroid-belt": {
+    "text": "Between Mars and Jupiter lies the Asteroid Belt, a wide ring of rocky leftovers from the birth of the planets. Scientists estimate it holds between one point one and one point nine million asteroids larger than a kilometer across. Jupiter's powerful gravity kept them from ever forming a planet. Yet put them all together and they still weigh less than our Moon. And unlike in the movies, the belt is mostly empty space, so spacecraft fly right through it."
+  },
+  "jupiter": {
+    "text": "Say hello to Jupiter, the giant of the Solar System. It is nearly 143,000 kilometers wide, about 1,000 Earths could fit inside, and it is more than twice as massive as all the other planets combined. Even so, it spins faster than any other planet, so a day lasts only about ten hours. Its Great Red Spot is a storm wider than Earth that has raged for more than 300 years. Jupiter has 115 known moons, including Ganymede, the largest moon of all."
+  },
+  "saturn": {
+    "text": "And here is Saturn, the jewel of the Solar System. Its dazzling rings are made of billions of chunks of ice and rock, stretching hundreds of thousands of kilometers across, yet in many places they are only about ten meters thick. Saturn is about 120,000 kilometers wide and has 293 known moons, among them Titan, with lakes of liquid methane. The most surprising thing? Saturn is less dense than water, so in a big enough bathtub, it would float!"
+  },
+  "uranus": {
+    "text": "Out in the cold, we find Uranus, an ice giant about 51,000 kilometers wide. Methane in its air gives it that soft blue-green color. Its strangest feature is its tilt: Uranus is knocked over by about 98 degrees, so it rolls around the Sun on its side. One orbit takes about 84 years, which means each pole gets around 21 years of nonstop sunlight, followed by 21 years of darkness. Uranus was also the first planet discovered with a telescope, by William Herschel in 1781."
+  },
+  "neptune": {
+    "text": "Next is Neptune, the most distant major planet, about four and a half billion kilometers from the Sun. This deep blue world is whipped by the fastest winds in the Solar System, at more than 2,000 kilometers per hour. One trip around the Sun takes about 165 Earth years. Neptune was the first planet found with mathematics: astronomers predicted where it had to be from the way it tugged on Uranus, and Johann Galle spotted it in 1846 on his very first night of searching."
+  },
+  "pluto": {
+    "text": "Our final stop is Pluto, an icy little world just 2,376 kilometers across, smaller than our own Moon. Discovered in 1930, it was called the ninth planet for 76 years. Then, in 2006, astronomers reclassified it as a dwarf planet, because it has not cleared its orbit of other objects in the crowded Kuiper Belt. One lap around the Sun takes about 248 years. When New Horizons flew past in 2015, it revealed icy mountains and a giant heart-shaped glacier."
+  },
+  "outro": {
+    "text": "And that brings our tour to an end! From the blazing Sun to frozen Pluto, we have crossed nearly six billion kilometers. Now the Solar System is yours to explore. Tap any planet to fly to it and read its info panel, drag to look around, and pinch to zoom in on the details. You can switch languages at the top, and press the Tour button whenever you want to take this trip again. Thanks for flying with me, and keep looking up!"
+  }
+}
