@@ -552,7 +552,7 @@ export interface AppState { lang: Lang; muted: boolean; selected: ContentId | nu
 ```
 `AppState` imports `Layout` from `src/ui/layout.ts` (Task 9), `QualityTier` from `src/quality/tiers.ts` (Task 11), `TourSnapshot` from `src/tour/tourMachine.ts` (Task 10) and `UiKey` from `src/i18n/strings.ts` (Task 6). All of these are merged before Task 8 starts (Wave Plan).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
   - `detectLang(['vi-VN','en'])` → `'vi'`; `detectLang(['en-US'])` → `'en'`; `detectLang([])` → `'en'`.
   - `loadPrefs` with an empty storage → `{lang: detected, muted: true, tourSeen: false}`.
   - Stored `sse.muted='false'` → `muted: false`. Stored `sse.lang='xx'` → falls back to the detected language.
@@ -560,10 +560,10 @@ export interface AppState { lang: Lang; muted: boolean; selected: ContentId | nu
   - `t('vi','tour.progress',{current:5,total:14})` contains `5` and `14`. An unknown param is left as-is.
   - `formatNumber('vi', 1392700)` → `'1.392.700'`; `formatNumber('en', 1392700)` → `'1,392,700'`.
   - Store: `set` notifies subscribers with `(next, prev)`; unsubscribe stops notifications; a `set` with identical values does not notify.
-- [ ] **Step 2:** Run them. Expected: FAIL.
-- [ ] **Step 3: Implement** (prefs wraps every storage call in try/catch).
-- [ ] **Step 4:** Run them. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run them. Expected: FAIL.
+- [x] **Step 3: Implement** (prefs wraps every storage call in try/catch).
+- [x] **Step 4:** Run them. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 9: Layout rule and framing math
 **Model:** sonnet
@@ -695,20 +695,20 @@ Sources (verified 2026-10-29) are `https://www.solarsystemscope.com/textures/dow
 - `8k_jupiter.jpg`, `8k_saturn.jpg`, `8k_saturn_ring_alpha.png`;
 - `2k_uranus.jpg`, `2k_neptune.jpg`, `8k_stars_milky_way.jpg`.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
   Every key exists in both `low` and `high` (sky keys only in `low`). Every referenced file exists on disk. `low` files are ≤ 2048 px wide (check with `sharp(...).metadata()`), `high` files are ≤ 4096. The sum of `low` sizes + `sky_2048` ≤ 5.5 MB.
-- [ ] **Step 2:** Run it. Expected: FAIL.
-- [ ] **Step 3: Implement `fetch-textures.mjs`**
+- [x] **Step 2:** Run it. Expected: FAIL.
+- [x] **Step 3: Implement `fetch-textures.mjs`**
   - Download to `.cache/textures-src/` (skip files already cached).
   - With sharp, write `low` (2048×1024; uranus/neptune at their native 2048) and `high` (4096×2048, never upscaled) as WebP q=82. The ring is a PNG→WebP with alpha, 2048 wide in both sets.
   - Earth clouds: convert the source luminance to the alpha channel (white clouds on transparent).
   - **Pluto (no source):** generate a 2048×1024 procedural equirectangular map with sharp from SVG noise: base tan/beige, darker reddish equatorial band (Cthulhu region), and a lighter heart-shaped patch (Tombaugh Regio) centred at lon ≈ 180°. Use the same file for both sets. Add a BACKLOG line "replace procedural Pluto texture with a New Horizons global map".
   - The script is idempotent and prints a size summary.
-- [ ] **Step 4:** Run `npm run fetch:textures` then `npx vitest run tests/unit/textureManifest.test.ts`. Expected: PASS.
+- [x] **Step 4:** Run `npm run fetch:textures` then `npx vitest run tests/unit/textureManifest.test.ts`. Expected: PASS.
 
   If the download fails after 3 retries: KNOWN_ISSUES entry, mark `[blocked]`, and continue. Task 15 has a fallback.
-- [ ] **Step 5: Commit** (including the generated assets; the `.cache` folder stays ignored)
+- [x] **Step 5: Commit** (including the generated assets; the `.cache` folder stays ignored)
 
 ### Task 13: Narration generation script
 **Model:** sonnet
@@ -724,20 +724,20 @@ Sources (verified 2026-10-29) are `https://www.solarsystemscope.com/textures/dow
 ```
 edge-tts 7.3 API: `edge_tts.Communicate(text, voice, boundary="SentenceBoundary")`; iterate `async for chunk in c.stream()`. `chunk["type"]` is one of `"audio"` (`chunk["data"]` bytes), `"SentenceBoundary"` and `"WordBoundary"`; `offset`/`duration` are in 100-ns units (ms = value / 10_000).
 
-- [ ] **Step 1: Write failing tests** (`unittest`) for the pure helpers:
+- [x] **Step 1: Write failing tests** (`unittest`) for the pure helpers:
   - `ticks_to_ms(12_340_000) == 1234`;
   - `text_hash(text, voice)` is stable and changes when either input changes;
   - `split_sentences("A. B! C?") == ["A.","B!","C?"]`;
   - `fallback_cues(sentences, duration_ms)` gives contiguous cues proportional to character counts, covering [0, duration_ms];
   - `needs_regen(manifest_entry, hash, mp3_exists)`.
-- [ ] **Step 2:** Run `.venv/Scripts/python -m unittest scripts/test_generate_narration.py` (create the venv first with `python -m venv .venv` and `.venv/Scripts/pip install -r scripts/requirements.txt`). Expected: FAIL.
-- [ ] **Step 3: Implement the helpers and `main()`**
+- [x] **Step 2:** Run `.venv/Scripts/python -m unittest scripts/test_generate_narration.py` (create the venv first with `python -m venv .venv` and `.venv/Scripts/pip install -r scripts/requirements.txt`). Expected: FAIL.
+- [x] **Step 3: Implement the helpers and `main()`**
   - Read `src/data/tour/{vi,en}.json`.
   - For each segment whose hash changed: stream it, write the mp3, and build cues from the `SentenceBoundary` events (fall back to `fallback_cues` if there are none).
   - `durationMs` = the last boundary offset + duration, else the mp3 length estimated at 48 kbps.
   - Retry 3× with backoff 2/4/8 s. On final failure, keep the old entry if there is one, print `FAILED <stopId>.<lang>`, and exit 1 after processing everything else.
-- [ ] **Step 4:** Run the unit tests. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 4:** Run the unit tests. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 14: Generate narration audio and the client-side manifest reader
 **Model:** haiku
