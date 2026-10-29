@@ -33,6 +33,8 @@ export interface CameraRig {
   onUserInteract(cb: () => void): () => void;
   /** The focus target the camera is on or flying to; null in overview. */
   getTarget(): FocusTarget | null;
+  /** True while a fly-to / fly-to-overview transition is in progress. */
+  isFlying(): boolean;
 }
 
 export const AUTO_ORBIT_RAD_PER_SEC = 0.08;
@@ -209,6 +211,9 @@ export function createCameraRig(camera: PerspectiveCamera, dom: HTMLElement): Ca
     },
     getTarget() {
       return target;
+    },
+    isFlying() {
+      return flight !== null;
     },
   };
 }

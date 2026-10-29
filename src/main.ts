@@ -6,6 +6,8 @@ import type { AppState } from './state/appState';
 import { loadPrefs, savePref } from './state/prefs';
 import { getLayout } from './ui/layout';
 import { initialTier, tierSettings, type QualityTier } from './quality/tiers';
+import { createFpsMonitor } from './quality/fpsMonitor';
+import { createRuntimeQuality, isSoftwareRenderer } from './quality/runtime';
 import {
   autostartStillWanted,
   initialTour,
@@ -23,7 +25,12 @@ import type { NarrationManifest } from './tour/narration';
 import tourScriptsEn from './data/tour/en.json';
 import tourScriptsVi from './data/tour/vi.json';
 import { TOUR_STOPS } from './data/tour/stops';
-import { createRenderer, isWebGLAvailable } from './scene/renderer';
+import {
+  applyRendererSettings,
+  createRenderer,
+  getRendererName,
+  isWebGLAvailable,
+} from './scene/renderer';
 import {
   listTextureKeys,
   loadHighTextures,
@@ -181,6 +188,28 @@ async function boot(): Promise<void> {
   rig.setLayout(store.get().layout);
   const postfx = createPostFX(renderer, scene, camera, settings);
 
+  // Runtime quality: the FPS monitor downgrades a tier; software rendering disables it (spec §11.4).
+  let solarRef: ReturnType<typeof createSolarSystem> | null = null;
+  const rendererName = getRendererName(renderer);
+  const software = isSoftwareRenderer(rendererName);
+  console.info(
+    `[quality] tier ${store.get().quality}, renderer ${rendererName ?? 'unknown'}${software ? ' (software: FPS monitor off)' : ''}`,
+  );
+  const runtimeQuality = createRuntimeQuality({
+    monitor: createFpsMonitor(),
+    software,
+    getTier: () => store.get().quality,
+    onDowngrade(next) {
+      store.set({ quality: next });
+      const s = tierSettings(next);
+      // The loaded sky and textures stay; antialias is fixed at renderer creation.
+      applyRendererSettings(renderer, s);
+      postfx.setSettings(s);
+      solarRef?.setTierSettings(s);
+      console.info(`[quality] downgraded to ${next}`);
+    },
+  });
+
   window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight, false);
     postfx.setSize(window.innerWidth, window.innerHeight);
@@ -217,6 +246,14 @@ async function boot(): Promise<void> {
     cameraTargetId: () => cameraTargetId(),
     projectBody: (id) => projectBody(id),
     tour: dispatchTour,
+    pixelRatio: () => renderer.getPixelRatio(),
+    downgradeQuality: () => runtimeQuality.downgrade(),
+    // Read the belt fresh: it can be swapped for a bigger InstancedMesh on growth.
+    asteroidCount: () =>
+      (
+        solarRef?.root.children.find((c) => (c as THREE.InstancedMesh).isInstancedMesh) as
+          THREE.InstancedMesh | undefined
+      )?.count ?? 0,
     // e2e only: speeds up the tour timers (narration, gap) and camera-rig time (flights,
     // auto-orbit), which is frame-bound and slow on software GL. Orbits keep real time.
     setTimeScale: (n) => {
@@ -248,7 +285,8 @@ async function boot(): Promise<void> {
   if (skyTexture) scene.add(createSky(skyTexture));
   const sun = createSun(lowTex.get('sun') ?? makeFallbackTexture('sun'));
   scene.add(sun.group);
-  const solar = createSolarSystem(lowTex, settings);
+  const solar = createSolarSystem(lowTex, tierSettings(store.get().quality));
+  solarRef = solar;
   scene.add(solar.root);
 
   selectBody = async (id) => {
@@ -334,6 +372,10 @@ async function boot(): Promise<void> {
   };
 
   startLoop((dt, tSec) => {
+    runtimeQuality.frame(dt * 1000, {
+      visible: !document.hidden,
+      transitioning: rig.isFlying(),
+    });
     sun.update(tSec);
     solar.update(tSec);
     rig.update(dt * rigTimeScale);
