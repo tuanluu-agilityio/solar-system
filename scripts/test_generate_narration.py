@@ -56,6 +56,38 @@ class FallbackCues(unittest.TestCase):
         self.assertEqual(gn.fallback_cues([], 500), [])
 
 
+class MakeContiguous(unittest.TestCase):
+    def test_first_cue_starts_at_zero_and_last_ends_at_duration(self):
+        cues = [{"startMs": 100, "endMs": 900, "text": "A."}, {"startMs": 900, "endMs": 1500, "text": "B."}]
+        out = gn.make_contiguous(cues, 1600)
+        self.assertEqual(out[0]["startMs"], 0)
+        self.assertEqual(out[-1]["endMs"], 1600)
+
+    def test_closes_gaps_and_overlaps(self):
+        cues = [
+            {"startMs": 0, "endMs": 3488, "text": "A."},
+            {"startMs": 3438, "endMs": 5000, "text": "B."},
+            {"startMs": 5010, "endMs": 6000, "text": "C."},
+        ]
+        out = gn.make_contiguous(cues, 6000)
+        self.assertEqual([c["startMs"] for c in out], [0, 3488, 5000])
+        self.assertEqual([c["endMs"] for c in out], [3488, 5000, 6000])
+        self.assertEqual([c["text"] for c in out], ["A.", "B.", "C."])
+
+    def test_never_inverts_a_cue(self):
+        cues = [{"startMs": 0, "endMs": 500, "text": "A."}, {"startMs": 400, "endMs": 450, "text": "B."}]
+        out = gn.make_contiguous(cues, 500)
+        self.assertGreaterEqual(out[1]["endMs"], out[1]["startMs"])
+
+    def test_idempotent(self):
+        cues = [{"startMs": 100, "endMs": 900, "text": "A."}, {"startMs": 850, "endMs": 1500, "text": "B."}]
+        once = gn.make_contiguous(cues, 1500)
+        self.assertEqual(gn.make_contiguous(once, 1500), once)
+
+    def test_empty(self):
+        self.assertEqual(gn.make_contiguous([], 500), [])
+
+
 class NeedsRegen(unittest.TestCase):
     ENTRY = {"hash": "h1"}
 
