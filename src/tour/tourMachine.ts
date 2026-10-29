@@ -51,6 +51,18 @@ export function shouldAutostart(
   return !tourSeen && (!isE2E || forceAutostart);
 }
 
+/**
+ * Re-checked when the autostart delay ends: the tour must not take over if the user
+ * started a tour, touched the scene or selected a body during the wait.
+ */
+export function autostartStillWanted(s: {
+  tourSeen: boolean;
+  userInteracted: boolean;
+  selected: ContentId | null;
+}): boolean {
+  return !s.tourSeen && !s.userInteracted && s.selected === null;
+}
+
 function stopAt(stops: TourStopDef[], index: number): TourStopDef {
   const stop = stops[index];
   if (!stop) throw new Error(`Tour stop ${index} is missing`);

@@ -6,7 +6,12 @@ import type { AppState } from './state/appState';
 import { loadPrefs, savePref } from './state/prefs';
 import { getLayout } from './ui/layout';
 import { initialTier, tierSettings, type QualityTier } from './quality/tiers';
-import { initialTour, shouldAutostart, type TourEvent } from './tour/tourMachine';
+import {
+  autostartStillWanted,
+  initialTour,
+  shouldAutostart,
+  type TourEvent,
+} from './tour/tourMachine';
 import {
   TOUR_AUTOSTART_DELAY_MS,
   createTourController,
@@ -109,8 +114,13 @@ async function boot(): Promise<void> {
   // Created once the solar system exists; the loading screen covers the UI until then.
   let tour: TourController | null = null;
   const dispatchTour = (e: TourEvent): void => tour?.dispatch(e);
-  // A manual tap, drag, zoom, selection or back pauses a running tour (spec §3.8).
-  const interruptTour = (): void => dispatchTour({ type: 'USER_INTERACTED' });
+  // A manual tap, drag, zoom, selection or back pauses a running tour (spec §3.8),
+  // and also cancels a pending first-visit autostart.
+  let userInteracted = false;
+  const interruptTour = (): void => {
+    userInteracted = true;
+    dispatchTour({ type: 'USER_INTERACTED' });
+  };
   let tourSeen = prefs.tourSeen;
   const startTour = (): void => {
     // The "seen" flag is set when a tour starts, so autostart happens at most once.
@@ -316,8 +326,10 @@ async function boot(): Promise<void> {
   const scheduleAutostart = (): void => {
     if (!shouldAutostart(tourSeen, isE2E, params.has('autostart'))) return;
     window.setTimeout(() => {
-      // Skip if the user already started (and maybe exited) a tour in the meantime.
-      if (!tourSeen) startTour();
+      // Skip if the user started a tour, touched the scene or selected a body meanwhile.
+      if (autostartStillWanted({ tourSeen, userInteracted, selected: store.get().selected })) {
+        startTour();
+      }
     }, TOUR_AUTOSTART_DELAY_MS);
   };
 
