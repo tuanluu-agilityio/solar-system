@@ -1011,13 +1011,13 @@ export function createCameraRig(camera: THREE.PerspectiveCamera, dom: HTMLElemen
 - Only when `tierSettings(quality).textureSet === 'high'`: after `flyTo` resolves, load the `high` keys for that body and swap the maps, disposing the low textures only if no other body uses them.
 - Cache it, so it loads once per body.
 
-- [ ] **Step 1: Write the failing e2e** (desktop project only)
+- [x] **Step 1: Write the failing e2e** (desktop project only)
 
   After `select('jupiter')` and waiting 5 s, the network log contains a request for `textures/high/jupiter.webp`. On the `iphone13` project there are no `textures/high/` requests.
-- [ ] **Step 2:** Run it. Expected: FAIL.
-- [ ] **Step 3: Implement**
-- [ ] **Step 4:** Run it. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run it. Expected: FAIL.
+- [x] **Step 3: Implement**
+- [x] **Step 4:** Run it. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ---
 

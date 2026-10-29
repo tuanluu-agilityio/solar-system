@@ -1,5 +1,8 @@
 import * as THREE from 'three';
-import { fallbackColor } from './textureKeys';
+import type { BodyId } from '../data/types';
+import { fallbackColor, textureKeysFor } from './textureKeys';
+
+export { textureKeysFor };
 
 type Manifest = Record<'low' | 'high', Record<string, string>>;
 let manifestPromise: Promise<Manifest | null> | null = null;
@@ -66,4 +69,16 @@ export async function loadTextureSet(
     }),
   );
   return out;
+}
+
+const highCache = new Map<BodyId, Promise<Map<string, THREE.Texture>>>();
+
+/** Loads a body's `high` textures once; later calls share the same result. */
+export function loadHighTextures(id: BodyId): Promise<Map<string, THREE.Texture>> {
+  let p = highCache.get(id);
+  if (!p) {
+    p = loadTextureSet('high', textureKeysFor(id), () => {});
+    highCache.set(id, p);
+  }
+  return p;
 }

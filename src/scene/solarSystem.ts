@@ -42,6 +42,8 @@ export interface SolarSystem {
   update(tSec: number): void;
   getFocusTarget(id: ContentId): FocusTarget;
   setTierSettings(s: TierSettings): void;
+  /** Swaps in higher-resolution maps; fallback stand-ins are ignored. */
+  upgradeTextures(id: BodyId, tex: Map<string, THREE.Texture>): void;
 }
 
 const BELT_FOCUS_RADIUS = 12;
@@ -75,9 +77,23 @@ function texOrFallback(tex: Map<string, THREE.Texture>, key: string): THREE.Text
   return tex.get(key) ?? makeFallbackTexture(key);
 }
 
+function materialsOf(o: THREE.Object3D): THREE.Material[] {
+  const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
+  return m ? (Array.isArray(m) ? m : [m]) : [];
+}
+
+function usesTexture(m: THREE.Material, t: THREE.Texture): boolean {
+  if ((m as THREE.MeshStandardMaterial).map === t) return true;
+  const u = (m as THREE.ShaderMaterial).uniforms as
+    Record<string, THREE.IUniform<unknown>> | undefined;
+  return u !== undefined && Object.values(u).some((x) => x.value === t);
+}
+
 /** Extra layers: Earth clouds and atmospheres, Saturn and Uranus rings. */
 interface Decorations {
   update(): void;
+  /** Swaps the cloud map and the Saturn ring strip when `tex` has real ones. */
+  upgrade(tex: Map<string, THREE.Texture>): void;
   apply(s: TierSettings): void;
 }
 
@@ -148,6 +164,21 @@ function decorate(
   const deco: Decorations = {
     update() {
       if (clouds) clouds.rotation.y = earth.mesh.rotation.y * CLOUD_SPIN_FACTOR;
+    },
+    upgrade(next) {
+      const cloudMat = clouds?.material as THREE.MeshStandardMaterial | undefined;
+      const hiClouds = next.get('earth_clouds');
+      if (cloudMat && hiClouds && !isFallbackTexture(hiClouds)) {
+        cloudMat.map = hiClouds;
+        cloudMat.needsUpdate = true;
+      }
+      const hiRing = next.get('saturn_ring');
+      if (hiRing && !isFallbackTexture(hiRing)) {
+        const u = sMat.uniforms;
+        (u.uMap as THREE.IUniform<THREE.Texture | null>).value = hiRing;
+        (u.uHasMap as THREE.IUniform<boolean>).value = true;
+        (u.uOpacity as THREE.IUniform<number>).value = SATURN_RING.opacity;
+      }
     },
     apply(next) {
       for (const a of atmospheres) a.visible = next.atmosphere;
@@ -237,6 +268,65 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
       const b = bodies.get(id);
       if (!b) throw new Error(`Unknown body ${id}`);
       return { object: b.mesh, radius: b.radius };
+    },
+    upgradeTextures(id, next) {
+      const body = bodies.get(id);
+      if (!body) return;
+      const real = (key: string): THREE.Texture | undefined => {
+        const t = next.get(key);
+        return t && !isFallbackTexture(t) ? t : undefined;
+      };
+      const replaced: THREE.Texture[] = [];
+      const mat = body.mesh.material as THREE.Material;
+      if (mat instanceof THREE.ShaderMaterial) {
+        // Earth: day/night shader.
+        for (const [key, uniform] of [
+          ['earth_day', 'uDay'],
+          ['earth_night', 'uNight'],
+        ] as const) {
+          const t = real(key);
+          const u = mat.uniforms[uniform] as THREE.IUniform<THREE.Texture> | undefined;
+          if (t && u) {
+            replaced.push(u.value);
+            u.value = t;
+          }
+        }
+      } else {
+        const key = (TEXTURE_KEYS[id] ?? [id]).find((k) => real(k));
+        const t = key ? real(key) : undefined;
+        const std = mat as THREE.MeshStandardMaterial;
+        if (t && std.map) {
+          replaced.push(std.map);
+          std.map = t;
+          std.needsUpdate = true;
+        }
+      }
+      const cloudMat = root.getObjectByName('earth-clouds');
+      if (id === 'earth' && cloudMat) {
+        replaced.push(
+          ...materialsOf(cloudMat).flatMap((m) =>
+            (m as THREE.MeshStandardMaterial).map
+              ? [(m as THREE.MeshStandardMaterial).map as THREE.Texture]
+              : [],
+          ),
+        );
+      }
+      const ringMat = root.getObjectByName('saturn-ring');
+      if (id === 'saturn' && ringMat) {
+        for (const m of materialsOf(ringMat)) {
+          const v = (m as THREE.ShaderMaterial).uniforms.uMap?.value as THREE.Texture | null;
+          if (v) replaced.push(v);
+        }
+      }
+      if (id === 'earth' || id === 'saturn') deco.upgrade(next);
+      // Free the low maps only when nothing in the scene still samples them.
+      for (const old of new Set(replaced)) {
+        let used = false;
+        root.traverse((o) => {
+          if (!used) used = materialsOf(o).some((m) => usesTexture(m, old));
+        });
+        if (!used) old.dispose();
+      }
     },
     setTierSettings(next) {
       for (const rig of rigs.values()) rig.setSegments(next);
