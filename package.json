@@ -13,7 +13,7 @@
     "test": "vitest run",
     "test:e2e": "playwright test",
     "test:visual": "playwright test -c playwright.visual.config.ts",
-    "test:perf": "playwright test tests/perf/fps.spec.ts",
+    "test:perf": "playwright test -c playwright.perf.config.ts",
     "fetch:textures": "node scripts/fetch-textures.mjs",
     "narration": ".venv\\Scripts\\python scripts\\generate-narration.py",
     "check:budget": "node scripts/check-budget.mjs"

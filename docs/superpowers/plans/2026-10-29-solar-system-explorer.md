@@ -1273,10 +1273,10 @@ export function createTourController(deps: TourDeps): { dispatch(e: TourEvent): 
 - If GPU measurements miss their targets: lower the **mobile `low`/`medium`** settings (asteroid count, bloom scale, sphere segments), re-measure, and stay above the quality floor in Global Constraints. If it is still under target at the floor, log KNOWN_ISSUES. Do not go below the floor.
 - If `gpu === false`: record the results in the ADR as informational only, and add "measure FPS on real phone" to `HUMAN_REVIEW.md` (Task 31).
 
-- [ ] **Step 1: Write the budget script and the perf spec**
-- [ ] **Step 2:** Run `npm run build && npm run check:budget`. Expected: exit 0. Fix overruns: lower the WebP quality to 75 for `low`, or code-split.
-- [ ] **Step 3:** Run `npm run test:perf`. Expected: results written; assertions pass on GPU. A browser window opens; this is expected.
-- [ ] **Step 4: Write the ADR with the numbers. Commit.**
+- [x] **Step 1: Write the budget script and the perf spec**
+- [x] **Step 2:** Run `npm run build && npm run check:budget`. Expected: exit 0. Fix overruns: lower the WebP quality to 75 for `low`, or code-split.
+- [x] **Step 3:** Run `npm run test:perf`. Expected: results written; assertions pass on GPU. A browser window opens; this is expected.
+- [x] **Step 4: Write the ADR with the numbers. Commit.**
 
 ### Task 30: GitHub Pages deploy workflow
 **Model:** haiku

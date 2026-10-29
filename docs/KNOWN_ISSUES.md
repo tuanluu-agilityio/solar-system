@@ -37,3 +37,9 @@ Symptom: at overview (desktop 1280x720 and iPhone 13) every planet is a 1-2 px d
 Tried: reviewed screenshots only (needs a larger overview display size for bodies or a closer overview camera).
 Fix: fixed in t28b: `overviewFrame` fits the projected orbit disc (desktop camera at 561 instead of 740 units, 1.3x closer), portrait looks down at 45 degrees, and `overviewBoost` draws each far body at least `OVERVIEW_MIN_BODY_PX * sqrt(r / r_earth)` px in radius (size order kept, never applied near the camera).
 Status: resolved
+
+## Desktop `high` tier overview below 55 FPS on the test laptop
+Task: 29
+Symptom: `npm run test:perf` (headed, real GPU: Intel Arc iGPU via ANGLE D3D11, 1440x900, 120 Hz display) measured the desktop overview at 45.3 to 54.1 FPS on the `high` tier, below the 55 FPS laptop target. The Saturn focus view measured 41.2 to 57.7 FPS. The phone emulation (Pixel 7, CPU x4, `medium`) passes at 45 FPS or more.
+Tried: forced `medium` (56.3 / 56.8); `high` with bloom scale 0.75 (overview 38.9 to 53.1); `high` with 4000 asteroids (overview 45.3 to 50.5). The run-to-run noise (about ±8 FPS on a shared, busy machine) is larger than any of these effects, so `src/quality/tiers.ts` was left unchanged (ADR 0005).
+Status: open (re-measure on an idle laptop; if it is confirmed, lower the `high` bloom scale to 0.75 first)

@@ -1,0 +1,30 @@
+{
+  "renderer": "ANGLE (Intel, Intel(R) Arc(TM) Graphics (0x00007D55) Direct3D11 vs_5_0 ps_5_0, D3D11)",
+  "gpu": true,
+  "mobile": {
+    "overview": 48,
+    "saturn": 55.3,
+    "qualityStart": "medium",
+    "qualityEnd": "medium",
+    "pixelRatio": 2,
+    "viewport": {
+      "width": 412,
+      "height": 839
+    },
+    "cpuThrottle": 4,
+    "measuredAt": "2026-10-29T22:03:57.601Z"
+  },
+  "desktop": {
+    "overview": 45.3,
+    "saturn": 56.3,
+    "qualityStart": "high",
+    "qualityEnd": "high",
+    "pixelRatio": 1,
+    "viewport": {
+      "width": 1440,
+      "height": 900
+    },
+    "cpuThrottle": 1,
+    "measuredAt": "2026-10-29T22:04:37.192Z"
+  }
+}
