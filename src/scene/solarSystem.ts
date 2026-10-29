@@ -25,7 +25,7 @@ import {
 } from '../bodies/earth';
 import { createRing } from '../bodies/rings';
 import { createOrbitLine } from '../bodies/orbitLine';
-import { makeFallbackTexture } from './textures';
+import { isFallbackTexture, makeFallbackTexture } from './textures';
 
 export type { BodyObject };
 
@@ -56,7 +56,7 @@ const TEXTURE_KEYS: Partial<Record<BodyId, string[]>> = {
 
 const EARTH_ATMOSPHERE = { color: '#4da6ff', intensity: 1.0 };
 const VENUS_ATMOSPHERE = { color: '#ffe9b0', intensity: 0.6 };
-const SATURN_RING = { inner: 1.24, outer: 2.3, opacity: 0.9 };
+const SATURN_RING = { inner: 1.24, outer: 2.3, opacity: 0.9, plainOpacity: 0.35 };
 const URANUS_RING = { inner: 1.6, outer: 2.0, opacity: 0.12 };
 /** The sun is the world origin. */
 const SUN_WORLD_POS = new THREE.Vector3(0, 0, 0);
@@ -96,8 +96,11 @@ function decorate(
 
   const earth = get('earth');
   const cloudTex = tex.get('earth_clouds');
-  // A fallback colour would be an opaque shell hiding Earth, so no texture means no clouds.
-  const clouds = cloudTex ? createCloudLayer(cloudTex, earth.radius, segments) : null;
+  // A solid fallback colour would be an opaque shell hiding Earth: no real map, no clouds.
+  const clouds =
+    cloudTex && !isFallbackTexture(cloudTex)
+      ? createCloudLayer(cloudTex, earth.radius, segments)
+      : null;
   if (clouds) {
     clouds.name = 'earth-clouds';
     earth.tiltGroup.add(clouds);
@@ -115,11 +118,14 @@ function decorate(
   }
 
   const saturn = get('saturn');
+  // Without the real alpha strip, a plain faint band beats an opaque solid disc.
+  const ringTex = tex.get('saturn_ring');
+  const hasRingMap = ringTex !== undefined && !isFallbackTexture(ringTex);
   const sRing = createRing(
     saturn.radius * SATURN_RING.inner,
     saturn.radius * SATURN_RING.outer,
-    texOrFallback(tex, 'saturn_ring'),
-    SATURN_RING.opacity,
+    hasRingMap ? ringTex : null,
+    hasRingMap ? SATURN_RING.opacity : SATURN_RING.plainOpacity,
   );
   sRing.name = 'saturn-ring';
   const sMat = sRing.material as THREE.ShaderMaterial;

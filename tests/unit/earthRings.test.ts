@@ -5,6 +5,7 @@ import { createRing } from '../../src/bodies/rings';
 import { createSolarSystem } from '../../src/scene/solarSystem';
 import { tierSettings } from '../../src/quality/tiers';
 import { debugCamTarget } from '../../src/debug/e2eApi';
+import { isFallbackTexture, makeFallbackTexture } from '../../src/scene/textures';
 
 function tex(): THREE.DataTexture {
   return new THREE.DataTexture(new Uint8Array([200, 200, 200, 255]), 1, 1);
@@ -200,10 +201,33 @@ describe('solar system decorations', () => {
     ).toBe(false);
   });
 
-  it('omits the cloud layer when the cloud texture is missing', () => {
+  it('omits the cloud layer when the cloud texture failed to load (fallback)', () => {
+    const textures = allTextures();
+    textures.set('earth_clouds', makeFallbackTexture('earth_clouds'));
+    const ss = createSolarSystem(textures, tierSettings('high'));
+    expect(ss.bodies.get('earth')!.tiltGroup.getObjectByName('earth-clouds')).toBeUndefined();
+  });
+
+  it('omits the cloud layer when the cloud texture is absent', () => {
     const textures = allTextures();
     textures.delete('earth_clouds');
     const ss = createSolarSystem(textures, tierSettings('high'));
     expect(ss.bodies.get('earth')!.tiltGroup.getObjectByName('earth-clouds')).toBeUndefined();
+  });
+
+  it('draws a plain faint Saturn ring instead of an opaque band when the ring texture is a fallback', () => {
+    const textures = allTextures();
+    textures.set('saturn_ring', makeFallbackTexture('saturn_ring'));
+    const ss = createSolarSystem(textures, tierSettings('high'));
+    const ring = ss.bodies.get('saturn')!.tiltGroup.getObjectByName('saturn-ring') as THREE.Mesh;
+    const m = ring.material as THREE.ShaderMaterial;
+    expect(m.uniforms.uHasMap!.value).toBe(false);
+    expect(m.uniforms.uOpacity!.value).toBeLessThan(0.5);
+  });
+
+  it('marks fallback textures', () => {
+    expect(isFallbackTexture(makeFallbackTexture('earth_clouds'))).toBe(true);
+    expect(isFallbackTexture(tex())).toBe(false);
+    expect(isFallbackTexture(undefined)).toBe(false);
   });
 });
