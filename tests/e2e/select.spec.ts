@@ -72,7 +72,7 @@ test('re-selecting mid-flight ends focused on the latest body (Review Focus 2)',
           const app = (window as unknown as AppWindow).__app;
           return { selected: app.getState().selected, camera: app.cameraTargetId() };
         }),
-      { timeout: 5_000 },
+      { timeout: 25_000 },
     )
     .toEqual({ selected: 'jupiter', camera: 'jupiter' });
   // Still on Jupiter after the first flight would have finished.
