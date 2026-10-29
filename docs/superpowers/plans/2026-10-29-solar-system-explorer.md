@@ -915,13 +915,13 @@ export function createRing(innerR: number, outerR: number, tex: THREE.Texture | 
 - Seeded PRNG (mulberry32) for determinism.
 - The whole belt rotates at the angular speed of a 4.6-year orbit.
 
-- [ ] **Step 1: Write the failing test**
+- [x] **Step 1: Write the failing test**
 
   The same seed gives the same first matrix. All instance radii are within the inner/outer display radii. `setCount(1500)` sets `mesh.count` to 1500.
-- [ ] **Step 2:** Run it. Expected: FAIL.
-- [ ] **Step 3: Implement it and add it with `asteroidCount` from the tier**
-- [ ] **Step 4:** Run it. Expected: PASS.
-- [ ] **Step 5: Commit**
+- [x] **Step 2:** Run it. Expected: FAIL.
+- [x] **Step 3: Implement it and add it with `asteroidCount` from the tier**
+- [x] **Step 4:** Run it. Expected: PASS.
+- [x] **Step 5: Commit**
 
 ### Task 20: Picking (tap vs drag) and labels
 **Model:** sonnet
