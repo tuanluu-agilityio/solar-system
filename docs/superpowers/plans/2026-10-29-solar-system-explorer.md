@@ -757,14 +757,14 @@ export function estimateDurationMs(text: string): number;   // 400 ms per word, 
 export function resolveSegment(m: NarrationManifest | null, stopId: TourStopId, lang: Lang, scriptText: string): NarrationSegment & { audio: boolean };
 ```
 
-- [ ] **Step 1:** Run `npm run narration` (`.venv/Scripts/python scripts/generate-narration.py`). Expected: 28 mp3 files plus `manifest.json`. On failure follow the blocked rule. `resolveSegment` still gives a subtitle-only fallback.
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 1:** Run `npm run narration` (`.venv/Scripts/python scripts/generate-narration.py`). Expected: 28 mp3 files plus `manifest.json`. On failure follow the blocked rule. `resolveSegment` still gives a subtitle-only fallback.
+- [x] **Step 2: Write the failing tests**
   - `cueAt` finds the cue at boundaries (start inclusive, end exclusive) and returns null past the end.
   - **Review Focus 4:** `resolveSegment(null, 'saturn', 'vi', text)` returns `audio:false`, `durationMs = estimateDurationMs(text)` and cues from sentence-proportional splitting. A missing language entry behaves the same.
   - Test file (`tests/unit/narrationAssets.test.ts`): if the manifest exists, every one of the 14×2 entries has an existing mp3 and `durationMs` between 10000 and 50000.
-- [ ] **Step 3: Implement `narration.ts`**
-- [ ] **Step 4:** Run `npm test`. Expected: PASS.
-- [ ] **Step 5: Commit** (mp3s included)
+- [x] **Step 3: Implement `narration.ts`**
+- [x] **Step 4:** Run `npm test`. Expected: PASS.
+- [x] **Step 5: Commit** (mp3s included)
 
 ---
 
