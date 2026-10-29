@@ -1337,11 +1337,11 @@ export function createTourController(deps: TourDeps): { dispatch(e: TourEvent): 
   - how to read the history: one PR per task on GitHub, plus `git log --first-parent main`;
   - optionally tighten `settings.json`.
 
-- [ ] **Step 1: Write the files**
-- [ ] **Step 2: Verify**
+- [x] **Step 1: Write the files**
+- [x] **Step 2: Verify**
 
   Run: `node .claude/hooks/session-start.mjs` — expected: "Task 31" is current. Also check `AGENTS.md` is under 150 lines: `node -e "console.log(require('fs').readFileSync('AGENTS.md','utf8').split('\n').length)"`.
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ### Task 32: Final whole-project review
 **Model:** opus (`final-reviewer`)
