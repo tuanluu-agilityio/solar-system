@@ -5,6 +5,7 @@ import { tierSettings } from '../../src/quality/tiers';
 import { BODY_IDS, type BodyId } from '../../src/data/types';
 import { BODIES } from '../../src/data/bodies';
 import { MOON_ORBIT_DISPLAY } from '../../src/config/scale';
+import { ORBIT_STYLE } from '../../src/bodies/orbitMath';
 
 function textures(): Map<string, THREE.Texture> {
   const keys = [
@@ -125,17 +126,18 @@ describe('createSolarSystem', () => {
     }
   });
 
-  it('draws 256-segment orbit lines for the 8 planets and Pluto', () => {
+  // Interim (Task 33): the orbit guides became ribbons; Task 34 rewrites this test fully.
+  it('draws an orbit ribbon for each of the 8 planets and Pluto', () => {
     const ss = make();
-    const lines: THREE.LineLoop[] = [];
+    const lines: THREE.Mesh[] = [];
     ss.root.traverse((o) => {
-      if (o instanceof THREE.LineLoop) lines.push(o);
+      if (o.name === 'orbit-line') lines.push(o as THREE.Mesh);
     });
     expect(lines.length).toBe(9);
     for (const l of lines) {
-      expect(l.geometry.getAttribute('position').count).toBe(256);
-      const m = l.material as THREE.LineBasicMaterial;
-      expect(m.opacity).toBeCloseTo(0.15);
+      expect(l).toBeInstanceOf(THREE.Mesh);
+      expect(l.geometry.getAttribute('position').count).toBe(2 * (ORBIT_STYLE.segments + 1));
+      expect(l.material).toBeInstanceOf(THREE.ShaderMaterial);
     }
   });
 
