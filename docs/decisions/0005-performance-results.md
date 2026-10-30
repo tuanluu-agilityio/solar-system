@@ -72,3 +72,14 @@ Mobile-throttled (`medium`) runs: overview 45.1 and 48.0; Saturn 55.0 and 55.3.
 Desktop project, default tiers, same Intel Arc iGPU: overview 47.2 FPS, Saturn 42.2 FPS (still below the 55 target). `qualityEnd` was `medium`: the runtime FPS monitor from Task 27 fired on the real GPU and downgraded `high` to `medium` during the run, which is the designed safety net. The forced `medium` desktop baseline measured about 56 FPS. Conclusion: the `high` tier can miss 55 FPS on a mid laptop iGPU, and the app recovers by itself within seconds; `src/quality/tiers.ts` is left unchanged because no tuning of bloom scale or asteroid count gave a gain beyond the run-to-run spread (about +/-8 FPS). Open items: a re-measure on an idle, plugged-in laptop and on a real phone (see `docs/BACKLOG.md`, "For HUMAN_REVIEW.md (Task 31)").
 
 Notes from the review: the re-measure was on a quieter machine but did not remove the miss (47.2 / 42.2 FPS), so the shortfall is probably real on this iGPU and not only noise. The monitor downgrades when the 3 s average falls under 30 FPS, while the 10 s test averages were 42-47, so the downgrade came from short dips (for example while the camera flies and textures upgrade), not from the sustained average.
+
+## Orbit ribbons (Task 35)
+
+Task 33/34 replaced the thin `LineLoop` orbit guides with nine screen-space ribbons (core plus halo, `ORBIT_STYLE.totalWidthPx` 9 px). The halo costs fill rate, so the desktop project was re-measured once with nothing else running (same Intel Arc iGPU, headed, `npm run test:perf -- --project=desktop`).
+
+| Desktop, default tiers | Overview | Saturn | Quality start / end |
+|---|---|---|---|
+| Before (controller re-measure above) | 47.2 | 42.2 | high / medium |
+| After (orbit ribbons) | 60 | 60 | high / high |
+
+Decision: no change to `totalWidthPx` or to any tier value. The after figures are not lower than the baseline (the threshold was 8 FPS lower), and the FPS monitor did not downgrade the tier. The improvement is most likely the quieter machine (the baseline was noted as noisy, about +/-8 FPS), not the ribbons, so this does not show that the ribbons are free; it shows they do not push `high` under the 55 FPS target on this GPU. The mobile-throttled project was not re-run (the ribbon shader is the same for all tiers and the phone margin was large). `docs/perf-results.json` now holds the new desktop figures; the mobile entry is the older measurement.

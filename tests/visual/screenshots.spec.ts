@@ -57,6 +57,23 @@ test('screenshots for the visual review', async ({ page }, info) => {
   await boot(page, 'en');
   await page.waitForTimeout(2_000);
   await shot('overview');
+  if (!mobile) {
+    // Low angle: drag the canvas vertically so the orbits are seen almost edge-on.
+    const box = (await page.locator('canvas').first().boundingBox())!;
+    const cx = box.x + box.width / 2;
+    const cy = box.y + box.height / 2;
+    await page.mouse.move(cx, cy);
+    await page.mouse.down();
+    // camera-controls maps a full canvas height to 360 degrees, so about 45 px tilts the view
+    // from 60 to about 82 degrees from the zenith; more would clamp to a straight top or bottom view.
+    await page.mouse.move(cx, cy - 45, { steps: 10 });
+    await page.mouse.up();
+    // Let the damped camera settle (frame-bound on software GL).
+    await page.waitForTimeout(8_000);
+    await shot('overview-low-angle');
+    await page.evaluate(() => (window as unknown as AppWindow).__app.overview());
+    await page.waitForTimeout(5_000);
+  }
   for (const id of ['sun', 'earth', 'saturn', 'jupiter', 'pluto']) {
     await focus(page, id);
     await shot(id);

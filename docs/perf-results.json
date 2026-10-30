@@ -15,16 +15,16 @@
     "measuredAt": "2026-10-29T22:03:57.601Z"
   },
   "desktop": {
-    "overview": 47.2,
-    "saturn": 42.2,
+    "overview": 60,
+    "saturn": 60,
     "qualityStart": "high",
-    "qualityEnd": "medium",
+    "qualityEnd": "high",
     "pixelRatio": 1,
     "viewport": {
       "width": 1440,
       "height": 900
     },
     "cpuThrottle": 1,
-    "measuredAt": "2026-10-29T22:09:41.274Z"
+    "measuredAt": "2026-10-30T07:15:45.864Z"
   }
 }

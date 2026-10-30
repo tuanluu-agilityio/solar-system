@@ -125,17 +125,17 @@ export function createOrbitLine(radius: number, color: THREE.ColorRepresentation
 
 **Interfaces:** Consumes everything from Tasks 33 and 34. Produces nothing new.
 
-- [ ] **Step 1: Add a low-angle shot** to `tests/visual/screenshots.spec.ts` (desktop project): after the overview shot, drag the canvas vertically about 300 px with the mouse, wait for the camera to settle (poll 25 s or more), save `desktop-overview-low-angle.png`.
-- [ ] **Step 2: Run** `npm run test:visual` (about 8 minutes, one Playwright run at a time), then **Read every changed PNG** and record PASS/FAIL per item in `docs/progress/t35.md`:
+- [x] **Step 1: Add a low-angle shot** to `tests/visual/screenshots.spec.ts` (desktop project): after the overview shot, drag the canvas vertically about 300 px with the mouse, wait for the camera to settle (poll 25 s or more), save `desktop-overview-low-angle.png`.
+- [x] **Step 2: Run** `npm run test:visual` (about 8 minutes, one Playwright run at a time), then **Read every changed PNG** and record PASS/FAIL per item in `docs/progress/t35.md`:
   - at overview on desktop and phone each orbit is a clearly visible glowing ribbon (core about 2-3 px) and the planets still stand out against it;
   - the bright head sits on each planet and the trail fades behind its motion, and tints are distinguishable;
   - labels, planets and the Sun glow are not covered or washed out; the Sun stays the brightest element;
   - in focus views (Saturn, Earth, a phone tour stop) orbits are dimmed and do not hurt readability of the panel, subtitles or the focused body;
   - in the low-angle shot the ribbons stay at least as wide as the core width (Review Focus 4).
-- [ ] **Step 3: Tune** `ORBIT_STYLE` values and the palette until the checklist passes (the Task 33 invariant tests bound the values; do not edit those tests). A FAIL needing more than 30 minutes goes to `docs/KNOWN_ISSUES.md`.
-- [ ] **Step 4: Perf check** (Review Focus 5): run `npm run test:perf` once for the desktop project with nothing else running (the headed window opening is expected) and compare with the numbers recorded before this work in `docs/perf-results.json` (overview 47.2, Saturn 42.2 on the Intel Arc iGPU, run-to-run noise about 8 FPS). If the overview or Saturn figure is more than 8 FPS lower, narrow `totalWidthPx` (the halo costs fill rate) and re-measure. Append the before/after numbers and the decision to ADR 0005. Run `npm run build && npm run check:budget` — Expected: exit 0.
-- [ ] **Step 5: Verify** `npm run typecheck && npm run lint && npm test` and the specs you touched (`npx playwright test tests/e2e/select.spec.ts --project=pixel7` as a smoke test). The refreshed PNGs are the ones in `docs/screenshots/`; `README.md` already links three of them, so check the three still look right.
-- [ ] **Step 6: Commit** `feat(t35): tune orbit ribbon look and record perf`, write `docs/progress/t35.md` (visual checklist table, perf numbers, DECISION lines), tick this task, per-task flow.
+- [x] **Step 3: Tune** `ORBIT_STYLE` values and the palette until the checklist passes (the Task 33 invariant tests bound the values; do not edit those tests). A FAIL needing more than 30 minutes goes to `docs/KNOWN_ISSUES.md`.
+- [x] **Step 4: Perf check** (Review Focus 5): run `npm run test:perf` once for the desktop project with nothing else running (the headed window opening is expected) and compare with the numbers recorded before this work in `docs/perf-results.json` (overview 47.2, Saturn 42.2 on the Intel Arc iGPU, run-to-run noise about 8 FPS). If the overview or Saturn figure is more than 8 FPS lower, narrow `totalWidthPx` (the halo costs fill rate) and re-measure. Append the before/after numbers and the decision to ADR 0005. Run `npm run build && npm run check:budget` — Expected: exit 0.
+- [x] **Step 5: Verify** `npm run typecheck && npm run lint && npm test` and the specs you touched (`npx playwright test tests/e2e/select.spec.ts --project=pixel7` as a smoke test). The refreshed PNGs are the ones in `docs/screenshots/`; `README.md` already links three of them, so check the three still look right.
+- [x] **Step 6: Commit** `feat(t35): tune orbit ribbon look and record perf`, write `docs/progress/t35.md` (visual checklist table, perf numbers, DECISION lines), tick this task, per-task flow.
 
 ---
 
