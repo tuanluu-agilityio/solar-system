@@ -255,7 +255,8 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
     rigs.set(id, rig);
     bodies.set(id, rig.body);
     // One orbit line per planet and Pluto; the Moon's tiny orbit stays unmarked.
-    if (id !== 'moon') root.add(createOrbitLine(rig.orbitRadius));
+    // Interim until Task 34 wires colour, planet angle, viewport and focus dimming.
+    if (id !== 'moon') root.add(createOrbitLine(rig.orbitRadius, '#ffffff').object);
   }
 
   // Focus anchor for the asteroid belt: mid-belt, kept on Earth's side of the Sun.
