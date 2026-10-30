@@ -13,6 +13,8 @@ export interface E2EApi {
   pixelRatio(): number;
   /** Runs one runtime downgrade (same path as the FPS monitor); returns the new tier or null at the floor. */
   downgradeQuality(): QualityTier | null;
+  /** Viewport the first orbit ribbon was last told about (drawing-buffer px and pixel ratio); null before the solar system exists. */
+  orbitViewport(): { width: number; height: number; pixelRatio: number } | null;
   /** Visible asteroid instances. */
   asteroidCount(): number;
   /** The body the camera rig is focused on (or flying to); null in overview. */

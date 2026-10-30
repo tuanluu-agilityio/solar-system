@@ -79,4 +79,11 @@ describe('BODIES', () => {
       expect(Number.isInteger(BODIES[id].physical.knownMoons)).toBe(true);
     }
   });
+
+  it('gives the 8 planets and Pluto a hex orbitColor, and the Sun and Moon none', () => {
+    for (const id of Object.keys(BODIES) as BodyId[]) {
+      if (id === 'sun' || id === 'moon') expect(BODIES[id].orbitColor, id).toBeUndefined();
+      else expect(BODIES[id].orbitColor, id).toMatch(/^#[0-9a-f]{6}$/i);
+    }
+  });
 });

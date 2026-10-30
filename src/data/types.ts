@@ -35,6 +35,8 @@ export interface BodyDef {
   parent: BodyId | null;
   orderFromSun: number | null;
   physical: PhysicalData;
+  /** Hex tint of the orbit ribbon; planets and Pluto only (the Sun and the Moon draw none). */
+  orbitColor?: string;
 }
 
 export interface BodyContent {

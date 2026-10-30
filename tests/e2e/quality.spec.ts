@@ -6,6 +6,7 @@ type AppWindow = {
     pixelRatio(): number;
     downgradeQuality(): string | null;
     asteroidCount(): number;
+    orbitViewport(): { width: number; height: number; pixelRatio: number } | null;
   };
 };
 
@@ -59,4 +60,30 @@ test('a downgrade applies pixel ratio and belt count and stops at low', async ({
   expect(await page.evaluate(() => (window as unknown as AppWindow).__app.downgradeQuality())).toBe(
     null,
   );
+});
+
+test('orbit ribbons follow the pixel ratio and canvas size after a downgrade', async ({ page }) => {
+  await boot(page, '&quality=high');
+  await page.evaluate(() => {
+    const a = (window as unknown as AppWindow).__app;
+    a.downgradeQuality();
+    a.downgradeQuality();
+  });
+  await expect
+    .poll(
+      () =>
+        page.evaluate(() => {
+          const a = (window as unknown as AppWindow).__app;
+          const c = document.querySelector('canvas') as HTMLCanvasElement;
+          const v = a.orbitViewport();
+          return (
+            v !== null &&
+            v.pixelRatio === a.pixelRatio() &&
+            v.width === c.width &&
+            v.height === c.height
+          );
+        }),
+      { timeout: 25_000 },
+    )
+    .toBe(true);
 });
