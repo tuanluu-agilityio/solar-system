@@ -106,6 +106,7 @@ The whole project, including this README, was produced by Claude Code agents fro
 - Textures: [Solar System Scope](https://www.solarsystemscope.com/textures/) (CC BY 4.0). Pluto uses a generated placeholder texture.
 - Facts and figures: NASA.
 - Narration voice generated with Microsoft Edge TTS (personal, educational project).
+- Analytics: production deploys use Google Analytics 4 for anonymous usage statistics (`ANALYTICS=1` or a Netlify production build, see `vite.config.ts`); dev, CI and previews send nothing.
 
 ## License
 
