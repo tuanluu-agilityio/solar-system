@@ -194,6 +194,12 @@ async function boot(): Promise<void> {
 
   // Runtime quality: the FPS monitor downgrades a tier; software rendering disables it (spec §11.4).
   let solarRef: ReturnType<typeof createSolarSystem> | null = null;
+  // Orbit ribbons keep a constant pixel width: tell them the drawing buffer and pixel ratio.
+  const drawingSize = new THREE.Vector2();
+  const syncOrbitViewport = (): void => {
+    renderer.getDrawingBufferSize(drawingSize);
+    solarRef?.setViewport(drawingSize.x, drawingSize.y, renderer.getPixelRatio());
+  };
   const rendererName = getRendererName(renderer);
   const software = isSoftwareRenderer(rendererName);
   console.info(
@@ -208,6 +214,7 @@ async function boot(): Promise<void> {
       const s = tierSettings(next);
       // The loaded sky and textures stay; antialias is fixed at renderer creation.
       applyRendererSettings(renderer, s);
+      syncOrbitViewport();
       postfx.setSettings(s);
       solarRef?.setTierSettings(s);
       console.info(`[quality] downgraded to ${next}`);
@@ -217,6 +224,7 @@ async function boot(): Promise<void> {
   window.addEventListener('resize', () => {
     renderer.setSize(window.innerWidth, window.innerHeight, false);
     postfx.setSize(window.innerWidth, window.innerHeight);
+    syncOrbitViewport();
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     const layout = getLayout(window.innerWidth, window.innerHeight);
@@ -252,6 +260,13 @@ async function boot(): Promise<void> {
     tour: dispatchTour,
     pixelRatio: () => renderer.getPixelRatio(),
     downgradeQuality: () => runtimeQuality.downgrade(),
+    orbitViewport: () => {
+      const mesh = solarRef?.root.getObjectByName('orbit-line') as THREE.Mesh | undefined;
+      const u = (mesh?.material as THREE.ShaderMaterial | undefined)?.uniforms;
+      if (!u) return null;
+      const v = u.uViewport?.value as THREE.Vector2;
+      return { width: v.x, height: v.y, pixelRatio: u.uPixelRatio?.value as number };
+    },
     // Read the belt fresh: it can be swapped for a bigger InstancedMesh on growth.
     asteroidCount: () =>
       (
@@ -292,6 +307,8 @@ async function boot(): Promise<void> {
   const solar = createSolarSystem(lowTex, tierSettings(store.get().quality));
   solarRef = solar;
   scene.add(solar.root);
+  syncOrbitViewport();
+  solar.setOrbitFocus(store.get().view !== 'overview');
 
   selectBody = async (id) => {
     store.set({ selected: id, view: 'focus' });
@@ -337,7 +354,10 @@ async function boot(): Promise<void> {
   createPicker(canvas, camera, solar.pickables, select, (id) => labels.setHovered(id));
   labels.setVisible(store.get().view === 'overview');
   store.subscribe((s, prev) => {
-    if (s.view !== prev.view) labels.setVisible(s.view === 'overview');
+    if (s.view !== prev.view) {
+      labels.setVisible(s.view === 'overview');
+      solar.setOrbitFocus(s.view !== 'overview');
+    }
   });
 
   // Tour flights get the same whoosh and high-res upgrade as a manual selection.

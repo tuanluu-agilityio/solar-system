@@ -3,6 +3,18 @@ import type { BodyDef, BodyId, BodyKind, PhysicalData } from './types';
 // Source: NASA Planetary Fact Sheet (massEarths = 10^24 kg / 5.97).
 // knownMoons as of 2026-10-29 (NASA Science moons pages; JPL counts as of Aug 2026)
 
+const ORBIT_COLORS: Partial<Record<BodyId, string>> = {
+  mercury: '#c9bfb3',
+  venus: '#f3d58a',
+  earth: '#6fb6ff',
+  mars: '#ff8a5c',
+  jupiter: '#e8c9a0',
+  saturn: '#f0dca0',
+  uranus: '#8fe3ea',
+  neptune: '#6f8cff',
+  pluto: '#c9b8d9',
+};
+
 function def(
   id: BodyId,
   kind: BodyKind,
@@ -10,7 +22,8 @@ function def(
   orderFromSun: number | null,
   physical: PhysicalData,
 ): BodyDef {
-  return { id, kind, parent, orderFromSun, physical };
+  const orbitColor = ORBIT_COLORS[id];
+  return { id, kind, parent, orderFromSun, physical, ...(orbitColor ? { orbitColor } : {}) };
 }
 
 export const BODIES: Record<BodyId, BodyDef> = {

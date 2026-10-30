@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
 import { createSolarSystem } from '../../src/scene/solarSystem';
 import { tierSettings } from '../../src/quality/tiers';
@@ -126,19 +126,112 @@ describe('createSolarSystem', () => {
     }
   });
 
-  // Interim (Task 33): the orbit guides became ribbons; Task 34 rewrites this test fully.
-  it('draws an orbit ribbon for each of the 8 planets and Pluto', () => {
-    const ss = make();
-    const lines: THREE.Mesh[] = [];
-    ss.root.traverse((o) => {
-      if (o.name === 'orbit-line') lines.push(o as THREE.Mesh);
-    });
-    expect(lines.length).toBe(9);
-    for (const l of lines) {
-      expect(l).toBeInstanceOf(THREE.Mesh);
-      expect(l.geometry.getAttribute('position').count).toBe(2 * (ORBIT_STYLE.segments + 1));
-      expect(l.material).toBeInstanceOf(THREE.ShaderMaterial);
+  describe('orbit ribbons', () => {
+    const ORBITING = BODY_IDS.filter((id) => id !== 'sun' && id !== 'moon');
+    type Orbit = { id: BodyId; mesh: THREE.Mesh; mat: THREE.ShaderMaterial };
+
+    function orbits(ss: ReturnType<typeof make>): Orbit[] {
+      const meshes: THREE.Mesh[] = [];
+      ss.root.traverse((o) => {
+        if (o.name === 'orbit-line') meshes.push(o as THREE.Mesh);
+      });
+      expect(meshes.length).toBe(9);
+      // Meshes are added in BODY_IDS order (planets, then Pluto).
+      return meshes.map((mesh, i) => ({
+        id: ORBITING[i]!,
+        mesh,
+        mat: mesh.material as THREE.ShaderMaterial,
+      }));
     }
+    const num = (m: THREE.ShaderMaterial, k: string): number => m.uniforms[k]!.value as number;
+
+    it('draws exactly 9 ShaderMaterial ribbons (no LineLoop) at each orbit radius', () => {
+      const ss = make();
+      for (const { id, mesh, mat } of orbits(ss)) {
+        expect(mesh).toBeInstanceOf(THREE.Mesh);
+        expect(mesh).not.toBeInstanceOf(THREE.LineLoop);
+        expect(mat).toBeInstanceOf(THREE.ShaderMaterial);
+        const p = mesh.geometry.getAttribute('position');
+        expect(Math.hypot(p.getX(0), p.getZ(0)), id).toBeCloseTo(
+          ss.bodies.get(id)!.orbitPivot.children[0]!.position.x,
+          3,
+        );
+      }
+    });
+
+    it('tints each ribbon with its body orbitColor', () => {
+      const ss = make();
+      for (const { id, mat } of orbits(ss)) {
+        const c = mat.uniforms.uColor!.value as THREE.Color;
+        expect(c.getHexString(), id).toBe(new THREE.Color(BODIES[id].orbitColor).getHexString());
+      }
+    });
+
+    it('feeds uPlanetAngle from orbitPivot.rotation.y after each update', () => {
+      const ss = make();
+      for (const t of [0, 7.3, 123.4]) {
+        ss.update(t);
+        for (const { id, mat } of orbits(ss)) {
+          expect(num(mat, 'uPlanetAngle'), id).toBe(ss.bodies.get(id)!.orbitPivot.rotation.y);
+        }
+      }
+    });
+
+    it('passes setViewport to every orbit material', () => {
+      const ss = make();
+      ss.setViewport(1000, 500, 2);
+      for (const { mat } of orbits(ss)) {
+        const v = mat.uniforms.uViewport!.value as THREE.Vector2;
+        expect([v.x, v.y, num(mat, 'uPixelRatio')]).toEqual([1000, 500, 2]);
+      }
+    });
+
+    it('dims orbits towards focusEmphasis while focused and restores them', () => {
+      const ss = make();
+      let t = 0;
+      const run = (sec: number): void => {
+        for (let i = 0; i < sec * 20; i++) ss.update((t += 0.05));
+      };
+      run(1);
+      for (const { mat } of orbits(ss)) expect(num(mat, 'uEmphasis')).toBe(1);
+      ss.setOrbitFocus(true);
+      run(8);
+      for (const { mat } of orbits(ss)) {
+        expect(Math.abs(num(mat, 'uEmphasis') - ORBIT_STYLE.focusEmphasis)).toBeLessThan(0.01);
+      }
+      ss.setOrbitFocus(false);
+      run(8);
+      for (const { mat } of orbits(ss))
+        expect(Math.abs(num(mat, 'uEmphasis') - 1)).toBeLessThan(0.01);
+    });
+
+    it('clamps a huge time jump to 0.25 s of emphasis smoothing', () => {
+      const ss = make();
+      ss.update(1);
+      ss.setOrbitFocus(true);
+      ss.update(1000);
+      const e = num(orbits(ss)[0]!.mat, 'uEmphasis');
+      expect(e).toBeGreaterThan(ORBIT_STYLE.focusEmphasis + 0.05);
+      expect(e).toBeLessThan(1);
+    });
+
+    it('allocates no Vector3 or Color per update', () => {
+      const ss = make();
+      ss.update(1);
+      const v3 = vi.spyOn(THREE.Vector3.prototype, 'set');
+      const clone = vi.spyOn(THREE.Vector3.prototype, 'clone');
+      const colorClone = vi.spyOn(THREE.Color.prototype, 'clone');
+      const arr = vi.spyOn(Array, 'from');
+      ss.setOrbitFocus(true);
+      for (let i = 0; i < 10; i++) ss.update(2 + i * 0.1);
+      expect(clone).not.toHaveBeenCalled();
+      expect(colorClone).not.toHaveBeenCalled();
+      expect(arr).not.toHaveBeenCalled();
+      v3.mockRestore();
+      clone.mockRestore();
+      colorClone.mockRestore();
+      arr.mockRestore();
+    });
   });
 
   it('uses 64 sphere segments, or 32 on the low tier and after setTierSettings', () => {

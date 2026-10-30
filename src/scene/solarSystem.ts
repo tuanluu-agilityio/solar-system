@@ -29,7 +29,8 @@ import {
 } from '../bodies/earth';
 import { createRing } from '../bodies/rings';
 import { createAsteroidBelt } from '../bodies/asteroidBelt';
-import { createOrbitLine } from '../bodies/orbitLine';
+import { createOrbitLine, type OrbitLine } from '../bodies/orbitLine';
+import { ORBIT_STYLE, stepEmphasis } from '../bodies/orbitMath';
 import { isFallbackTexture, makeFallbackTexture } from './textures';
 
 export type { BodyObject };
@@ -54,6 +55,10 @@ export interface SolarSystem {
    * Hides the Moon while a boosted Earth would cover its orbit.
    */
   applyOverviewBoost(camera: THREE.PerspectiveCamera, viewH: number): void;
+  /** Keeps the orbit ribbons a constant pixel width: drawing-buffer size and pixel ratio. */
+  setViewport(drawingWidthPx: number, drawingHeightPx: number, pixelRatio: number): void;
+  /** Dims the orbit ribbons while the camera is focused on a body. */
+  setOrbitFocus(focused: boolean): void;
 }
 
 const BELT_FOCUS_RADIUS = 12;
@@ -238,6 +243,7 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
   root.name = 'solar-system';
   const bodies = new Map<BodyId, BodyObject>();
   const rigs = new Map<BodyId, PlanetRig>();
+  const orbitLines: { pivot: THREE.Object3D; line: OrbitLine }[] = [];
 
   bodies.set('sun', createSunStandIn(root));
 
@@ -254,9 +260,13 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
     const rig = createPlanet(id, texture, s, parent, material);
     rigs.set(id, rig);
     bodies.set(id, rig.body);
-    // One orbit line per planet and Pluto; the Moon's tiny orbit stays unmarked.
-    // Interim until Task 34 wires colour, planet angle, viewport and focus dimming.
-    if (id !== 'moon') root.add(createOrbitLine(rig.orbitRadius, '#ffffff').object);
+    // One orbit ribbon per planet and Pluto; the Moon's tiny orbit stays unmarked.
+    const orbitColor = BODIES[id].orbitColor;
+    if (orbitColor) {
+      const line = createOrbitLine(rig.orbitRadius, orbitColor);
+      orbitLines.push({ pivot: rig.body.orbitPivot, line });
+      root.add(line.object);
+    }
   }
 
   // Focus anchor for the asteroid belt: mid-belt, kept on Earth's side of the Sun.
@@ -277,6 +287,9 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
   const camPos = new THREE.Vector3();
   const bodyPos = new THREE.Vector3();
   const boosts = new Map<BodyId, number>();
+  let emphasis = 1;
+  let emphasisTarget = 1;
+  let lastT: number | null = null;
 
   const solar: SolarSystem = {
     root,
@@ -284,6 +297,13 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
     pickables,
     update(tSec) {
       for (const rig of rigs.values()) rig.update(tSec);
+      const dt = lastT === null ? 0 : Math.min(0.25, Math.max(0, tSec - lastT));
+      lastT = tSec;
+      emphasis = stepEmphasis(emphasis, emphasisTarget, dt);
+      for (const o of orbitLines) {
+        o.line.setPlanetAngle(o.pivot.rotation.y);
+        o.line.setEmphasis(emphasis);
+      }
       deco.update();
       belt.update(tSec);
       beltPivot.rotation.y = orbitalAngle(EARTH_YEAR_DAYS, tSec, INITIAL_PHASE.earth);
@@ -376,6 +396,12 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
         moon.tiltGroup.visible = visible;
         moon.pickProxy.layers.set(visible ? 0 : UNPICKABLE_LAYER);
       }
+    },
+    setViewport(w, h, pixelRatio) {
+      for (const o of orbitLines) o.line.setViewport(w, h, pixelRatio);
+    },
+    setOrbitFocus(focused) {
+      emphasisTarget = focused ? ORBIT_STYLE.focusEmphasis : 1;
     },
     setTierSettings(next) {
       for (const rig of rigs.values()) rig.setSegments(next);
