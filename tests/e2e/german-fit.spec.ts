@@ -27,7 +27,7 @@ async function expectFits(
   page: Page,
   scope: string,
   label: string,
-  opts: { buttons?: boolean } = {},
+  opts: { buttons?: boolean; iconOnly?: boolean } = {},
 ): Promise<void> {
   expect(
     await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
@@ -79,7 +79,8 @@ async function expectFits(
     return { out, texts, buttons };
   }, scope);
   expect(result.out, label).toEqual([]);
-  expect(result.texts, `${label}: no text measured`).toBeGreaterThan(0);
+  // Icon-only buttons (the control cluster on a phone) carry no visible text.
+  if (!opts.iconOnly) expect(result.texts, `${label}: no text measured`).toBeGreaterThan(0);
   if (opts.buttons) expect(result.buttons, `${label}: no button measured`).toBeGreaterThan(0);
 }
 
@@ -119,11 +120,34 @@ test.describe('German layout fit', () => {
 
     await expectFits(page, '[data-testid="hint"]', 'hint');
     await expectFits(page, '[data-testid="not-to-scale"]', 'disclaimer');
-    await expectFits(page, '[data-testid="lang"]', 'lang button', { buttons: true });
-    await expectFits(page, '[data-testid="credits"]', 'credits button', { buttons: true });
-    await expectFits(page, '[data-testid="sound"]', 'sound button', { buttons: true });
-    await expectFits(page, '[data-testid="tour"]', 'tour button', { buttons: true });
+    await expectFits(page, '[data-testid="lang"]', 'lang button', {
+      buttons: true,
+      iconOnly: true,
+    });
+    await expectFits(page, '[data-testid="credits"]', 'credits button', {
+      buttons: true,
+      iconOnly: true,
+    });
+    await expectFits(page, '[data-testid="sound"]', 'sound button', {
+      buttons: true,
+      iconOnly: true,
+    });
+    await expectFits(page, '[data-testid="tour"]', 'tour button', {
+      buttons: true,
+      iconOnly: true,
+    });
+    await expectFits(page, '[data-testid="settings"]', 'settings button', {
+      buttons: true,
+      iconOnly: true,
+    });
     await expectLabelsFit(page, 'body labels');
+
+    await page.getByTestId('settings').click();
+    await expect(page.getByTestId('settings-panel')).toBeVisible();
+    await page.waitForTimeout(400);
+    await expectFits(page, '[data-testid="settings-panel"]', 'settings panel', { buttons: true });
+    await page.keyboard.press('Escape');
+    await expect(page.getByTestId('settings-panel')).toBeHidden();
 
     await page.evaluate(() => {
       void (window as unknown as AppWindow).__app.select('earth');

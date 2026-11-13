@@ -979,7 +979,7 @@ kbd {
 @keyframes sse-pop {
   from {
     opacity: 0;
-    transform: translateY(-4px) scale(0.98);
+    transform: translateY(-4px);
   }
   to {
     opacity: 1;
