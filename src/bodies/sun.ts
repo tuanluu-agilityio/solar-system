@@ -125,6 +125,9 @@ const surfaceFragment = /* glsl */ `
   // Granulation: bright convection cells separated by narrow dark intergranular lanes.
   float granulation(vec3 p, float t) {
   #if SUN_DETAIL == 1
+    // Warp the lattice so cell walls curve and vary in width: straight Voronoi edges read as
+    // a wire mesh in a close-up.
+    p += 0.42 * (vec3(vnoise(p * 1.3 + 3.1), vnoise(p * 1.3 + 17.7), vnoise(p * 1.3 + 41.3)) - 0.5);
     vec3 fl = floor(p);
     ivec3 i = ivec3(fl);
     vec3 f = p - fl;
@@ -145,7 +148,10 @@ const surfaceFragment = /* glsl */ `
       else if (dd < f2) { f2 = dd; }
     }
     // Bright, domed granule centres falling off into soft dark lanes.
-    float lane = smoothstep(0.0, 0.5, sqrt(f2) - sqrt(f1));
+    float edge = sqrt(f2) - sqrt(f1);
+    float laneWidth = 0.45 + 0.5 * vnoise(p * 0.9 + 9.0);
+    float lane = smoothstep(0.0, laneWidth, edge);
+    lane = mix(0.38, 1.0, lane * lane * (3.0 - 2.0 * lane));
     float dome = 1.0 - smoothstep(0.0, 0.9, sqrt(f1));
     // Granules differ in brightness and carry faint internal structure.
     float inner = 0.8 + 0.4 * vnoise(p * 2.7 + t * 0.2);
