@@ -1,6 +1,9 @@
 // Downloads Solar System Scope textures, converts them to WebP (low + high sets)
 // and writes public/textures/manifest.json. Idempotent; source files are cached.
-import { existsSync, mkdirSync, statSync, writeFileSync } from 'node:fs';
+//   node scripts/fetch-textures.mjs [--only key1,key2]
+// `--only` converts just those keys and merges them into the existing manifest, leaving every
+// other committed file untouched.
+import { existsSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
@@ -12,7 +15,9 @@ const BASE_URL = 'https://www.solarsystemscope.com/textures/download/';
 const QUALITY = 82;
 const RETRIES = 3;
 
-// key -> source file. `kind` selects special handling; `native` caps both sets at the source size.
+// key -> source file. `kind` selects special handling; `lowWidth` overrides the low-set width
+// (the low set is the initial download, so data maps that only refine shading stay small).
+// TIFF sources (Earth normal and specular maps) are read by sharp like any other format.
 const SOURCES = [
   { key: 'sun', file: '8k_sun.jpg' },
   { key: 'mercury', file: '8k_mercury.jpg' },
@@ -21,6 +26,8 @@ const SOURCES = [
   { key: 'earth_day', file: '8k_earth_daymap.jpg' },
   { key: 'earth_night', file: '8k_earth_nightmap.jpg' },
   { key: 'earth_clouds', file: '8k_earth_clouds.jpg', kind: 'clouds' },
+  { key: 'earth_normal', file: '8k_earth_normal_map.tif', kind: 'data', lowWidth: 1024 },
+  { key: 'earth_specular', file: '8k_earth_specular_map.tif', kind: 'mask', lowWidth: 1024 },
   { key: 'moon', file: '8k_moon.jpg' },
   { key: 'mars', file: '8k_mars.jpg' },
   { key: 'jupiter', file: '8k_jupiter.jpg' },
@@ -104,11 +111,24 @@ async function plutoPipeline() {
   return sharp(Buffer.from(svg)).removeAlpha();
 }
 
+function onlyKeys() {
+  const i = process.argv.indexOf('--only');
+  if (i < 0) return null;
+  return new Set(String(process.argv[i + 1] ?? '').split(',').filter(Boolean));
+}
+
+function readManifest() {
+  const path = resolve(OUT, 'manifest.json');
+  if (!existsSync(path)) return { low: {}, high: {} };
+  return JSON.parse(readFileSync(path, 'utf8'));
+}
+
 async function main() {
   mkdirSync(CACHE, { recursive: true });
   for (const set of ['low', 'high']) mkdirSync(resolve(OUT, set), { recursive: true });
 
-  const manifest = { low: {}, high: {} };
+  const only = onlyKeys();
+  const manifest = only ? readManifest() : { low: {}, high: {} };
   const sizes = { low: 0, high: 0 };
   const record = (set, key, bytes) => {
     manifest[set][key] = `textures/${set}/${key}.webp`;
@@ -117,6 +137,7 @@ async function main() {
   };
 
   for (const s of SOURCES) {
+    if (only && !only.has(s.key)) continue;
     const src = await download(s.file);
     const meta = await sharp(src).metadata();
     const srcW = meta.width ?? 0;
@@ -133,26 +154,33 @@ async function main() {
       record('high', 'sky_4096', await toWebp(sharp(src).resize(4096, 2048), high));
     } else {
       for (const [set, width] of [
-        ['low', 2048],
+        ['low', s.lowWidth ?? 2048],
         ['high', 4096],
       ]) {
         const out = resolve(OUT, set, `${s.key}.webp`);
         const w = Math.min(width, srcW); // never upscale
-        const pipe =
-          s.kind === 'clouds'
-            ? await cloudsPipeline(src, w)
-            : sharp(src).resize({ width: w, withoutEnlargement: true });
+        let pipe;
+        if (s.kind === 'clouds') pipe = await cloudsPipeline(src, w);
+        else if (s.kind === 'mask') {
+          // Single-channel mask (ocean = white): greyscale keeps the WebP small.
+          pipe = sharp(src).greyscale().resize({ width: w, withoutEnlargement: true });
+        } else pipe = sharp(src).resize({ width: w, withoutEnlargement: true });
         record(set, s.key, await toWebp(pipe, out));
       }
     }
   }
 
   // Pluto: same procedural file for both sets.
+  if (only && !only.has('pluto')) return writeManifest(manifest, sizes);
   const plutoLow = resolve(OUT, 'low/pluto.webp');
   record('low', 'pluto', await toWebp(await plutoPipeline(), plutoLow));
   const plutoHigh = resolve(OUT, 'high/pluto.webp');
   record('high', 'pluto', await toWebp(await plutoPipeline(), plutoHigh));
 
+  writeManifest(manifest, sizes);
+}
+
+function writeManifest(manifest, sizes) {
   const ordered = (set) =>
     Object.fromEntries(Object.entries(set).sort(([a], [b]) => a.localeCompare(b)));
   writeFileSync(

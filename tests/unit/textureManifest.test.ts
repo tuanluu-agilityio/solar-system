@@ -12,6 +12,8 @@ const KEYS = [
   'earth_day',
   'earth_night',
   'earth_clouds',
+  'earth_normal',
+  'earth_specular',
   'moon',
   'mars',
   'jupiter',

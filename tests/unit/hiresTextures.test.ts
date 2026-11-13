@@ -37,7 +37,13 @@ function textures(keys = ALL_KEYS): Map<string, THREE.Texture> {
 
 describe('textureKeysFor', () => {
   it('lists every texture a body uses', () => {
-    expect(textureKeysFor('earth')).toEqual(['earth_day', 'earth_night', 'earth_clouds']);
+    expect(textureKeysFor('earth')).toEqual([
+      'earth_day',
+      'earth_night',
+      'earth_clouds',
+      'earth_normal',
+      'earth_specular',
+    ]);
     expect(textureKeysFor('venus')).toEqual(['venus_atmosphere', 'venus_surface']);
     expect(textureKeysFor('saturn')).toEqual(['saturn', 'saturn_ring']);
     expect(textureKeysFor('jupiter')).toEqual(['jupiter']);
