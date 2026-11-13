@@ -1,6 +1,12 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
-import { aggregateProgress, fallbackColor, skyKey, skySet } from '../../src/scene/textureKeys';
+import {
+  aggregateProgress,
+  fallbackColor,
+  isDataTextureKey,
+  skyKey,
+  skySet,
+} from '../../src/scene/textureKeys';
 import { percent } from '../../src/ui/loadingScreen';
 import { installE2EApi, type E2EApi } from '../../src/debug/e2eApi';
 import manifest from '../../public/textures/manifest.json';
@@ -14,6 +20,13 @@ describe('texture keys', () => {
   it('uses a neutral colour for unknown keys and dark for sky', () => {
     expect(fallbackColor('nope')).toBe(0x808080);
     expect(fallbackColor('sky_2048')).toBe(0x02030a);
+  });
+  it('marks the Earth normal and specular maps as linear data, colour maps as sRGB', () => {
+    expect(isDataTextureKey('earth_normal')).toBe(true);
+    expect(isDataTextureKey('earth_specular')).toBe(true);
+    for (const key of ['earth_day', 'earth_clouds', 'mars', 'saturn_ring', 'sky_2048']) {
+      expect(isDataTextureKey(key), key).toBe(false);
+    }
   });
   it('maps sky sizes to the right set and key, present in the manifest', () => {
     expect(skySet(2048)).toBe('low');

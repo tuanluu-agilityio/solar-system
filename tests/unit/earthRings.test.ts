@@ -49,12 +49,14 @@ describe('createEarthMaterial', () => {
 });
 
 describe('createCloudLayer', () => {
-  it('is a transparent shell at radius * 1.01', () => {
+  it('is a transparent, sun-lit shader shell at radius * 1.01', () => {
     const clouds = tex();
     const mesh = createCloudLayer(clouds, 2);
     expect(radiusOf(mesh)).toBeCloseTo(2.02);
-    const m = mesh.material as THREE.MeshStandardMaterial;
-    expect(m.map).toBe(clouds);
+    const m = mesh.material as THREE.ShaderMaterial;
+    expect(m).toBeInstanceOf(THREE.ShaderMaterial);
+    expect(m.uniforms.uMap!.value).toBe(clouds);
+    expect(m.uniforms.uSunPos!.value).toBeInstanceOf(THREE.Vector3);
     expect(m.transparent).toBe(true);
     expect(m.depthWrite).toBe(false);
   });
@@ -107,17 +109,19 @@ describe('solar system decorations', () => {
   const make = (tier: 'low' | 'high' = 'high') =>
     createSolarSystem(allTextures(), tierSettings(tier));
 
-  it('gives Earth the day/night shader, clouds and a blue atmosphere', () => {
+  it('gives Earth the day/night shader, clouds and a thin blue atmosphere', () => {
     const ss = make();
     const earth = ss.bodies.get('earth')!;
     expect(earth.mesh.material).toBeInstanceOf(THREE.ShaderMaterial);
     const clouds = earth.tiltGroup.getObjectByName('earth-clouds') as THREE.Mesh;
     expect(radiusOf(clouds)).toBeCloseTo(earth.radius * 1.01);
     const atmo = earth.tiltGroup.getObjectByName('earth-atmosphere') as THREE.Mesh;
-    expect(radiusOf(atmo)).toBeCloseTo(earth.radius * 1.04);
+    // Earth's air is thin: the glow hugs the limb, Rayleigh blue warming at the terminator.
+    expect(radiusOf(atmo)).toBeCloseTo(earth.radius * 1.025);
     const am = atmo.material as THREE.ShaderMaterial;
-    expect((am.uniforms.uColor!.value as THREE.Color).getHexString()).toBe('4da6ff');
-    expect(am.uniforms.uIntensity!.value).toBeCloseTo(1.0);
+    expect((am.uniforms.uColor!.value as THREE.Color).getHexString()).toBe('5b9dff');
+    expect((am.uniforms.uTwilight!.value as THREE.Color).getHexString()).toBe('e8925f');
+    expect(am.uniforms.uIntensity!.value).toBeCloseTo(0.8);
   });
 
   it('spins the clouds 1.2x as fast as Earth', () => {
@@ -133,8 +137,8 @@ describe('solar system decorations', () => {
     const textures = allTextures();
     const ss = createSolarSystem(textures, tierSettings('high'));
     const venus = ss.bodies.get('venus')!;
-    const m = venus.mesh.material as THREE.MeshStandardMaterial;
-    expect(m.map).toBe(textures.get('venus_atmosphere'));
+    const m = venus.mesh.material as THREE.ShaderMaterial;
+    expect(m.uniforms.uMap!.value).toBe(textures.get('venus_atmosphere'));
     const atmo = venus.tiltGroup.getObjectByName('venus-atmosphere') as THREE.Mesh;
     const am = atmo.material as THREE.ShaderMaterial;
     expect(am.uniforms.uIntensity!.value).toBeCloseTo(0.6);

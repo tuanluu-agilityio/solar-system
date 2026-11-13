@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { BodyId } from '../data/types';
-import { fallbackColor, textureKeysFor } from './textureKeys';
+import { fallbackColor, isDataTextureKey, textureKeysFor } from './textureKeys';
 
 export { textureKeysFor };
 
@@ -29,7 +29,7 @@ export function makeFallbackTexture(key: string): THREE.DataTexture {
   const b = hex & 255;
   for (let i = 0; i < 4; i++) data.set([r, g, b, 255], i * 4);
   const tex = new THREE.DataTexture(data, 2, 2, THREE.RGBAFormat);
-  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.colorSpace = isDataTextureKey(key) ? THREE.NoColorSpace : THREE.SRGBColorSpace;
   tex.needsUpdate = true;
   // Lets overlay layers (clouds, ring alpha) tell a solid stand-in from a real map.
   tex.userData.isFallback = true;
@@ -58,7 +58,7 @@ export async function loadTextureSet(
       try {
         if (!rel) throw new Error('not in manifest');
         tex = await loader.loadAsync(`${import.meta.env.BASE_URL}${rel}`);
-        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.colorSpace = isDataTextureKey(key) ? THREE.NoColorSpace : THREE.SRGBColorSpace;
       } catch (err) {
         console.warn(`Texture "${set}/${key}" failed to load, using fallback colour`, err);
         tex = makeFallbackTexture(key);

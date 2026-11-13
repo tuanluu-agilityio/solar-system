@@ -384,6 +384,9 @@ async function boot(): Promise<void> {
   const solar = createSolarSystem(lowTex, tierSettings(store.get().quality));
   solarRef = solar;
   scene.add(solar.root);
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  solar.setReducedMotion(reducedMotion?.matches ?? false);
+  reducedMotion?.addEventListener?.('change', (e) => solar.setReducedMotion(e.matches));
   syncOrbitViewport();
   solar.setOrbitFocus(store.get().view !== 'overview');
   solar.setOrbitsVisible(orbitsOn);
@@ -503,7 +506,7 @@ async function boot(): Promise<void> {
     sun.update(tSec);
     // Planets run on the simulation clock (speed control); the Sun keeps wall time.
     simClock.advance(dt);
-    solar.update(simClock.time);
+    solar.update(simClock.time, dt);
     rig.update(dt * rigTimeScale);
     deepSpace.update(tSec, camera, renderer.getPixelRatio());
     solar.applyOverviewBoost(camera, canvas.clientHeight || window.innerHeight);

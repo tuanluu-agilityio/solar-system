@@ -20,6 +20,8 @@ export interface TierSettings {
   textureSet: 'low' | 'high';
   atmosphere: boolean;
   ringShadow: boolean;
+  /** Planet relief, cloud flow, Earth normal map and cloud shadows, fine ring structure. */
+  planetDetail: boolean;
   skySize: 2048 | 4096;
   antialias: boolean;
   /** Procedural background stars (src/scene/starfield.ts). */
@@ -37,6 +39,7 @@ const TIERS: Record<QualityTier, TierSettings> = {
     textureSet: 'low',
     atmosphere: true,
     ringShadow: false,
+    planetDetail: false,
     skySize: 2048,
     antialias: false,
     starCount: 7000,
@@ -49,6 +52,7 @@ const TIERS: Record<QualityTier, TierSettings> = {
     textureSet: 'low',
     atmosphere: true,
     ringShadow: false,
+    planetDetail: true,
     skySize: 4096,
     antialias: true,
     starCount: 12000,
@@ -61,6 +65,7 @@ const TIERS: Record<QualityTier, TierSettings> = {
     textureSet: 'high',
     atmosphere: true,
     ringShadow: true,
+    planetDetail: true,
     skySize: 4096,
     antialias: true,
     starCount: 18000,
@@ -79,6 +84,7 @@ const TIERS: Record<QualityTier, TierSettings> = {
     antialias: true,
     starCount: 26000,
     dustCount: 800,
+    planetDetail: true,
   },
 };
 

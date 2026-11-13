@@ -297,6 +297,17 @@ describe('createSolarSystem', () => {
       expect(e).toBeLessThan(1);
     });
 
+    it('fades on real frame time when given, so paused simulation time still fades', () => {
+      const ss = make();
+      ss.update(5, 0.05);
+      ss.setOrbitFocus(true);
+      // Simulation time stands still (paused); only wall time passes.
+      for (let i = 0; i < 160; i++) ss.update(5, 0.05);
+      for (const { mat } of orbits(ss)) {
+        expect(Math.abs(num(mat, 'uEmphasis') - ORBIT_STYLE.focusEmphasis)).toBeLessThan(0.01);
+      }
+    });
+
     it('does not allocate objects or call the tuple helper per update', () => {
       const ss = make();
       ss.update(1);
