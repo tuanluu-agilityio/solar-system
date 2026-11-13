@@ -1,4 +1,5 @@
 import { t } from '../i18n/i18n';
+import { icon, setIcon, type IconName } from './icons';
 import type { AppState } from '../state/appState';
 import type { Store } from '../state/store';
 
@@ -12,12 +13,12 @@ export interface ControlActions {
 /** A press on the canvas counts as a drag once the pointer moved this far. */
 const DRAG_DISMISS_PX = 8;
 
-function button(testId: string, text = ''): HTMLButtonElement {
+function button(testId: string, iconName?: IconName): HTMLButtonElement {
   const b = document.createElement('button');
   b.type = 'button';
   b.className = 'ctl-btn glass';
   b.setAttribute('data-testid', testId);
-  b.textContent = text;
+  if (iconName) b.append(icon(iconName));
   return b;
 }
 
@@ -30,24 +31,24 @@ export function createControlBar(
   root: HTMLElement,
   store: Store<AppState>,
   actions: ControlActions,
-): { dispose(): void } {
+): { dispose(): void; settingsButton: HTMLButtonElement } {
   const title = document.createElement('h1');
   title.className = 'app-title';
   title.setAttribute('data-testid', 'title');
 
   const cluster = document.createElement('div');
   cluster.className = 'control-cluster';
-  const lang = button('lang', '文A');
+  const lang = button('lang', 'globe');
   lang.setAttribute('aria-haspopup', 'dialog');
   const sound = button('sound');
   const tour = button('tour');
-  const tourIcon = document.createElement('span');
-  tourIcon.setAttribute('aria-hidden', 'true');
   const tourText = document.createElement('span');
   tourText.className = 'ctl-label';
-  tour.append(tourIcon, tourText);
-  const credits = button('credits', 'ⓘ');
-  cluster.append(lang, sound, tour, credits);
+  tour.append(icon('play'), tourText);
+  // The settings popover (src/ui/settings.ts) owns this button's click.
+  const settingsBtn = button('settings', 'cog');
+  const credits = button('credits', 'info');
+  cluster.append(lang, sound, tour, settingsBtn, credits);
 
   const hint = document.createElement('p');
   hint.className = 'hint glass';
@@ -64,12 +65,12 @@ export function createControlBar(
     title.textContent = t(s.lang, 'appTitle');
     lang.setAttribute('aria-label', t(s.lang, 'lang.switch'));
     // The label names the action, like `tour.start`: muted -> "Sound on".
-    sound.textContent = s.muted ? '🔇' : '🔊';
+    setIcon(sound, s.muted ? 'volumeOff' : 'volumeOn');
     sound.setAttribute('aria-label', t(s.lang, s.muted ? 'sound.on' : 'sound.off'));
     sound.setAttribute('aria-pressed', String(!s.muted));
     const running = s.tour.status !== 'idle' && s.tour.status !== 'finished';
     const tourLabel = t(s.lang, running ? 'tour.stop' : 'tour.start');
-    tourIcon.textContent = running ? '■' : '▶';
+    setIcon(tour, running ? 'stop' : 'play');
     tourText.textContent = tourLabel;
     tour.setAttribute('aria-label', tourLabel);
     credits.setAttribute('aria-label', t(s.lang, 'credits.title'));
@@ -112,6 +113,7 @@ export function createControlBar(
   });
 
   return {
+    settingsButton: settingsBtn,
     dispose() {
       unsub();
       window.removeEventListener('pointerdown', onDown);

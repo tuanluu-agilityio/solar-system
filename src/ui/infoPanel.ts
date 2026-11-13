@@ -1,7 +1,10 @@
 import { BODIES } from '../data/bodies';
 import { getContent } from '../data/content';
 import type { BodyDef, ContentId, Lang } from '../data/types';
+import { NAV_ORDER } from '../data/navOrder';
 import { formatNumber, t } from '../i18n/i18n';
+import { neighbour } from '../interaction/keyboard';
+import { icon } from './icons';
 import type { UiKey } from '../i18n/strings';
 import type { AppState } from '../state/appState';
 import type { Store } from '../state/store';
@@ -9,6 +12,25 @@ import type { Store } from '../state/store';
 export interface PanelField {
   key: UiKey;
   value: string;
+}
+
+/** Rows of the orbit and rotation section; every other row is physical. */
+const ORBIT_KEYS: ReadonlySet<UiKey> = new Set<UiKey>([
+  'field.distance',
+  'field.distanceEarth',
+  'field.orbitalPeriod',
+  'field.rotationPeriod',
+]);
+
+/** Splits the rows into the physical and the orbit sections (empty sections are dropped). */
+export function panelSections(
+  fields: readonly PanelField[],
+): { title: UiKey; fields: PanelField[] }[] {
+  const sections: { title: UiKey; fields: PanelField[] }[] = [
+    { title: 'section.physical', fields: fields.filter((f) => !ORBIT_KEYS.has(f.key)) },
+    { title: 'section.orbit', fields: fields.filter((f) => ORBIT_KEYS.has(f.key)) },
+  ];
+  return sections.filter((s) => s.fields.length > 0);
 }
 
 export type SheetState = 'peek' | 'expanded';
@@ -81,6 +103,12 @@ export function panelFields(def: BodyDef, lang: Lang): PanelField[] {
   if (p.knownMoons !== undefined) {
     out.push({ key: 'field.moons', value: formatNumber(lang, p.knownMoons) });
   }
+  if (p.atmosphere && p.atmosphere.length > 0) {
+    out.push({
+      key: 'field.atmosphere',
+      value: p.atmosphere.map((a) => `${a.gas} ${formatNumber(lang, a.percent, 2)}%`).join(' · '),
+    });
+  }
   return out;
 }
 
@@ -105,6 +133,7 @@ export function createInfoPanel(
   root: HTMLElement,
   store: Store<AppState>,
   onBack: () => void,
+  onStep: (id: ContentId) => void = () => undefined,
 ): { dispose(): void } {
   const panel = el('aside', 'info-panel glass');
   panel.setAttribute('data-testid', 'panel');
@@ -116,21 +145,35 @@ export function createInfoPanel(
   const head = el('div', 'panel-head');
   const title = el('h2', 'panel-title');
   const sub = el('p', 'panel-sub');
-  head.append(title, sub);
+  head.append(sub, title);
   grab.append(handle, head);
 
-  const back = el('button', 'ctl-btn glass panel-back');
+  const actions = el('div', 'panel-actions');
+  const back = el('button', 'ctl-btn panel-back');
   back.type = 'button';
   back.setAttribute('data-testid', 'back');
+  const backLabel = el('span');
+  back.append(icon('chevronLeft'), backLabel);
+  const stepper = el('div', 'panel-stepper');
+  const prev = el('button', 'ctl-btn panel-step');
+  prev.type = 'button';
+  prev.setAttribute('data-testid', 'panel-prev');
+  prev.append(icon('chevronLeft'));
+  const next = el('button', 'ctl-btn panel-step');
+  next.type = 'button';
+  next.setAttribute('data-testid', 'panel-next');
+  next.append(icon('chevronRight'));
+  stepper.append(prev, next);
+  actions.append(back, stepper);
 
   const scroll = el('div', 'panel-scroll');
-  const fields = el('dl', 'panel-fields');
+  const sections = el('div', 'panel-sections');
   const desc = el('p', 'panel-desc');
   const factsTitle = el('h3', 'panel-facts-title');
   const facts = el('ul', 'panel-facts');
   const source = el('p', 'panel-source');
-  scroll.append(fields, desc, factsTitle, facts, source);
-  panel.append(grab, back, scroll);
+  scroll.append(sections, desc, factsTitle, facts, source);
+  panel.append(grab, actions, scroll);
   root.append(panel);
 
   let sheet: SheetState = 'peek';
@@ -167,16 +210,28 @@ export function createInfoPanel(
       def && def.orderFromSun !== null
         ? t(lang, 'panel.order', { kind: content.kindLabel, n: def.orderFromSun })
         : content.kindLabel;
-    back.textContent = t(lang, 'backToOverview');
-    fields.replaceChildren(
-      ...(def ? panelFields(def, lang) : []).flatMap((f) => {
-        const row = el('div', 'panel-field');
-        const dt = el('dt');
-        dt.textContent = t(lang, f.key);
-        const dd = el('dd');
-        dd.textContent = f.value;
-        row.append(dt, dd);
-        return [row];
+    backLabel.textContent = t(lang, 'backToOverview');
+    prev.setAttribute('aria-label', t(lang, 'panel.prev'));
+    next.setAttribute('aria-label', t(lang, 'panel.next'));
+    sections.replaceChildren(
+      ...panelSections(def ? panelFields(def, lang) : []).map((sec) => {
+        const box = el('section', 'panel-section');
+        const h = el('h3', 'panel-section-title');
+        h.textContent = t(lang, sec.title);
+        const list = el('dl', 'panel-fields');
+        list.append(
+          ...sec.fields.map((f) => {
+            const row = el('div', 'panel-field');
+            const dt = el('dt');
+            dt.textContent = t(lang, f.key);
+            const dd = el('dd');
+            dd.textContent = f.value;
+            row.append(dt, dd);
+            return row;
+          }),
+        );
+        box.append(h, list);
+        return box;
       }),
     );
     desc.textContent = content.description;
@@ -194,6 +249,12 @@ export function createInfoPanel(
   render();
 
   back.addEventListener('click', () => onBack());
+  const step = (dir: 1 | -1): void => {
+    const id = neighbour({ order: NAV_ORDER, selected: store.get().selected }, dir);
+    if (id) onStep(id);
+  };
+  prev.addEventListener('click', () => step(-1));
+  next.addEventListener('click', () => step(1));
 
   // Drag on the handle/header: up toggles to expanded, down returns to peek or closes.
   let startY: number | null = null;

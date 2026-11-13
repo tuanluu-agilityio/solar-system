@@ -1,4 +1,5 @@
 import { t } from '../i18n/i18n';
+import { icon } from './icons';
 import type { AppState } from '../state/appState';
 import type { Store } from '../state/store';
 import type { Cue } from '../tour/narration';
@@ -28,12 +29,9 @@ export function createSubtitles(
   unmute.setAttribute('data-testid', 'tour-unmute');
   unmute.hidden = true;
   // On phones only the icon shows (`.ctl-label` collapses), keeping the tour dock short.
-  const unmuteIcon = document.createElement('span');
-  unmuteIcon.setAttribute('aria-hidden', 'true');
-  unmuteIcon.textContent = '🔊';
   const unmuteText = document.createElement('span');
   unmuteText.className = 'ctl-label';
-  unmute.append(unmuteIcon, unmuteText);
+  unmute.append(icon('volumeOn'), unmuteText);
   const caption = document.createElement('p');
   caption.className = 'subtitles glass';
   caption.setAttribute('data-testid', 'subtitles');

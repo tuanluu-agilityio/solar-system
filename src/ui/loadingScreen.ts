@@ -15,6 +15,9 @@ export function createLoadingScreen(parent: HTMLElement, lang: Lang): LoadingScr
   const root = document.createElement('div');
   root.id = 'loading-screen';
   root.setAttribute('role', 'status');
+  const brand = document.createElement('p');
+  brand.className = 'loading-title';
+  brand.textContent = t(lang, 'appTitle');
   const label = document.createElement('p');
   label.className = 'loading-label';
   label.textContent = t(lang, 'loading');
@@ -28,7 +31,7 @@ export function createLoadingScreen(parent: HTMLElement, lang: Lang): LoadingScr
   bar.append(fill);
   const pct = document.createElement('p');
   pct.className = 'loading-percent';
-  root.append(label, bar, pct);
+  root.append(brand, label, bar, pct);
   parent.append(root);
 
   const set = (f: number): void => {
