@@ -67,8 +67,8 @@ describe('SolarSystem.upgradeTextures', () => {
     const dispose = vi.spyOn(lowJupiter, 'dispose');
     const hi = tex();
     ss.upgradeTextures('jupiter', new Map([['jupiter', hi]]));
-    const m = ss.bodies.get('jupiter')!.mesh.material as THREE.MeshStandardMaterial;
-    expect(m.map).toBe(hi);
+    const m = ss.bodies.get('jupiter')!.mesh.material as THREE.ShaderMaterial;
+    expect(m.uniforms.uMap!.value).toBe(hi);
     expect(dispose).toHaveBeenCalledTimes(1);
   });
 
@@ -94,7 +94,38 @@ describe('SolarSystem.upgradeTextures', () => {
     expect(m.uniforms.uDay!.value).toBe(hi.get('earth_day'));
     expect(m.uniforms.uNight!.value).toBe(hi.get('earth_night'));
     const clouds = ss.root.getObjectByName('earth-clouds') as THREE.Mesh;
-    expect((clouds.material as THREE.MeshStandardMaterial).map).toBe(hi.get('earth_clouds'));
+    expect((clouds.material as THREE.ShaderMaterial).uniforms.uMap!.value).toBe(
+      hi.get('earth_clouds'),
+    );
+    // The surface shader samples the same clouds for its cloud shadows.
+    expect(m.uniforms.uClouds!.value).toBe(hi.get('earth_clouds'));
+  });
+
+  it('swaps in the Earth normal and specular maps and frees the low ones', () => {
+    const low = textures([...ALL_KEYS, 'earth_normal', 'earth_specular']);
+    const ss = createSolarSystem(low, tierSettings('high'));
+    const m = ss.bodies.get('earth')!.mesh.material as THREE.ShaderMaterial;
+    expect(m.uniforms.uNormal!.value).toBe(low.get('earth_normal'));
+    expect(m.uniforms.uHasSpecular!.value).toBe(1);
+    const disposeNormal = vi.spyOn(low.get('earth_normal')!, 'dispose');
+    const hi = new Map([
+      ['earth_normal', tex()],
+      ['earth_specular', tex()],
+    ]);
+    ss.upgradeTextures('earth', hi);
+    expect(m.uniforms.uNormal!.value).toBe(hi.get('earth_normal'));
+    expect(m.uniforms.uSpecular!.value).toBe(hi.get('earth_specular'));
+    expect(m.uniforms.uHasNormal!.value).toBe(1);
+    expect(disposeNormal).toHaveBeenCalledTimes(1);
+  });
+
+  it('falls back gracefully when Earth has no normal or specular map yet', () => {
+    const low = textures();
+    low.set('earth_normal', makeFallbackTexture('earth_normal'));
+    const ss = createSolarSystem(low, tierSettings('high'));
+    const m = ss.bodies.get('earth')!.mesh.material as THREE.ShaderMaterial;
+    expect(m.uniforms.uHasNormal!.value).toBe(0);
+    expect(m.uniforms.uHasSpecular!.value).toBe(0);
   });
 
   it('swaps the Saturn ring strip and Venus atmosphere map', () => {
@@ -108,18 +139,21 @@ describe('SolarSystem.upgradeTextures', () => {
     expect((ring.material as THREE.ShaderMaterial).uniforms.uMap!.value).toBe(
       hi.get('saturn_ring'),
     );
+    // Saturn's globe samples the same strip for the ring shadow.
+    const sm = ss.bodies.get('saturn')!.mesh.material as THREE.ShaderMaterial;
+    expect(sm.uniforms.uRingMap!.value).toBe(hi.get('saturn_ring'));
     const venus = new Map([['venus_atmosphere', tex()]]);
     ss.upgradeTextures('venus', venus);
-    const vm = ss.bodies.get('venus')!.mesh.material as THREE.MeshStandardMaterial;
-    expect(vm.map).toBe(venus.get('venus_atmosphere'));
+    const vm = ss.bodies.get('venus')!.mesh.material as THREE.ShaderMaterial;
+    expect(vm.uniforms.uMap!.value).toBe(venus.get('venus_atmosphere'));
   });
 
   it('ignores fallback stand-ins from a failed high load', () => {
     const low = textures();
     const ss = createSolarSystem(low, tierSettings('high'));
     ss.upgradeTextures('jupiter', new Map([['jupiter', makeFallbackTexture('jupiter')]]));
-    const m = ss.bodies.get('jupiter')!.mesh.material as THREE.MeshStandardMaterial;
-    expect(m.map).toBe(low.get('jupiter'));
+    const m = ss.bodies.get('jupiter')!.mesh.material as THREE.ShaderMaterial;
+    expect(m.uniforms.uMap!.value).toBe(low.get('jupiter'));
   });
 });
 

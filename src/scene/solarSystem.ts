@@ -6,6 +6,7 @@ import {
   ASTEROID_BELT_MKM,
   MOON_ORBIT_DISPLAY,
   displayOrbitRadius,
+  displayPlanetRadius,
   displayRadius,
 } from '../config/scale';
 import { overviewBoost } from '../camera/framing';
@@ -20,11 +21,28 @@ import {
 } from '../bodies/planet';
 import {
   CLOUD_SPIN_FACTOR,
+  EARTH_ATMOSPHERE_SCALE,
   createAtmosphere,
   createCloudLayer,
   createEarthMaterial,
+  setEarthMap,
 } from '../bodies/earth';
 import { createRing } from '../bodies/rings';
+import {
+  createPlanetClock,
+  createPlanetMaterial,
+  setPlanetMap,
+  type PlanetClock,
+  type RingShadowSource,
+} from '../bodies/planetMaterial';
+import {
+  PLANET_LOOKS,
+  cloudUvOffset,
+  driftOffset,
+  shaderTime,
+  type LookBodyId,
+  type PlanetLook,
+} from '../bodies/planetLook';
 import { createAsteroidBelt } from '../bodies/asteroidBelt';
 import { createOrbitLine, type OrbitLine } from '../bodies/orbitLine';
 import { ORBIT_STYLE, stepEmphasis } from '../bodies/orbitMath';
@@ -56,6 +74,8 @@ export interface SolarSystem {
   setViewport(drawingWidthPx: number, drawingHeightPx: number, pixelRatio: number): void;
   /** Dims the orbit ribbons while the camera is focused on a body. */
   setOrbitFocus(focused: boolean): void;
+  /** Freezes the animated cloud and band flow (`prefers-reduced-motion`); orbits keep moving. */
+  setReducedMotion(reduced: boolean): void;
 }
 
 const BELT_FOCUS_RADIUS = 12;
@@ -69,10 +89,19 @@ const TEXTURE_KEYS: Partial<Record<BodyId, string[]>> = {
   earth: ['earth_day'],
 };
 
-const EARTH_ATMOSPHERE = { color: '#4da6ff', intensity: 1.0 };
-const VENUS_ATMOSPHERE = { color: '#ffe9b0', intensity: 0.6 };
+type ShellLook = NonNullable<PlanetLook['shell']>;
+
+/** Thin Rayleigh blue by day, warming toward orange at the terminator. */
+const EARTH_ATMOSPHERE: ShellLook = {
+  color: '#5b9dff',
+  intensity: 0.8,
+  scale: EARTH_ATMOSPHERE_SCALE,
+  twilight: '#e8925f',
+};
 const SATURN_RING = { inner: 1.24, outer: 2.3, opacity: 0.9, plainOpacity: 0.35 };
 const URANUS_RING = { inner: 1.6, outer: 2.0, opacity: 0.12 };
+/** Uranus' rings are a few narrow ringlets: no fine ringlet noise or tint on top. */
+const URANUS_RING_STYLE = { ringlets: 0, narrow: 1, tint: 0 };
 /** The Moon hides while Earth's and its own shown radii would cover this share of its orbit. */
 const MOON_CLEARANCE = 0.8;
 /** A boosted pick proxy stays this much larger than the shown body. */
@@ -81,6 +110,9 @@ const PICK_BOOST_MARGIN = 1.2;
 const UNPICKABLE_LAYER = 1;
 /** The sun is the world origin. */
 const SUN_WORLD_POS = new THREE.Vector3(0, 0, 0);
+
+type TexUniform = THREE.IUniform<THREE.Texture | null>;
+type NumUniform = THREE.IUniform<number>;
 
 function bodyTexture(tex: Map<string, THREE.Texture>, id: BodyId): THREE.Texture {
   const keys = TEXTURE_KEYS[id] ?? [id];
@@ -95,9 +127,20 @@ function texOrFallback(tex: Map<string, THREE.Texture>, key: string): THREE.Text
   return tex.get(key) ?? makeFallbackTexture(key);
 }
 
+/** A loaded map, or null when it is absent or a solid fallback stand-in. */
+function realTexture(tex: Map<string, THREE.Texture>, key: string): THREE.Texture | null {
+  const t = tex.get(key);
+  return t && !isFallbackTexture(t) ? t : null;
+}
+
 function materialsOf(o: THREE.Object3D): THREE.Material[] {
   const m = (o as THREE.Mesh).material as THREE.Material | THREE.Material[] | undefined;
   return m ? (Array.isArray(m) ? m : [m]) : [];
+}
+
+function uniformsOf(o: THREE.Object3D | undefined): Record<string, THREE.IUniform<unknown>> {
+  const m = (o as THREE.Mesh | undefined)?.material as THREE.ShaderMaterial | undefined;
+  return m?.uniforms ?? {};
 }
 
 function usesTexture(m: THREE.Material, t: THREE.Texture): boolean {
@@ -107,7 +150,43 @@ function usesTexture(m: THREE.Material, t: THREE.Texture): boolean {
   return u !== undefined && Object.values(u).some((x) => x.value === t);
 }
 
-/** Extra layers: Earth clouds and atmospheres, Saturn and Uranus rings. */
+/** Saturn's ring strip as its shadow source on the globe (no map: the plain faint band). */
+function saturnRingSource(tex: Map<string, THREE.Texture>): RingShadowSource {
+  const radius = displayPlanetRadius(BODIES.saturn.physical.diameterKm);
+  const map = realTexture(tex, 'saturn_ring');
+  return {
+    map,
+    inner: radius * SATURN_RING.inner,
+    outer: radius * SATURN_RING.outer,
+    opacity: map ? SATURN_RING.opacity : SATURN_RING.plainOpacity,
+  };
+}
+
+/** Earth gets its own shader; every other body the shared planet shader with its look. */
+function createBodyMaterial(
+  id: Exclude<BodyId, 'sun'>,
+  texture: THREE.Texture,
+  tex: Map<string, THREE.Texture>,
+  clock: PlanetClock,
+): THREE.ShaderMaterial {
+  if (id === 'earth') {
+    return createEarthMaterial(
+      texture,
+      texOrFallback(tex, 'earth_night'),
+      SUN_WORLD_POS,
+      {
+        normal: realTexture(tex, 'earth_normal'),
+        specular: realTexture(tex, 'earth_specular'),
+        clouds: realTexture(tex, 'earth_clouds'),
+      },
+      clock.uDetail,
+    );
+  }
+  const ring = id === 'saturn' ? saturnRingSource(tex) : undefined;
+  return createPlanetMaterial(texture, PLANET_LOOKS[id], clock, ring);
+}
+
+/** Extra layers: Earth clouds, atmosphere shells, Saturn and Uranus rings. */
 interface Decorations {
   update(): void;
   /** Swaps the cloud map and the Saturn ring strip when `tex` has real ones. */
@@ -121,6 +200,7 @@ function decorate(
   bodies: Map<BodyId, BodyObject>,
   tex: Map<string, THREE.Texture>,
   s: TierSettings,
+  clock: PlanetClock,
 ): Decorations {
   const get = (id: BodyId): BodyObject => {
     const b = bodies.get(id);
@@ -132,41 +212,45 @@ function decorate(
   const shadowedRings: THREE.ShaderMaterial[] = [];
 
   const earth = get('earth');
-  const cloudTex = tex.get('earth_clouds');
+  const earthMat = earth.mesh.material as THREE.ShaderMaterial;
+  const cloudTex = realTexture(tex, 'earth_clouds');
   // A solid fallback colour would be an opaque shell hiding Earth: no real map, no clouds.
-  const clouds =
-    cloudTex && !isFallbackTexture(cloudTex)
-      ? createCloudLayer(cloudTex, earth.radius, segments)
-      : null;
+  const clouds = cloudTex ? createCloudLayer(cloudTex, earth.radius, segments) : null;
   if (clouds) {
     clouds.name = 'earth-clouds';
     earth.tiltGroup.add(clouds);
   }
 
-  for (const [id, a] of [
-    ['earth', EARTH_ATMOSPHERE],
-    ['venus', VENUS_ATMOSPHERE],
-  ] as const) {
+  // Airless bodies have no shell (their look's `shell` is null).
+  const shells: [BodyId, ShellLook][] = [['earth', EARTH_ATMOSPHERE]];
+  for (const id of Object.keys(PLANET_LOOKS) as LookBodyId[]) {
+    const shell = PLANET_LOOKS[id].shell;
+    if (shell) shells.push([id, shell]);
+  }
+  for (const [id, a] of shells) {
     const body = get(id);
-    const atmo = createAtmosphere(body.radius, a.color, a.intensity, segments);
+    const atmo = createAtmosphere(body.radius, a.color, a.intensity, segments, {
+      scale: a.scale,
+      twilight: a.twilight,
+    });
     atmo.name = `${id}-atmosphere`;
     body.tiltGroup.add(atmo);
     atmospheres.push(atmo);
   }
 
   const saturn = get('saturn');
+  const saturnMat = saturn.mesh.material as THREE.ShaderMaterial;
   // Without the real alpha strip, a plain faint band beats an opaque solid disc.
-  const ringTex = tex.get('saturn_ring');
-  const hasRingMap = ringTex !== undefined && !isFallbackTexture(ringTex);
+  const ringSource = saturnRingSource(tex);
   const sRing = createRing(
     saturn.radius * SATURN_RING.inner,
     saturn.radius * SATURN_RING.outer,
-    hasRingMap ? ringTex : null,
-    hasRingMap ? SATURN_RING.opacity : SATURN_RING.plainOpacity,
+    ringSource.map,
+    ringSource.opacity,
   );
   sRing.name = 'saturn-ring';
   const sMat = sRing.material as THREE.ShaderMaterial;
-  (sMat.uniforms.uPlanetRadius as THREE.IUniform<number>).value = saturn.radius;
+  (sMat.uniforms.uPlanetRadius as NumUniform).value = saturn.radius;
   shadowedRings.push(sMat);
   saturn.tiltGroup.add(sRing);
 
@@ -177,36 +261,50 @@ function decorate(
     uranus.radius * URANUS_RING.outer,
     null,
     URANUS_RING.opacity,
+    URANUS_RING_STYLE,
   );
   uRing.name = 'uranus-ring';
   uranus.tiltGroup.add(uRing);
+  const ringMats = [sMat, uRing.material as THREE.ShaderMaterial];
 
   const deco: Decorations = {
     update() {
-      if (clouds) clouds.rotation.y = earth.mesh.rotation.y * CLOUD_SPIN_FACTOR;
+      if (!clouds) return;
+      clouds.rotation.y = earth.mesh.rotation.y * CLOUD_SPIN_FACTOR;
+      (earthMat.uniforms.uCloudOffset as NumUniform).value = cloudUvOffset(
+        earth.mesh.rotation.y,
+        clouds.rotation.y,
+      );
     },
     upgrade(next) {
-      const cloudMat = clouds?.material as THREE.MeshStandardMaterial | undefined;
-      const hiClouds = next.get('earth_clouds');
-      if (cloudMat && hiClouds && !isFallbackTexture(hiClouds)) {
-        cloudMat.map = hiClouds;
-        cloudMat.needsUpdate = true;
+      const hiClouds = realTexture(next, 'earth_clouds');
+      if (clouds && hiClouds) {
+        (uniformsOf(clouds).uMap as TexUniform).value = hiClouds;
+        setEarthMap(earthMat, 'clouds', hiClouds);
       }
-      const hiRing = next.get('saturn_ring');
-      if (hiRing && !isFallbackTexture(hiRing)) {
+      const hiRing = realTexture(next, 'saturn_ring');
+      if (hiRing) {
         const u = sMat.uniforms;
-        (u.uMap as THREE.IUniform<THREE.Texture | null>).value = hiRing;
+        (u.uMap as TexUniform).value = hiRing;
         (u.uHasMap as THREE.IUniform<boolean>).value = true;
-        (u.uOpacity as THREE.IUniform<number>).value = SATURN_RING.opacity;
+        (u.uOpacity as NumUniform).value = SATURN_RING.opacity;
+        const p = saturnMat.uniforms;
+        (p.uRingMap as TexUniform).value = hiRing;
+        (p.uRingHasMap as NumUniform).value = 1;
+        (p.uRingOpacity as NumUniform).value = SATURN_RING.opacity;
       }
     },
     setSaturnScale(k) {
-      (sMat.uniforms.uPlanetRadius as THREE.IUniform<number>).value = saturn.radius * k;
+      (sMat.uniforms.uPlanetRadius as NumUniform).value = saturn.radius * k;
     },
     apply(next) {
       for (const a of atmospheres) a.visible = next.atmosphere;
       const shadow = next.ringShadow ? 1 : 0;
-      for (const m of shadowedRings) (m.uniforms.uShadow as THREE.IUniform<number>).value = shadow;
+      for (const m of shadowedRings) (m.uniforms.uShadow as NumUniform).value = shadow;
+      (saturnMat.uniforms.uRingShadow as NumUniform).value = shadow;
+      const detail = next.planetDetail ? 1 : 0;
+      clock.uDetail.value = detail;
+      for (const m of ringMats) (m.uniforms.uDetail as NumUniform).value = detail;
     },
   };
   deco.apply(s);
@@ -242,6 +340,8 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
   const rigs = new Map<BodyId, PlanetRig>();
   const orbitLines: OrbitLine[] = [];
   const orbitLineByBody = new Map<BodyId, OrbitLine>();
+  const clock = createPlanetClock(s.planetDetail);
+  let reducedMotion = false;
 
   bodies.set('sun', createSunStandIn(root));
 
@@ -251,10 +351,7 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
     const texture = bodyTexture(tex, id);
     const parent = id === 'moon' ? rigs.get('earth')?.offset : root;
     if (!parent) throw new Error('Earth must be created before the Moon');
-    const material =
-      id === 'earth'
-        ? createEarthMaterial(texture, texOrFallback(tex, 'earth_night'), SUN_WORLD_POS)
-        : undefined;
+    const material = createBodyMaterial(id, texture, tex, clock);
     const rig = createPlanet(id, texture, s, parent, material);
     rigs.set(id, rig);
     bodies.set(id, rig.body);
@@ -278,7 +375,8 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
   const belt = createAsteroidBelt(s.asteroidCount);
   root.add(belt.mesh);
 
-  const deco = decorate(bodies, tex, s);
+  const deco = decorate(bodies, tex, s, clock);
+  const venusUniforms = uniformsOf(bodies.get('venus')?.mesh);
   const pickables = [...bodies.values()].map((b) => b.pickProxy);
   const camPos = new THREE.Vector3();
   const bodyPos = new THREE.Vector3();
@@ -301,6 +399,9 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
       emphasis = stepEmphasis(emphasis, emphasisTarget, dt);
       for (const line of orbitLines) line.setEmphasis(emphasis);
       deco.update();
+      clock.uTime.value = shaderTime(tSec, reducedMotion);
+      const drift = venusUniforms.uDrift as NumUniform | undefined;
+      if (drift) drift.value = driftOffset(PLANET_LOOKS.venus.drift, tSec, reducedMotion);
       belt.update(tSec);
       const earthPosition = rigs.get('earth')!.offset.position;
       const earthDistance = Math.hypot(earthPosition.x, earthPosition.y, earthPosition.z);
@@ -320,60 +421,60 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
     upgradeTextures(id, next) {
       const body = bodies.get(id);
       if (!body) return;
-      const real = (key: string): THREE.Texture | undefined => {
-        const t = next.get(key);
-        return t && !isFallbackTexture(t) ? t : undefined;
-      };
+      const real = (key: string): THREE.Texture | null => realTexture(next, key);
       const replaced: THREE.Texture[] = [];
-      const mat = body.mesh.material as THREE.Material;
-      if (mat instanceof THREE.ShaderMaterial) {
-        // Earth: day/night shader.
-        for (const [key, uniform] of [
+      const old = (u: THREE.IUniform<unknown> | undefined): void => {
+        if (u?.value instanceof THREE.Texture) replaced.push(u.value);
+      };
+      // Every body is a ShaderMaterial: Earth's own shader or the shared planet shader.
+      const mat = body.mesh.material as THREE.ShaderMaterial;
+      const u = mat.uniforms ?? {};
+      if (id === 'earth') {
+        for (const [key, name] of [
           ['earth_day', 'uDay'],
           ['earth_night', 'uNight'],
         ] as const) {
           const t = real(key);
-          const u = mat.uniforms[uniform] as THREE.IUniform<THREE.Texture> | undefined;
-          if (t && u) {
-            replaced.push(u.value);
-            u.value = t;
+          const un = u[name] as THREE.IUniform<THREE.Texture> | undefined;
+          if (t && un) {
+            old(un);
+            un.value = t;
           }
         }
-      } else {
+        for (const [key, which, name] of [
+          ['earth_normal', 'normal', 'uNormal'],
+          ['earth_specular', 'specular', 'uSpecular'],
+        ] as const) {
+          const t = real(key);
+          if (t) {
+            old(u[name]);
+            setEarthMap(mat, which, t);
+          }
+        }
+        if (real('earth_clouds')) {
+          old(u.uClouds);
+          old(uniformsOf(root.getObjectByName('earth-clouds')).uMap);
+        }
+      } else if (u.uMap) {
         const key = (TEXTURE_KEYS[id] ?? [id]).find((k) => real(k));
-        const t = key ? real(key) : undefined;
-        const std = mat as THREE.MeshStandardMaterial;
-        if (t && std.map) {
-          replaced.push(std.map);
-          std.map = t;
-          std.needsUpdate = true;
+        const t = key ? real(key) : null;
+        if (t) {
+          old(u.uMap);
+          setPlanetMap(mat, t);
         }
       }
-      const cloudMat = root.getObjectByName('earth-clouds');
-      if (id === 'earth' && cloudMat) {
-        replaced.push(
-          ...materialsOf(cloudMat).flatMap((m) =>
-            (m as THREE.MeshStandardMaterial).map
-              ? [(m as THREE.MeshStandardMaterial).map as THREE.Texture]
-              : [],
-          ),
-        );
-      }
-      const ringMat = root.getObjectByName('saturn-ring');
-      if (id === 'saturn' && ringMat) {
-        for (const m of materialsOf(ringMat)) {
-          const v = (m as THREE.ShaderMaterial).uniforms.uMap?.value as THREE.Texture | null;
-          if (v) replaced.push(v);
-        }
+      if (id === 'saturn' && real('saturn_ring')) {
+        old(uniformsOf(root.getObjectByName('saturn-ring')).uMap);
+        old(u.uRingMap);
       }
       if (id === 'earth' || id === 'saturn') deco.upgrade(next);
       // Free the low maps only when nothing in the scene still samples them.
-      for (const old of new Set(replaced)) {
+      for (const o of new Set(replaced)) {
         let used = false;
-        root.traverse((o) => {
-          if (!used) used = materialsOf(o).some((m) => usesTexture(m, old));
+        root.traverse((obj) => {
+          if (!used) used = materialsOf(obj).some((m) => usesTexture(m, o));
         });
-        if (!used) old.dispose();
+        if (!used) o.dispose();
       }
     },
     applyOverviewBoost(camera, viewH) {
@@ -405,6 +506,9 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
     },
     setOrbitFocus(focused) {
       emphasisTarget = focused ? ORBIT_STYLE.focusEmphasis : 1;
+    },
+    setReducedMotion(reduced) {
+      reducedMotion = reduced;
     },
     setTierSettings(next) {
       for (const rig of rigs.values()) rig.setSegments(next);

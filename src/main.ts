@@ -311,6 +311,9 @@ async function boot(): Promise<void> {
   const solar = createSolarSystem(lowTex, tierSettings(store.get().quality));
   solarRef = solar;
   scene.add(solar.root);
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  solar.setReducedMotion(reducedMotion?.matches ?? false);
+  reducedMotion?.addEventListener?.('change', (e) => solar.setReducedMotion(e.matches));
   syncOrbitViewport();
   solar.setOrbitFocus(store.get().view !== 'overview');
 

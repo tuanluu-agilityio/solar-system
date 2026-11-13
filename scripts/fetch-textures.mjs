@@ -114,7 +114,11 @@ async function plutoPipeline() {
 function onlyKeys() {
   const i = process.argv.indexOf('--only');
   if (i < 0) return null;
-  return new Set(String(process.argv[i + 1] ?? '').split(',').filter(Boolean));
+  return new Set(
+    String(process.argv[i + 1] ?? '')
+      .split(',')
+      .filter(Boolean),
+  );
 }
 
 function readManifest() {

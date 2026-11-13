@@ -11,6 +11,7 @@ describe('tiers', () => {
       textureSet: 'low',
       atmosphere: true,
       ringShadow: false,
+      planetDetail: false,
       skySize: 2048,
       antialias: false,
     });
@@ -21,6 +22,7 @@ describe('tiers', () => {
       textureSet: 'low',
       atmosphere: true,
       ringShadow: false,
+      planetDetail: true,
       skySize: 4096,
       antialias: true,
     });
@@ -31,6 +33,7 @@ describe('tiers', () => {
       textureSet: 'high',
       atmosphere: true,
       ringShadow: true,
+      planetDetail: true,
       skySize: 4096,
       antialias: true,
     });

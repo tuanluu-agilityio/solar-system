@@ -13,6 +13,8 @@ export interface TierSettings {
   textureSet: 'low' | 'high';
   atmosphere: boolean;
   ringShadow: boolean;
+  /** Planet relief, cloud flow, Earth normal map and cloud shadows, fine ring structure. */
+  planetDetail: boolean;
   skySize: 2048 | 4096;
   antialias: boolean;
 }
@@ -26,6 +28,7 @@ const TIERS: Record<QualityTier, TierSettings> = {
     textureSet: 'low',
     atmosphere: true,
     ringShadow: false,
+    planetDetail: false,
     skySize: 2048,
     antialias: false,
   },
@@ -36,6 +39,7 @@ const TIERS: Record<QualityTier, TierSettings> = {
     textureSet: 'low',
     atmosphere: true,
     ringShadow: false,
+    planetDetail: true,
     skySize: 4096,
     antialias: true,
   },
@@ -46,6 +50,7 @@ const TIERS: Record<QualityTier, TierSettings> = {
     textureSet: 'high',
     atmosphere: true,
     ringShadow: true,
+    planetDetail: true,
     skySize: 4096,
     antialias: true,
   },
