@@ -46,6 +46,8 @@ import { createPostFX } from './scene/postfx';
 import { createSun } from './bodies/sun';
 import { createSolarSystem } from './scene/solarSystem';
 import { createPicker } from './interaction/picker';
+import { createKeyboardNav } from './interaction/keyboard';
+import { NAV_ORDER } from './data/navOrder';
 import { createLabels } from './ui/labels';
 import { createCameraRig } from './camera/cameraRig';
 import { createLoadingScreen, showBootError, showWebglUnsupported } from './ui/loadingScreen';
@@ -356,6 +358,21 @@ async function boot(): Promise<void> {
     isMobile: () => store.get().layout === 'mobile',
   });
   createPicker(canvas, camera, solar.pickables, select, (id) => labels.setHovered(id));
+  createKeyboardNav(
+    window,
+    () => ({ order: NAV_ORDER, selected: store.get().selected }),
+    (a) => {
+      if (a.type === 'select') select(a.id);
+      else if (a.type === 'overview') void backToOverview();
+      else {
+        interruptTour();
+        if (a.type === 'zoom') rig.zoomBy(a.factor);
+        else rig.rotateBy(a.azimuth);
+      }
+    },
+  );
+  // A resting focus view slowly circles its body, unless the user asked for less motion.
+  rig.setIdleDrift(!isE2E && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   labels.setVisible(store.get().view === 'overview');
   store.subscribe((s, prev) => {
     if (s.view !== prev.view) {

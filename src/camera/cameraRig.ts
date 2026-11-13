@@ -44,9 +44,23 @@ export interface CameraRig {
   getTarget(): FocusTarget | null;
   /** True while a fly-to / fly-to-overview transition is in progress. */
   isFlying(): boolean;
+  /** Multiplies the camera distance by `factor` (clamped to the zoom limits), smoothly. */
+  zoomBy(factor: number): void;
+  /** Turns the view about the vertical axis by `azimuthRad`, smoothly. */
+  rotateBy(azimuthRad: number): void;
+  /**
+   * Idle drift: while a body is focused and the user has not touched the view for
+   * IDLE_DRIFT_DELAY_SEC, the camera slowly circles it. Off by default.
+   */
+  setIdleDrift(on: boolean): void;
 }
 
 export const AUTO_ORBIT_RAD_PER_SEC = 0.08;
+/** Idle drift speed around a focused body, and how long the view must rest before it starts. */
+export const IDLE_DRIFT_RAD_PER_SEC = 0.025;
+export const IDLE_DRIFT_DELAY_SEC = 6;
+/** The drift eases in over this long instead of starting abruptly. */
+const IDLE_DRIFT_RAMP_SEC = 3;
 const SMOOTH_TIME = 0.25;
 const DRAGGING_SMOOTH_TIME = 0.1;
 /** Smoothing during a fly-to; with the cap below a flight takes about 2 s. */
@@ -60,6 +74,11 @@ const FOCUS_MAX_FACTOR = 12;
 
 /** camera-controls with a rigid shift of both the current and the end state (follow, auto-orbit). */
 class RigControls extends CameraControls {
+  /** The distance the camera is heading to (repeated zoom steps compound from it). */
+  get endDistance(): number {
+    return this._sphericalEnd.radius;
+  }
+
   shift(delta: Vector3, dTheta: number): void {
     if (delta.lengthSq() === 0 && dTheta === 0) return;
     this._target.add(delta);
@@ -91,6 +110,8 @@ export function createCameraRig(camera: PerspectiveCamera, dom: HTMLElement): Ca
   /** NDC shift that centres the overview disc; recomputed with the overview distance. */
   let overviewOffsetY = 0;
   let autoOrbit = false;
+  let idleDrift = false;
+  let idleSec = 0;
   let flight: Flight | null = null;
   const lastPos = new Vector3();
   const pos = new Vector3();
@@ -107,6 +128,13 @@ export function createCameraRig(camera: PerspectiveCamera, dom: HTMLElement): Ca
     done.resolve();
   };
   controls.addEventListener('rest', finishFlight);
+  // Any touch of the view (drag, pinch, tap, wheel) restarts the idle clock.
+  const touch = (): void => {
+    idleSec = 0;
+  };
+  controls.addEventListener('controlstart', touch);
+  dom.addEventListener('pointerdown', touch);
+  dom.addEventListener('wheel', touch, { passive: true });
 
   const startFlight = (): Promise<void> => {
     finishFlight(); // last request wins: the superseded promise resolves now
@@ -209,7 +237,19 @@ export function createCameraRig(camera: PerspectiveCamera, dom: HTMLElement): Ca
         delta.subVectors(pos, lastPos);
         lastPos.copy(pos);
       }
-      controls.shift(delta, autoOrbit ? AUTO_ORBIT_RAD_PER_SEC * dtSec : 0);
+      let turn = autoOrbit ? AUTO_ORBIT_RAD_PER_SEC * dtSec : 0;
+      if (idleDrift && target && !flight && !autoOrbit) {
+        idleSec += dtSec;
+        const ramp = Math.min(
+          1,
+          Math.max(0, (idleSec - IDLE_DRIFT_DELAY_SEC) / IDLE_DRIFT_RAMP_SEC),
+        );
+        // Smoothstep ease-in.
+        turn += IDLE_DRIFT_RAD_PER_SEC * ramp * ramp * (3 - 2 * ramp) * dtSec;
+      } else {
+        idleSec = 0;
+      }
+      controls.shift(delta, turn);
       controls.update(dtSec);
       if (flight) {
         flight.elapsed += dtSec;
@@ -238,6 +278,23 @@ export function createCameraRig(camera: PerspectiveCamera, dom: HTMLElement): Ca
     },
     isFlying() {
       return flight !== null;
+    },
+    zoomBy(factor) {
+      if (!Number.isFinite(factor) || factor <= 0) return;
+      idleSec = 0;
+      const d = Math.min(
+        controls.maxDistance,
+        Math.max(controls.minDistance, controls.endDistance * factor),
+      );
+      void controls.dollyTo(d, true);
+    },
+    rotateBy(azimuthRad) {
+      idleSec = 0;
+      void controls.rotate(azimuthRad, 0, true);
+    },
+    setIdleDrift(on) {
+      idleDrift = on;
+      idleSec = 0;
     },
   };
 }
