@@ -309,10 +309,18 @@ async function deimosPipeline() {
       <stop offset="0.88" stop-color="#a1968a" stop-opacity="0.25"/>
       <stop offset="1" stop-color="#a1968a" stop-opacity="0"/>
     </radialGradient>
+    <linearGradient id="poles" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6f665d" stop-opacity="1"/>
+      <stop offset="0.1" stop-color="#6f665d" stop-opacity="0"/>
+      <stop offset="0.9" stop-color="#6f665d" stop-opacity="0"/>
+      <stop offset="1" stop-color="#6f665d" stop-opacity="1"/>
+    </linearGradient>
   </defs>
   <rect width="${W}" height="${H}" fill="#6f665d"/>
   <rect width="${W}" height="${H}" filter="url(#n)" opacity="0.6"/>
   ${craters}
+  <!-- Flat colour at the poles: noise rows converging there would show as a pinched star. -->
+  <rect width="${W}" height="${H}" fill="url(#poles)"/>
 </svg>`;
   return sharp(Buffer.from(svg)).removeAlpha();
 }

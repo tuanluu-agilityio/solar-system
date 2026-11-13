@@ -47,6 +47,7 @@ import {
   makeFallbackTexture,
 } from './scene/textures';
 import { aggregateProgress, isLazyTextureKey, skyKey, skySet } from './scene/textureKeys';
+import { nearPlaneFor } from './scene/nearPlane';
 import { createDeepSpace } from './scene/deepSpace';
 import { startLoop } from './scene/loop';
 import { createPostFX } from './scene/postfx';
@@ -222,6 +223,19 @@ async function boot(): Promise<void> {
     20000,
   );
   const rig = createCameraRig(camera, canvas);
+  // Zoomed onto a tiny moon, the surface comes closer than the default near plane.
+  const targetPos = new THREE.Vector3();
+  const syncNearPlane = (): void => {
+    const t = rig.getTarget();
+    const gap = t
+      ? camera.position.distanceTo(t.object.getWorldPosition(targetPos)) - t.radius
+      : Infinity;
+    const near = nearPlaneFor(gap);
+    if (near !== camera.near) {
+      camera.near = near;
+      camera.updateProjectionMatrix();
+    }
+  };
   rig.setLayout(store.get().layout);
   // Tour stops on a phone are framed above the compact subtitle dock.
   store.subscribe((s, prev) => {
@@ -518,6 +532,7 @@ async function boot(): Promise<void> {
     simClock.advance(dt);
     solar.update(simClock.time, dt);
     rig.update(dt * rigTimeScale);
+    syncNearPlane();
     deepSpace.update(tSec, camera, renderer.getPixelRatio());
     solar.applyOverviewBoost(camera, canvas.clientHeight || window.innerHeight);
     labels.update();
