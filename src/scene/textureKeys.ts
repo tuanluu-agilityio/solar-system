@@ -1,5 +1,7 @@
 // Pure helpers for texture loading (no three.js, unit-testable).
-import type { BodyId } from '../data/types';
+import { moonDisplay } from '../config/scale';
+import { BODIES } from '../data/bodies';
+import { BODY_IDS, type BodyId } from '../data/types';
 
 // Per-body base colours (sRGB hex) used when a texture fails to load.
 const FALLBACK_COLORS: Record<string, number> = {
@@ -15,8 +17,16 @@ const FALLBACK_COLORS: Record<string, number> = {
   earth_specular: 0x000000,
   moon: 0xb5b5b5,
   mars: 0xc1572e,
+  phobos: 0x5f574f,
+  deimos: 0x857a6f,
   jupiter: 0xc9a27a,
+  io: 0xcfb45a,
+  europa: 0xd9cdb8,
+  ganymede: 0x8a8076,
+  callisto: 0x4a423a,
   saturn: 0xe3c98f,
+  enceladus: 0xf2f5f7,
+  titan: 0xc8873f,
   saturn_ring: 0xcdb98f,
   uranus: 0x9bd8e0,
   neptune: 0x3f5fd0,
@@ -63,4 +73,18 @@ const EXTRA_KEYS: Partial<Record<BodyId, string[]>> = {
 /** Every texture key a body uses (earth: day, night, clouds, normal, specular). */
 export function textureKeysFor(id: BodyId): string[] {
   return [...(EXTRA_KEYS[id] ?? [id])];
+}
+
+/**
+ * Maps of the moons hidden from the overview: left out of the boot download and loaded the
+ * first time their planet system comes into view (the fallback colour shows until then).
+ */
+const LAZY_KEYS: ReadonlySet<string> = new Set(
+  BODY_IDS.filter((id) => BODIES[id].kind === 'moon' && !moonDisplay(id).overview).flatMap((id) =>
+    textureKeysFor(id),
+  ),
+);
+
+export function isLazyTextureKey(key: string): boolean {
+  return LAZY_KEYS.has(key);
 }

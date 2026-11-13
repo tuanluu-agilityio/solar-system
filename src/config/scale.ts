@@ -32,6 +32,13 @@ export const MOON_SYSTEM_VIEW_FACTOR = 4;
 export const ASTEROID_BELT_MKM = { inner: 329, outer: 479 } as const;
 /** Asteroid belt orbital period in Earth years. */
 export const ASTEROID_BELT_PERIOD_YEARS = 4.6;
+/**
+ * Kuiper belt extent in AU (visual only, not selectable): the classical belt from Neptune's
+ * orbit out to about 50 AU, which Pluto's orbit (39.5 AU) crosses.
+ */
+export const KUIPER_BELT_AU = { inner: 30, outer: 50 } as const;
+/** Kuiper belt turning period in Earth years (about Pluto's, 248 years). */
+export const KUIPER_BELT_PERIOD_YEARS = 248;
 
 /** Earth orbital period in days used by the orbit maths (a 60 s display year). */
 export const EARTH_YEAR_DAYS = 365.25;

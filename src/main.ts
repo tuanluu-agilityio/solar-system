@@ -42,10 +42,11 @@ import {
 import {
   listTextureKeys,
   loadHighTextures,
+  loadLowTextures,
   loadTextureSet,
   makeFallbackTexture,
 } from './scene/textures';
-import { aggregateProgress, skyKey, skySet } from './scene/textureKeys';
+import { aggregateProgress, isLazyTextureKey, skyKey, skySet } from './scene/textureKeys';
 import { createDeepSpace } from './scene/deepSpace';
 import { startLoop } from './scene/loop';
 import { createPostFX } from './scene/postfx';
@@ -355,7 +356,10 @@ async function boot(): Promise<void> {
     },
   });
 
-  const lowKeys = (await listTextureKeys('low')).filter((k) => !k.startsWith('sky'));
+  // Moon maps load when their planet system first comes into view (onFirstShown below).
+  const lowKeys = (await listTextureKeys('low')).filter(
+    (k) => !k.startsWith('sky') && !isLazyTextureKey(k),
+  );
   const parts = [
     { loaded: 0, total: lowKeys.length },
     { loaded: 0, total: 1 },
@@ -381,7 +385,13 @@ async function boot(): Promise<void> {
   });
   sunRef = sun;
   scene.add(sun.group);
-  const solar = createSolarSystem(lowTex, tierSettings(store.get().quality));
+  const solar = createSolarSystem(lowTex, tierSettings(store.get().quality), {
+    onFirstShown: (id) => {
+      loadLowTextures(id)
+        .then((tex) => solar.upgradeTextures(id, tex))
+        .catch(() => undefined);
+    },
+  });
   solarRef = solar;
   scene.add(solar.root);
   const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');

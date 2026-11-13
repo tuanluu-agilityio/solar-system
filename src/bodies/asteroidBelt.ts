@@ -3,14 +3,19 @@ import {
   ASTEROID_BELT_MKM,
   ASTEROID_BELT_PERIOD_YEARS,
   EARTH_YEAR_DAYS,
+  KUIPER_BELT_AU,
+  KUIPER_BELT_PERIOD_YEARS,
   displayOrbitRadius,
+  displaySemiMajorAxis,
   orbitalAngle,
 } from '../config/scale';
 
-const MAX_HEIGHT = 1.5;
 /** Rock sizes (display units): mostly tiny, a few larger (power-law skew). */
 export const SIZE_MIN = 0.02;
 export const SIZE_MAX = 0.2;
+/** Kuiper belt bodies: small icy specks, a touch larger since they are seen from farther away. */
+export const KUIPER_SIZE_MIN = 0.03;
+export const KUIPER_SIZE_MAX = 0.3;
 const SIZE_SKEW = 3;
 /** Each axis keeps at least this share of the size, so rocks are lumpy, not spheres. */
 const AXIS_MIN = 0.55;
@@ -18,6 +23,7 @@ const AXIS_MIN = 0.55;
 const ROCK_JITTER = 0.28;
 const ROCK_SEED = 4242;
 const DEFAULT_SEED = 1337;
+const KUIPER_SEED = 3031;
 /** Camera distances (display units) over which nearby rocks fade in by shrinking. */
 export const NEAR_FADE = { start: 1.5, end: 6 } as const;
 
@@ -25,9 +31,51 @@ export const NEAR_FADE = { start: 1.5, end: 6 } as const;
 const MIN_ROCK_ANGLE = 0.0007;
 
 const glslFloat = (x: number): string => (Number.isInteger(x) ? `${x}.0` : String(x));
+/** Shape of one belt: radii and half-thickness in display units, period, sizes and tints. */
+export interface BeltSpec {
+  name: string;
+  inner: number;
+  outer: number;
+  maxHeight: number;
+  periodDays: number;
+  sizeMin: number;
+  sizeMax: number;
+  colorA: THREE.Color;
+  colorB: THREE.Color;
+  /** Brightness factor range [min, min + span] applied to each tint. */
+  brightness: readonly [number, number];
+}
+
 /** Carbonaceous grey to stony brown, with a brightness spread. */
-const ROCK_GREY = new THREE.Color('#77736c');
-const ROCK_BROWN = new THREE.Color('#8c7457');
+export const ASTEROID_BELT_SPEC: BeltSpec = {
+  name: 'asteroid-belt',
+  inner: displayOrbitRadius(ASTEROID_BELT_MKM.inner),
+  outer: displayOrbitRadius(ASTEROID_BELT_MKM.outer),
+  maxHeight: 1.5,
+  periodDays: ASTEROID_BELT_PERIOD_YEARS * EARTH_YEAR_DAYS,
+  sizeMin: SIZE_MIN,
+  sizeMax: SIZE_MAX,
+  colorA: new THREE.Color('#77736c'),
+  colorB: new THREE.Color('#8c7457'),
+  brightness: [0.6, 0.6],
+};
+
+/**
+ * The Kuiper belt: icy grey to reddish (tholin) bodies, a much thicker band (its objects have
+ * inclinations of tens of degrees) and very dim, so it reads as a faint haze of specks.
+ */
+export const KUIPER_BELT_SPEC: BeltSpec = {
+  name: 'kuiper-belt',
+  inner: displaySemiMajorAxis(KUIPER_BELT_AU.inner),
+  outer: displaySemiMajorAxis(KUIPER_BELT_AU.outer),
+  maxHeight: 14,
+  periodDays: KUIPER_BELT_PERIOD_YEARS * EARTH_YEAR_DAYS,
+  sizeMin: KUIPER_SIZE_MIN,
+  sizeMax: KUIPER_SIZE_MAX,
+  colorA: new THREE.Color('#8f8c8a'),
+  colorB: new THREE.Color('#8a6a58'),
+  brightness: [0.22, 0.2],
+};
 
 /** Small deterministic PRNG returning floats in [0, 1). */
 function mulberry32(seed: number): () => number {
@@ -69,10 +117,9 @@ function makeRockGeometry(): THREE.BufferGeometry {
 }
 
 /** Fills `mesh` with `n` seeded instances; instance i is the same for any n > i. */
-function fill(mesh: THREE.InstancedMesh, n: number, seed: number): void {
+function fill(mesh: THREE.InstancedMesh, n: number, seed: number, spec: BeltSpec): void {
   const rand = mulberry32(seed);
-  const inner = displayOrbitRadius(ASTEROID_BELT_MKM.inner);
-  const outer = displayOrbitRadius(ASTEROID_BELT_MKM.outer);
+  const { inner, outer } = spec;
   const m = new THREE.Matrix4();
   const pos = new THREE.Vector3();
   const quat = new THREE.Quaternion();
@@ -83,23 +130,29 @@ function fill(mesh: THREE.InstancedMesh, n: number, seed: number): void {
     const r = inner + rand() * (outer - inner);
     const a = rand() * Math.PI * 2;
     // Sum of three uniforms: a cheap bell curve in [-1, 1].
-    const h = ((rand() + rand() + rand()) / 3 - 0.5) * 2 * MAX_HEIGHT;
+    const h = ((rand() + rand() + rand()) / 3 - 0.5) * 2 * spec.maxHeight;
     pos.set(Math.cos(a) * r, h, Math.sin(a) * r);
     euler.set(rand() * Math.PI, rand() * Math.PI, rand() * Math.PI);
     quat.setFromEuler(euler);
-    const size = SIZE_MIN + Math.pow(rand(), SIZE_SKEW) * (SIZE_MAX - SIZE_MIN);
+    const size = spec.sizeMin + Math.pow(rand(), SIZE_SKEW) * (spec.sizeMax - spec.sizeMin);
     const axis = (): number => size * (AXIS_MIN + rand() * (1 - AXIS_MIN));
     scale.set(axis(), axis(), axis());
     m.compose(pos, quat, scale);
     mesh.setMatrixAt(i, m);
-    color.lerpColors(ROCK_GREY, ROCK_BROWN, rand()).multiplyScalar(0.6 + rand() * 0.6);
+    color
+      .lerpColors(spec.colorA, spec.colorB, rand())
+      .multiplyScalar(spec.brightness[0] + rand() * spec.brightness[1]);
     mesh.setColorAt(i, color);
   }
   mesh.instanceMatrix.needsUpdate = true;
   if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 }
 
-export function createAsteroidBelt(count: number, seed: number = DEFAULT_SEED): AsteroidBelt {
+export function createAsteroidBelt(
+  count: number,
+  seed: number = DEFAULT_SEED,
+  spec: BeltSpec = ASTEROID_BELT_SPEC,
+): AsteroidBelt {
   const geometry = makeRockGeometry();
   // White base: the per-instance colour carries each rock's tint.
   const material = new THREE.MeshStandardMaterial({
@@ -123,9 +176,9 @@ export function createAsteroidBelt(count: number, seed: number = DEFAULT_SEED): 
     );
   };
   let mesh = new THREE.InstancedMesh(geometry, material, count);
-  mesh.name = 'asteroid-belt';
+  mesh.name = spec.name;
   mesh.frustumCulled = false;
-  fill(mesh, count, seed);
+  fill(mesh, count, seed, spec);
   let capacity = count;
   let angle = 0;
 
@@ -134,7 +187,7 @@ export function createAsteroidBelt(count: number, seed: number = DEFAULT_SEED): 
       return mesh;
     },
     update(tSec) {
-      angle = orbitalAngle(ASTEROID_BELT_PERIOD_YEARS * EARTH_YEAR_DAYS, tSec, 0);
+      angle = orbitalAngle(spec.periodDays, tSec, 0);
       mesh.rotation.y = angle;
     },
     setCount(n) {
@@ -144,7 +197,7 @@ export function createAsteroidBelt(count: number, seed: number = DEFAULT_SEED): 
         next.name = mesh.name;
         next.frustumCulled = false;
         next.rotation.y = angle;
-        fill(next, n, seed);
+        fill(next, n, seed, spec);
         const parent = mesh.parent;
         if (parent) {
           parent.add(next);
@@ -158,4 +211,9 @@ export function createAsteroidBelt(count: number, seed: number = DEFAULT_SEED): 
     },
   };
   return belt;
+}
+
+/** The visual Kuiper belt: the same instanced rocks, spread and tinted by `KUIPER_BELT_SPEC`. */
+export function createKuiperBelt(count: number, seed: number = KUIPER_SEED): AsteroidBelt {
+  return createAsteroidBelt(count, seed, KUIPER_BELT_SPEC);
 }

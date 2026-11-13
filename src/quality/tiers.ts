@@ -28,6 +28,8 @@ export interface TierSettings {
   starCount: number;
   /** Near-camera parallax dust motes (src/scene/dust.ts); 0 disables the layer. */
   dustCount: number;
+  /** Faint icy bodies of the visual Kuiper belt (src/bodies/asteroidBelt.ts); 0 hides it. */
+  kuiperCount: number;
 }
 
 // Bloom is present in every tier (the quality floor).
@@ -44,6 +46,7 @@ const TIERS: Record<QualityTier, TierSettings> = {
     antialias: false,
     starCount: 7000,
     dustCount: 0,
+    kuiperCount: 0,
   },
   medium: {
     pixelRatioCap: 2,
@@ -57,6 +60,7 @@ const TIERS: Record<QualityTier, TierSettings> = {
     antialias: true,
     starCount: 12000,
     dustCount: 250,
+    kuiperCount: 1500,
   },
   high: {
     pixelRatioCap: 2,
@@ -70,6 +74,7 @@ const TIERS: Record<QualityTier, TierSettings> = {
     antialias: true,
     starCount: 18000,
     dustCount: 500,
+    kuiperCount: 3000,
   },
   // Never chosen automatically. Antialiasing is fixed when the renderer is created, so a
   // live switch to or from ultra keeps the context's antialias setting.
@@ -85,6 +90,7 @@ const TIERS: Record<QualityTier, TierSettings> = {
     starCount: 26000,
     dustCount: 800,
     planetDetail: true,
+    kuiperCount: 4500,
   },
 };
 

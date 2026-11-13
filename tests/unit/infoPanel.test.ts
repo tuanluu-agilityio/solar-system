@@ -257,3 +257,103 @@ describe('panel sections and stepping', () => {
     expect(root.textContent).not.toContain('Atmosphere');
   });
 });
+
+describe('moons in the panel', () => {
+  const MOONS = (Object.keys(BODIES) as (keyof typeof BODIES)[]).filter(
+    (id) => BODIES[id].kind === 'moon',
+  );
+
+  it('shows every moon distance in km from its own planet, in every language', () => {
+    const keyOf = {
+      earth: 'field.distanceEarth',
+      mars: 'field.distanceMars',
+      jupiter: 'field.distanceJupiter',
+      saturn: 'field.distanceSaturn',
+    } as const;
+    expect(MOONS).toHaveLength(9);
+    for (const id of MOONS) {
+      const parent = BODIES[id].parent as keyof typeof keyOf;
+      expect(keyOf[parent], id).toBeDefined();
+      for (const lang of ['en', 'vi', 'ja', 'de'] as const) {
+        const keys = panelFields(BODIES[id], lang).map((f) => f.key);
+        expect(keys, `${lang}/${id}`).toContain(keyOf[parent]);
+        expect(keys, `${lang}/${id}`).not.toContain('field.distance');
+      }
+    }
+    expect(val('phobos', 'en', 'field.distanceMars')).toBe('9,378 km');
+    expect(val('io', 'en', 'field.distanceJupiter')).toBe('421,800 km');
+    expect(val('titan', 'de', 'field.distanceSaturn')).toBe('1.221.870 km');
+  });
+
+  it('omits the mean temperature where NASA gives none (Phobos, Deimos)', () => {
+    for (const id of ['phobos', 'deimos'] as const) {
+      expect(val(id, 'en', 'field.meanTemp')).toBeUndefined();
+    }
+    expect(val('europa', 'en', 'field.meanTemp')).toBe('-170 °C');
+  });
+
+  function panelFor(selected: AppState['selected'], lang: AppState['lang'] = 'en') {
+    const root = document.createElement('div');
+    const store = makeStore({ selected, view: 'focus', lang });
+    const onStep = vi.fn();
+    createInfoPanel(root, store, () => undefined, onStep);
+    const chips = (prefix: string): HTMLButtonElement[] => [
+      ...root.querySelectorAll<HTMLButtonElement>(`[data-testid^="${prefix}-"]`),
+    ];
+    return { root, store, onStep, chips };
+  }
+
+  it('gives a planet with modelled moons a Moons chip row that flies to the moon', () => {
+    const { root, store, onStep, chips } = panelFor('jupiter');
+    expect(chips('moon').map((b) => b.dataset.testid)).toEqual([
+      'moon-io',
+      'moon-europa',
+      'moon-ganymede',
+      'moon-callisto',
+    ]);
+    expect(chips('moon').map((b) => b.textContent)).toEqual([
+      'Io',
+      'Europa',
+      'Ganymede',
+      'Callisto',
+    ]);
+    expect(root.textContent).toContain('Moons');
+    chips('moon')[2]!.click();
+    expect(onStep).toHaveBeenLastCalledWith('ganymede');
+    store.set({ selected: 'mars' });
+    expect(chips('moon').map((b) => b.dataset.testid)).toEqual(['moon-phobos', 'moon-deimos']);
+    store.set({ selected: 'earth' });
+    expect(chips('moon').map((b) => b.dataset.testid)).toEqual(['moon-moon']);
+    store.set({ selected: 'venus' });
+    expect(chips('moon')).toHaveLength(0);
+    expect(root.textContent).not.toContain('Moons');
+    store.set({ selected: 'asteroid-belt' });
+    expect(chips('moon')).toHaveLength(0);
+  });
+
+  it('gives a moon a chip back to its planet', () => {
+    const { root, store, onStep, chips } = panelFor('titan');
+    expect(chips('parent').map((b) => b.dataset.testid)).toEqual(['parent-saturn']);
+    expect(chips('parent')[0]!.textContent).toBe('Saturn');
+    expect(root.textContent).toContain('Parent planet');
+    expect(chips('moon')).toHaveLength(0);
+    chips('parent')[0]!.click();
+    expect(onStep).toHaveBeenLastCalledWith('saturn');
+    store.set({ lang: 'de' });
+    expect(root.textContent).toContain('Mutterplanet');
+    store.set({ selected: 'moon' });
+    expect(chips('parent').map((b) => b.dataset.testid)).toEqual(['parent-earth']);
+  });
+
+  it('labels the chip rows in every language', () => {
+    for (const [lang, word] of [
+      ['vi', 'Vệ tinh'],
+      ['ja', '衛星'],
+      ['de', 'Monde'],
+    ] as const) {
+      const { root, chips } = panelFor('saturn', lang);
+      expect(root.textContent, lang).toContain(word);
+      expect(chips('moon')).toHaveLength(2);
+    }
+  });
+});

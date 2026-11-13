@@ -45,9 +45,10 @@ const state = (page: Page) =>
   });
 
 test('selecting each clickable body shows its panel title in every language', async ({ page }) => {
-  // 11 flights plus language toggles on software GL.
+  // One flight plus a language toggle per body on software GL: about 22 s each (240 s was
+  // sized for 11 bodies).
   test.slow();
-  test.setTimeout(240_000);
+  test.setTimeout(Math.ceil((240_000 / 11) * BODY_IDS.length));
   await boot(page);
   // Flights are frame-bound on software GL (about 1.5 fps); speed the rig up.
   await page.evaluate(() => (window as unknown as AppWindow).__app.setTimeScale(20));

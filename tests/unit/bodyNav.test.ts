@@ -87,4 +87,56 @@ describe('createBodyNav', () => {
       expect(navDot(id)).toMatch(/^#[0-9a-f]{6}$/i);
     }
   });
+
+  describe('moons', () => {
+    const visibleIds = (nav: HTMLElement): string[] =>
+      [...nav.querySelectorAll<HTMLButtonElement>('button')]
+        .filter((b) => !b.hidden)
+        .map((b) => b.dataset.testid!.slice(4));
+    const PLANETS_AND_MORE = NAV_ORDER.filter(
+      (id) => id === 'asteroid-belt' || id === 'moon' || BODIES[id].kind !== 'moon',
+    );
+
+    it('hides every moon but Earth’s in the overview', () => {
+      const { nav } = setup();
+      expect(visibleIds(nav)).toEqual(PLANETS_AND_MORE);
+    });
+
+    it('inserts a planet’s moons right after it while the planet is the target', () => {
+      const { nav, store } = setup({ selected: 'jupiter', view: 'focus' });
+      const shown = visibleIds(nav);
+      const i = shown.indexOf('jupiter');
+      expect(shown.slice(i + 1, i + 5)).toEqual(['io', 'europa', 'ganymede', 'callisto']);
+      expect(shown).not.toContain('phobos');
+      expect(shown).not.toContain('titan');
+      const io = nav.querySelector<HTMLButtonElement>('[data-testid="nav-io"]')!;
+      expect(io.classList.contains('nav-moon')).toBe(true);
+      expect(io.textContent).toBe('Io');
+      store.set({ selected: 'mars' });
+      const mars = visibleIds(nav);
+      expect(mars.slice(mars.indexOf('mars') + 1, mars.indexOf('mars') + 4)).toEqual([
+        'phobos',
+        'deimos',
+        'asteroid-belt',
+      ]);
+      expect(mars).not.toContain('io');
+    });
+
+    it('keeps the moons while one of them is the target, and selects them on click', () => {
+      const { nav, store, onSelect } = setup({ selected: 'titan', view: 'focus' });
+      expect(visibleIds(nav)).toEqual(expect.arrayContaining(['saturn', 'enceladus', 'titan']));
+      expect(nav.querySelector('[data-testid="nav-titan"]')?.getAttribute('aria-current')).toBe(
+        'true',
+      );
+      nav.querySelector<HTMLButtonElement>('[data-testid="nav-enceladus"]')!.click();
+      expect(onSelect).toHaveBeenCalledWith('enceladus');
+      store.set({ selected: null, view: 'overview' });
+      expect(visibleIds(nav)).toEqual(PLANETS_AND_MORE);
+    });
+
+    it('gives a moon its planet’s orbit colour as its dot', () => {
+      expect(navDot('io')).toBe(BODIES.jupiter.orbitColor);
+      expect(navDot('phobos')).toBe(BODIES.mars.orbitColor);
+    });
+  });
 });

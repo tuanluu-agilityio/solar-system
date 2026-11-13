@@ -1,12 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import * as THREE from 'three';
-import { createSolarSystem } from '../../src/scene/solarSystem';
+import { createSolarSystem, moonSystemVisible } from '../../src/scene/solarSystem';
 import { tierSettings } from '../../src/quality/tiers';
 import { BODY_IDS, type BodyId } from '../../src/data/types';
-import { BODIES } from '../../src/data/bodies';
+import { BODIES, moonsOf } from '../../src/data/bodies';
 import {
   EARTH_YEAR_DAYS,
   MOON_ORBIT_DISPLAY,
+  MOON_SYSTEM_VIEW_FACTOR,
+  moonDisplay,
   displaySemiMajorAxis,
   displayRadius,
   orbitalAngle,
@@ -49,8 +51,11 @@ function make(tier: 'low' | 'high' = 'high') {
   return createSolarSystem(textures(), tierSettings(tier));
 }
 
-type OrbitingBodyId = Exclude<BodyId, 'sun' | 'moon'>;
-const ORBITING = BODY_IDS.filter((id): id is OrbitingBodyId => id !== 'sun' && id !== 'moon');
+/** Bodies circling the Sun on Kepler ellipses: the planets and Pluto (a moon's parent is a planet). */
+type OrbitingBodyId = BodyId;
+const ORBITING = BODY_IDS.filter((id) => BODIES[id].parent === 'sun');
+/** Moons hidden from the overview: every moon except Earth's. */
+const SYSTEM_MOONS = BODY_IDS.filter((id) => BODIES[id].kind === 'moon' && id !== 'moon');
 
 function orbitShape(id: OrbitingBodyId) {
   const orbit = BODIES[id].orbit;
@@ -75,11 +80,13 @@ function meanAnomalyAt(id: OrbitingBodyId, tSec: number): number {
 }
 
 describe('createSolarSystem', () => {
-  it('has all 11 bodies and 11 pickables', () => {
+  it('has all 19 bodies and 19 pickables', () => {
     const ss = make();
-    expect(ss.bodies.size).toBe(11);
+    expect(ss.bodies.size).toBe(19);
     for (const id of BODY_IDS) expect(ss.bodies.has(id)).toBe(true);
-    expect(ss.pickables.length).toBe(11);
+    expect(ss.pickables.length).toBe(19);
+    expect(ORBITING).toHaveLength(9);
+    expect(SYSTEM_MOONS).toHaveLength(8);
   });
 
   it('uses linear planet radii and preserves the Sun and Moon display sizes', () => {
@@ -91,7 +98,7 @@ describe('createSolarSystem', () => {
         10,
       );
     }
-    for (const id of ['sun', 'moon'] as const) {
+    for (const id of ['sun', 'moon', ...SYSTEM_MOONS] as const) {
       expect(ss.bodies.get(id)!.radius).toBeCloseTo(
         displayRadius(BODIES[id].physical.diameterKm),
         10,
@@ -153,6 +160,7 @@ describe('createSolarSystem', () => {
   it('makes pick proxies at least 1.8x the mesh radius or 2.5', () => {
     const ss = make();
     for (const b of ss.bodies.values()) {
+      if (SYSTEM_MOONS.includes(b.id)) continue;
       const geo = b.pickProxy.geometry as THREE.SphereGeometry;
       const r = geo.parameters.radius;
       expect(r).toBeGreaterThanOrEqual(Math.min(b.radius * 1.8, 2.5));
@@ -160,6 +168,87 @@ describe('createSolarSystem', () => {
       expect(b.pickProxy.userData.bodyId).toBe(b.id);
       expect(ss.pickables).toContain(b.pickProxy);
     }
+  });
+
+  it('gives moons seen only near their planet a tap target that never swallows a neighbour', () => {
+    const ss = make();
+    for (const id of SYSTEM_MOONS) {
+      const b = ss.bodies.get(id)!;
+      const r = (b.pickProxy.geometry as THREE.SphereGeometry).parameters.radius;
+      const orbit = moonDisplay(id).orbitRadius;
+      expect(r, id).toBeCloseTo(Math.max(b.radius * 1.8, Math.min(2.5, orbit * 0.3)));
+      expect(r, id).toBeLessThan(orbit - ss.bodies.get(BODIES[id].parent!)!.radius);
+      expect(ss.pickables).toContain(b.pickProxy);
+    }
+  });
+
+  it('orbits every other moon in its planet equatorial plane at its display radius', () => {
+    const ss = make();
+    for (const t of [0, 3.7, 41]) {
+      ss.update(t);
+      for (const id of SYSTEM_MOONS) {
+        const planet = ss.bodies.get(BODIES[id].parent!)!;
+        const rel = worldPos(ss.bodies.get(id)!.mesh).sub(worldPos(planet.mesh));
+        expect(rel.length(), id).toBeCloseTo(moonDisplay(id).orbitRadius, 4);
+        // The planet's spin axis in world space: the moon stays perpendicular to it.
+        const axis = new THREE.Vector3(0, 1, 0).applyAxisAngle(
+          new THREE.Vector3(0, 0, 1),
+          THREE.MathUtils.degToRad(BODIES[planet.id].physical.axialTiltDeg),
+        );
+        expect(Math.abs(rel.normalize().dot(axis)), id).toBeLessThan(1e-6);
+      }
+    }
+  });
+
+  it('keeps the same face of every moon toward its planet (tidal lock)', () => {
+    const ss = make();
+    for (const id of SYSTEM_MOONS) {
+      const moon = ss.bodies.get(id)!;
+      const planet = ss.bodies.get(BODIES[id].parent!)!;
+      const facing = (t: number): THREE.Vector3 => {
+        ss.update(t);
+        const toPlanet = worldPos(planet.mesh).sub(worldPos(moon.mesh)).normalize();
+        moon.mesh.updateWorldMatrix(true, false);
+        return toPlanet.transformDirection(moon.mesh.matrixWorld.clone().invert());
+      };
+      const f0 = facing(0);
+      expect(facing(2.9).distanceTo(f0), id).toBeLessThan(1e-6);
+      expect(facing(17.3).distanceTo(f0), id).toBeLessThan(1e-6);
+      // The map centre (u = 0.5, local +x, longitude 0) is the sub-planet point.
+      expect(f0.x, id).toBeGreaterThan(0.999);
+    }
+  });
+
+  it('moves moons on the slowed display period (Io returns after one display orbit)', () => {
+    const ss = make();
+    const io = ss.bodies.get('io')!;
+    const jupiter = ss.bodies.get('jupiter')!;
+    const rel = (t: number): THREE.Vector3 => {
+      ss.update(t);
+      return worldPos(io.mesh).sub(worldPos(jupiter.mesh));
+    };
+    const period = (60 * moonDisplay('io').periodDays) / EARTH_YEAR_DAYS;
+    const a = rel(5).clone();
+    expect(rel(5 + period).distanceTo(a)).toBeLessThan(1e-3);
+    expect(rel(5 + period / 2).distanceTo(a)).toBeGreaterThan(moonDisplay('io').orbitRadius);
+  });
+
+  it('gives Phobos and Deimos lumpy, non-spherical shapes', () => {
+    const ss = make();
+    for (const id of ['phobos', 'deimos'] as const) {
+      const pos = ss.bodies.get(id)!.mesh.geometry.getAttribute('position');
+      const v = new THREE.Vector3();
+      let min = Infinity;
+      let max = 0;
+      for (let i = 0; i < pos.count; i++) {
+        const r = v.fromBufferAttribute(pos, i).length();
+        min = Math.min(min, r);
+        max = Math.max(max, r);
+      }
+      expect(max / min, id).toBeGreaterThan(1.2);
+    }
+    const io = ss.bodies.get('io')!.mesh.geometry as THREE.SphereGeometry;
+    expect(io.parameters.radius).toBeCloseTo(ss.bodies.get('io')!.radius);
   });
 
   it('applies real axial tilts and retrograde spin for Venus and Uranus', () => {
@@ -461,6 +550,95 @@ describe('overview boost', () => {
       ss.applyOverviewBoost(cameraAt(pos.x + 8, pos.y + 2, pos.z, pos), 664);
       expect(scaleOf(ss, id), id).toBe(1);
     }
+  });
+
+  describe('moon systems', () => {
+    const ray = new THREE.Raycaster();
+    const shown = (ss: ReturnType<typeof make>, id: BodyId): boolean => {
+      const b = ss.bodies.get(id)!;
+      return b.tiltGroup.visible && ray.layers.test(b.pickProxy.layers);
+    };
+
+    it('shows a system only while the camera is within the view factor of its outermost moon', () => {
+      expect(moonSystemVisible(5 * MOON_SYSTEM_VIEW_FACTOR - 0.01, 5)).toBe(true);
+      expect(moonSystemVisible(5 * MOON_SYSTEM_VIEW_FACTOR, 5)).toBe(false);
+    });
+
+    it('hides every moon but Earth\u2019s in the overview: not drawn and not pickable', () => {
+      const ss = make();
+      ss.update(0);
+      ss.root.updateMatrixWorld(true);
+      // Hidden from creation, before the first boost pass.
+      for (const id of SYSTEM_MOONS) expect(shown(ss, id), id).toBe(false);
+      ss.applyOverviewBoost(cameraAt(0, 600, 1000), 664);
+      for (const id of SYSTEM_MOONS) expect(shown(ss, id), id).toBe(false);
+    });
+
+    it('shows a planet\u2019s moons when the camera is near it (a focus view), others by distance', () => {
+      const ss = make();
+      ss.update(0);
+      const viewRadius = (planet: BodyId): number =>
+        Math.max(...moonsOf(planet).map((m) => moonDisplay(m).orbitRadius));
+      for (const t of [0, 7, 30]) {
+        ss.update(t);
+        ss.root.updateMatrixWorld(true);
+        for (const planet of ['mars', 'jupiter', 'saturn'] as const) {
+          const b = ss.bodies.get(planet)!;
+          const p = worldPos(b.mesh);
+          // About the rig's focus distance (6.6 radii).
+          const camera = cameraAt(p.x + b.radius * 6.6, p.y, p.z, p);
+          ss.applyOverviewBoost(camera, 664);
+          for (const id of SYSTEM_MOONS) {
+            const parent = BODIES[id].parent!;
+            const d = worldPos(ss.bodies.get(parent)!.mesh).distanceTo(camera.position);
+            // Its own moons always; a neighbour's only when that planet is in range too.
+            const expected = parent === planet || moonSystemVisible(d, viewRadius(parent));
+            expect(shown(ss, id), `${planet} t=${t}: ${id}`).toBe(expected);
+          }
+        }
+      }
+    });
+
+    it('keeps a planet\u2019s moons shown while one of them is focused', () => {
+      const ss = make();
+      ss.update(7);
+      ss.root.updateMatrixWorld(true);
+      for (const id of SYSTEM_MOONS) {
+        const b = ss.bodies.get(id)!;
+        const p = worldPos(b.mesh);
+        ss.applyOverviewBoost(cameraAt(p.x + b.radius * 6.6, p.y + b.radius, p.z, p), 664);
+        for (const sibling of moonsOf(BODIES[id].parent!)) {
+          expect(shown(ss, sibling), `${id}: ${sibling}`).toBe(true);
+        }
+      }
+    });
+
+    it('reports each moon once, the first time its system comes into view', () => {
+      const seen: BodyId[] = [];
+      const ss = createSolarSystem(textures(), tierSettings('high'), {
+        onFirstShown: (id) => seen.push(id),
+      });
+      ss.update(0);
+      ss.root.updateMatrixWorld(true);
+      ss.applyOverviewBoost(cameraAt(0, 600, 1000), 664);
+      expect(seen).toEqual([]);
+      const mars = worldPos(ss.bodies.get('mars')!.mesh);
+      const near = cameraAt(mars.x + 2, mars.y, mars.z, mars);
+      ss.applyOverviewBoost(near, 664);
+      // Jupiter's system may be in range of this camera too, depending on the planets' phases.
+      expect(seen).toEqual(expect.arrayContaining(moonsOf('mars')));
+      const first = [...seen];
+      ss.applyOverviewBoost(cameraAt(0, 600, 1000), 664);
+      ss.applyOverviewBoost(near, 664);
+      expect(seen).toEqual(first);
+      expect(new Set(seen).size).toBe(seen.length);
+    });
+
+    it('draws no orbit ribbon for any moon', () => {
+      const ss = make();
+      const lines = ss.root.children.filter((c) => c.name === 'orbit-line');
+      expect(lines).toHaveLength(ORBITING.length);
+    });
   });
 
   it('hides the Moon while a boosted Earth would swallow its orbit, and makes it unpickable', () => {
