@@ -301,4 +301,30 @@ describe('createCameraRig', () => {
     run(rig, IDLE_DRIFT_DELAY_SEC + 6);
     expect(camera.position.distanceTo(q)).toBeLessThan(1e-3);
   });
+
+  it('a flight lifts the camera mid-way and ends on the exact focus pose', () => {
+    const lifted = setup();
+    const flat = setup();
+    flat.rig.setFlightArc(false);
+    const a = body(300, 0, 0);
+    const b = body(300, 0, 0);
+    void lifted.rig.flyTo(a);
+    void flat.rig.flyTo(b);
+    run(lifted.rig, 1.1);
+    run(flat.rig, 1.1);
+    expect(lifted.camera.position.y - flat.camera.position.y).toBeGreaterThan(1);
+    run(lifted.rig, 4);
+    run(flat.rig, 4);
+    expect(lifted.camera.position.distanceTo(flat.camera.position)).toBeLessThan(1e-3);
+    expect(lifted.camera.quaternion.angleTo(flat.camera.quaternion)).toBeLessThan(1e-4);
+  });
+
+  it('keeps looking at the look-at point while lifted', () => {
+    const { camera, rig } = setup();
+    const t = body(300, 0, 0);
+    void rig.flyTo(t);
+    run(rig, 1.1);
+    // The view direction passes through a point on the way to the target, not past it.
+    expect(targetOf(camera).y).toBeLessThan(0);
+  });
 });

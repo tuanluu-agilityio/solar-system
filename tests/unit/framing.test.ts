@@ -1,6 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  FLIGHT_ARC_SHARE,
   FOCUS_FILL,
+  SUN_CLEARANCE,
+  flightArcHeight,
   focusDistance,
   focusFill,
   focusScreenOffset,
@@ -188,5 +191,28 @@ describe('overviewPolar', () => {
     const p = overviewPolar(390 / 664);
     expect(p).toBeLessThan(Math.PI / 3);
     expect(p).toBeGreaterThanOrEqual(Math.PI / 5);
+  });
+});
+
+describe('flightArcHeight', () => {
+  const P = (x: number, y: number, z: number) => ({ x, y, z });
+
+  it('is a small share of the distance for a path far from the Sun', () => {
+    const h = flightArcHeight(P(100, 0, 0), P(100, 0, 200));
+    expect(h).toBeCloseTo(200 * FLIGHT_ARC_SHARE, 6);
+  });
+
+  it('rises to clear the Sun when the straight path crosses it', () => {
+    const h = flightArcHeight(P(-60, 0, 0), P(60, 0, 1));
+    expect(h).toBeGreaterThanOrEqual(SUN_CLEARANCE * 1.5);
+  });
+
+  it('does not add clearance for a flight that starts or ends at the Sun', () => {
+    expect(flightArcHeight(P(0, 0, 0), P(100, 0, 0))).toBeCloseTo(100 * FLIGHT_ARC_SHARE, 6);
+    expect(flightArcHeight(P(100, 0, 0), P(0, 0, 0))).toBeCloseTo(100 * FLIGHT_ARC_SHARE, 6);
+  });
+
+  it('is zero when nothing moves', () => {
+    expect(flightArcHeight(P(5, 1, 2), P(5, 1, 2))).toBe(0);
   });
 });

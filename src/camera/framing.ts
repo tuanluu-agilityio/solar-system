@@ -3,6 +3,7 @@ import {
   OVERVIEW_MIN_BODY_PX,
   displaySemiMajorAxis,
   displayPlanetRadius,
+  displayRadius,
 } from '../config/scale';
 import { BODIES } from '../data/bodies';
 import type { Layout } from '../ui/layout';
@@ -134,4 +135,37 @@ export function overviewBoost(
   const px = (radius / (distance * Math.tan((fovDeg * Math.PI) / 360))) * (viewH / 2);
   if (!(px > 0)) return OVERVIEW_MAX_BOOST;
   return Math.min(OVERVIEW_MAX_BOOST, Math.max(1, overviewMinPx(radius) / px));
+}
+
+/** A flight keeps its look-at point at least this far from the Sun's centre (display units). */
+export const SUN_CLEARANCE = displayRadius(BODIES.sun.physical.diameterKm) * 2.5;
+/** Every flight rises by this share of its length, for a gentle sweep instead of a straight line. */
+export const FLIGHT_ARC_SHARE = 0.04;
+
+interface Point {
+  x: number;
+  y: number;
+  z: number;
+}
+
+/**
+ * How far a flight between two look-at points lifts the camera at mid-flight: a small share of
+ * the travelled distance, raised so a path that would cross the Sun (at the origin) clears it.
+ * A flight that starts or ends at the Sun is not lifted for clearance.
+ */
+export function flightArcHeight(from: Point, to: Point): number {
+  const dx = to.x - from.x;
+  const dy = to.y - from.y;
+  const dz = to.z - from.z;
+  const len2 = dx * dx + dy * dy + dz * dz;
+  const base = Math.sqrt(len2) * FLIGHT_ARC_SHARE;
+  if (len2 < 1e-9) return 0;
+  const endsAtSun =
+    Math.hypot(from.x, from.y, from.z) < SUN_CLEARANCE ||
+    Math.hypot(to.x, to.y, to.z) < SUN_CLEARANCE;
+  if (endsAtSun) return base;
+  // Closest approach of the segment to the origin.
+  const u = Math.min(1, Math.max(0, -(from.x * dx + from.y * dy + from.z * dz) / len2));
+  const closest = Math.hypot(from.x + dx * u, from.y + dy * u, from.z + dz * u);
+  return closest < SUN_CLEARANCE ? Math.max(base, SUN_CLEARANCE * 1.5) : base;
 }

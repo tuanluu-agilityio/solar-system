@@ -453,6 +453,7 @@ async function boot(): Promise<void> {
   );
   // A resting focus view slowly circles its body, unless the user asked for less motion.
   rig.setIdleDrift(!isE2E && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  rig.setFlightArc(!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   // Labels show in the overview only, and only while the user keeps them on.
   syncLabels = (): void => labels.setVisible(store.get().view === 'overview' && labelsOn);
   syncLabels();
