@@ -33,6 +33,8 @@ export interface PhysicalData {
   distanceFromParentMkm?: number; // million km (Moon: from Earth)
   orbitalPeriodDays?: number;
   knownMoons?: number;
+  /** Main atmospheric gases (NASA Planetary Fact Sheet); formulas use Unicode subscripts. */
+  atmosphere?: readonly { gas: string; percent: number }[];
 }
 
 export interface OrbitalElements {

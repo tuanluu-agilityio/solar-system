@@ -149,6 +149,10 @@ export const BODIES: Record<BodyId, BodyDef> = {
     distanceFromParentMkm: 108.2,
     orbitalPeriodDays: 224.7,
     knownMoons: 0,
+    atmosphere: [
+      { gas: 'CO₂', percent: 96.5 },
+      { gas: 'N₂', percent: 3.5 },
+    ],
   }),
   earth: def('earth', 'terrestrial', 'sun', 3, {
     diameterKm: 12756,
@@ -160,6 +164,11 @@ export const BODIES: Record<BodyId, BodyDef> = {
     distanceFromParentMkm: 149.6,
     orbitalPeriodDays: 365.2,
     knownMoons: 1,
+    atmosphere: [
+      { gas: 'N₂', percent: 78.08 },
+      { gas: 'O₂', percent: 20.95 },
+      { gas: 'Ar', percent: 0.93 },
+    ],
   }),
   moon: def('moon', 'moon', 'earth', null, {
     diameterKm: 3475,
@@ -181,6 +190,11 @@ export const BODIES: Record<BodyId, BodyDef> = {
     distanceFromParentMkm: 228.0,
     orbitalPeriodDays: 687.0,
     knownMoons: 2,
+    atmosphere: [
+      { gas: 'CO₂', percent: 95.1 },
+      { gas: 'N₂', percent: 2.59 },
+      { gas: 'Ar', percent: 1.94 },
+    ],
   }),
   jupiter: def('jupiter', 'gas-giant', 'sun', 5, {
     diameterKm: 142984,
@@ -192,6 +206,10 @@ export const BODIES: Record<BodyId, BodyDef> = {
     distanceFromParentMkm: 778.5,
     orbitalPeriodDays: 4331,
     knownMoons: 115,
+    atmosphere: [
+      { gas: 'H₂', percent: 89.8 },
+      { gas: 'He', percent: 10.2 },
+    ],
   }),
   saturn: def('saturn', 'gas-giant', 'sun', 6, {
     diameterKm: 120536,
@@ -203,6 +221,10 @@ export const BODIES: Record<BodyId, BodyDef> = {
     distanceFromParentMkm: 1432.0,
     orbitalPeriodDays: 10747,
     knownMoons: 293,
+    atmosphere: [
+      { gas: 'H₂', percent: 96.3 },
+      { gas: 'He', percent: 3.25 },
+    ],
   }),
   uranus: def('uranus', 'ice-giant', 'sun', 7, {
     diameterKm: 51118,
@@ -214,6 +236,11 @@ export const BODIES: Record<BodyId, BodyDef> = {
     distanceFromParentMkm: 2867.0,
     orbitalPeriodDays: 30589,
     knownMoons: 29,
+    atmosphere: [
+      { gas: 'H₂', percent: 82.5 },
+      { gas: 'He', percent: 15.2 },
+      { gas: 'CH₄', percent: 2.3 },
+    ],
   }),
   neptune: def('neptune', 'ice-giant', 'sun', 8, {
     diameterKm: 49528,
@@ -225,6 +252,11 @@ export const BODIES: Record<BodyId, BodyDef> = {
     distanceFromParentMkm: 4515.0,
     orbitalPeriodDays: 59800,
     knownMoons: 16,
+    atmosphere: [
+      { gas: 'H₂', percent: 80 },
+      { gas: 'He', percent: 19 },
+      { gas: 'CH₄', percent: 1.5 },
+    ],
   }),
   pluto: def('pluto', 'dwarf-planet', 'sun', 9, {
     diameterKm: 2376,

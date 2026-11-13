@@ -24,6 +24,8 @@ export interface RuntimeQuality {
   frame(dtMs: number, ctx: FrameContext): QualityTier | null;
   /** Downgrades one tier regardless of the monitor (null at the floor). */
   downgrade(): QualityTier | null;
+  /** False (a manual tier choice) stops the automatic downgrade; true resumes it from scratch. */
+  setAuto(on: boolean): void;
 }
 
 export function createRuntimeQuality(deps: {
@@ -34,6 +36,7 @@ export function createRuntimeQuality(deps: {
   /** Applies the lower tier (store update + settings); called only on an actual downgrade. */
   onDowngrade(next: QualityTier): void;
 }): RuntimeQuality {
+  let auto = true;
   const downgrade = (): QualityTier | null => {
     const current = deps.getTier();
     const next = lowerTier(current);
@@ -44,7 +47,7 @@ export function createRuntimeQuality(deps: {
   };
   return {
     frame(dtMs, ctx) {
-      if (deps.software) return null;
+      if (deps.software || !auto) return null;
       if (!ctx.visible || ctx.transitioning) {
         deps.monitor.reset(); // a window must not span a hitch or a hidden period
         return null;
@@ -52,5 +55,9 @@ export function createRuntimeQuality(deps: {
       return deps.monitor.sample(dtMs) === 'downgrade' ? downgrade() : null;
     },
     downgrade,
+    setAuto(on) {
+      auto = on;
+      deps.monitor.reset();
+    },
   };
 }

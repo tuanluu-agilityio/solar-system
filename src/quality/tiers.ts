@@ -1,4 +1,11 @@
-export type QualityTier = 'low' | 'medium' | 'high';
+export type QualityTier = 'low' | 'medium' | 'high' | 'ultra';
+/** What the user picks: a fixed tier, or `auto` (device-based start plus FPS downgrade). */
+export type QualityChoice = 'auto' | QualityTier;
+export const QUALITY_CHOICES: readonly QualityChoice[] = ['auto', 'low', 'medium', 'high', 'ultra'];
+
+export function isQualityChoice(v: unknown): v is QualityChoice {
+  return typeof v === 'string' && (QUALITY_CHOICES as readonly string[]).includes(v);
+}
 
 export interface DeviceInfo {
   isMobile: boolean;
@@ -49,6 +56,18 @@ const TIERS: Record<QualityTier, TierSettings> = {
     skySize: 4096,
     antialias: true,
   },
+  // Never chosen automatically. Antialiasing is fixed when the renderer is created, so a
+  // live switch to or from ultra keeps the context's antialias setting.
+  ultra: {
+    pixelRatioCap: 2,
+    bloomResolutionScale: 1,
+    asteroidCount: 12000,
+    textureSet: 'high',
+    atmosphere: true,
+    ringShadow: true,
+    skySize: 4096,
+    antialias: true,
+  },
 };
 
 export function initialTier(d: DeviceInfo): QualityTier {
@@ -61,5 +80,6 @@ export function tierSettings(t: QualityTier): TierSettings {
 }
 
 export function lowerTier(t: QualityTier): QualityTier {
+  if (t === 'ultra') return 'high';
   return t === 'high' ? 'medium' : 'low';
 }

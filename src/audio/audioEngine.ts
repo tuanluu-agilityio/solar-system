@@ -1,5 +1,6 @@
 import { startAmbient } from './ambient';
 import { playWhoosh as whooshInto } from './whoosh';
+import { UI_MIN_GAP_S, playUiSound, type UiSound } from './uiSounds';
 
 // Audio engine (spec §3.7). Everything is routed through Web Audio GainNodes:
 // master -> destination; ambientBus, sfxBus, narrationBus -> master.
@@ -22,6 +23,8 @@ export interface AudioEngine {
   /** Master gain 0/1 with a 0.2 s ramp; the ambient starts on the first unmute. */
   setMuted(m: boolean): void;
   playWhoosh(): void;
+  /** Soft interface blip; silent while muted or before unlock, rate-limited. */
+  playUi(kind: UiSound): void;
   playNarration(url: string): Promise<NarrationResult>;
   stopNarration(): void;
   /** Current narration playback position, 0 when idle. */
@@ -59,6 +62,7 @@ export function createAudioEngine(
   let failed = false;
   let muted = true;
   let ambientStarted = false;
+  let lastUiAt = -Infinity;
   let element: HTMLAudioElement | null = null;
   // Settles the narration in flight, if any.
   let finishNarration: ((r: NarrationResult) => void) | null = null;
@@ -120,6 +124,14 @@ export function createAudioEngine(
     playWhoosh() {
       if (!graph || muted) return;
       whooshInto(graph.ctx, graph.sfxBus);
+    },
+
+    playUi(kind) {
+      if (!graph || muted) return;
+      const now = graph.ctx.currentTime;
+      if (now - lastUiAt < UI_MIN_GAP_S) return;
+      lastUiAt = now;
+      playUiSound(graph.ctx, graph.sfxBus, kind);
     },
 
     playNarration(url) {
