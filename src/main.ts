@@ -43,7 +43,7 @@ import { aggregateProgress, skyKey, skySet } from './scene/textureKeys';
 import { createSky } from './scene/sky';
 import { startLoop } from './scene/loop';
 import { createPostFX } from './scene/postfx';
-import { createSun } from './bodies/sun';
+import { createSun, sunDetailForTier } from './bodies/sun';
 import { createSolarSystem } from './scene/solarSystem';
 import { createPicker } from './interaction/picker';
 import { createLabels } from './ui/labels';
@@ -306,7 +306,9 @@ async function boot(): Promise<void> {
   ]);
   const skyTexture = skyTex.get(skyKey(sky));
   if (skyTexture) scene.add(createSky(skyTexture));
-  const sun = createSun(lowTex.get('sun') ?? makeFallbackTexture('sun'));
+  const sun = createSun(lowTex.get('sun') ?? makeFallbackTexture('sun'), {
+    detail: sunDetailForTier(store.get().quality),
+  });
   scene.add(sun.group);
   const solar = createSolarSystem(lowTex, tierSettings(store.get().quality));
   solarRef = solar;
