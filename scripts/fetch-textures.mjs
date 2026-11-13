@@ -80,12 +80,13 @@ const SOURCES = [
     palette: ['#9eabb4', '#d5dde2', '#f4f7f9', '#ffffff'],
   },
   {
-    // Titan's surface at 938 nm, seen through the haze: tinted toward the orange smog.
+    // Titan's surface at 938 nm. In visible light the haze hides it, so the tint keeps only a
+    // faint trace of the dark dune fields and bright Xanadu under an even orange smog.
     key: 'titan',
     url: `${USGS_MOSAIC}Titan_ISS_P19658_Mosaic_Global_4km.tif`,
     kind: 'mosaic',
     lowWidth: 1024,
-    palette: ['#4a2c14', '#8a5a2c', '#c08a50', '#e2b47a'],
+    palette: ['#a5672f', '#bb793b', '#c98a48', '#d49957'],
   },
   {
     key: 'phobos',
@@ -309,7 +310,7 @@ async function deimosPipeline() {
       <stop offset="1" stop-color="#a1968a" stop-opacity="0"/>
     </radialGradient>
   </defs>
-  <rect width="${W}" height="${H}" fill="#857a6f"/>
+  <rect width="${W}" height="${H}" fill="#6f665d"/>
   <rect width="${W}" height="${H}" filter="url(#n)" opacity="0.6"/>
   ${craters}
 </svg>`;

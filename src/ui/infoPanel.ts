@@ -57,6 +57,36 @@ function sig3(lang: Lang, v: number): string {
   return formatNumber(lang, Number(v.toPrecision(3)), 6);
 }
 
+const SUPERSCRIPT: Record<string, string> = {
+  '-': '⁻',
+  '0': '⁰',
+  '1': '¹',
+  '2': '²',
+  '3': '³',
+  '4': '⁴',
+  '5': '⁵',
+  '6': '⁶',
+  '7': '⁷',
+  '8': '⁸',
+  '9': '⁹',
+};
+/** Below this a mass (in Earths) is written in powers of ten: small moons would read "0". */
+const SCIENTIFIC_BELOW = 1e-3;
+
+/** 3 significant digits; tiny values as `m × 10ⁿ` (1.78 × 10⁻⁹). */
+function massValue(lang: Lang, v: number): string {
+  if (v === 0 || v >= SCIENTIFIC_BELOW) return sig3(lang, v);
+  const exp = Math.floor(Math.log10(v));
+  const mantissa = Number((v / 10 ** exp).toPrecision(3));
+  const power = [...String(exp)].map((c) => SUPERSCRIPT[c] ?? c).join('');
+  return `${formatNumber(lang, mantissa, 2)} × 10${power}`;
+}
+
+/** One decimal (9.8 m/s²); weak gravity keeps 2 significant digits (0.0058, not 0). */
+function gravityValue(lang: Lang, g: number): string {
+  return g >= 0.5 ? formatNumber(lang, g, 1) : formatNumber(lang, Number(g.toPrecision(2)), 6);
+}
+
 function withUnit(lang: Lang, n: string, unit: UiKey): string {
   return `${n} ${t(lang, unit)}`;
 }
@@ -80,7 +110,7 @@ export function panelFields(def: BodyDef, lang: Lang): PanelField[] {
   });
   out.push({
     key: 'field.mass',
-    value: withUnit(lang, sig3(lang, p.massEarths), 'unit.earthMass'),
+    value: withUnit(lang, massValue(lang, p.massEarths), 'unit.earthMass'),
   });
   if (p.distanceFromParentMkm !== undefined) {
     // A moon: distance from its planet, in km.
@@ -112,7 +142,7 @@ export function panelFields(def: BodyDef, lang: Lang): PanelField[] {
   if (p.meanTempC !== undefined) {
     out.push({ key: 'field.meanTemp', value: `${formatNumber(lang, p.meanTempC)} °C` });
   }
-  out.push({ key: 'field.gravity', value: `${formatNumber(lang, p.surfaceGravity, 1)} m/s²` });
+  out.push({ key: 'field.gravity', value: `${gravityValue(lang, p.surfaceGravity)} m/s²` });
   if (p.knownMoons !== undefined) {
     out.push({ key: 'field.moons', value: formatNumber(lang, p.knownMoons) });
   }

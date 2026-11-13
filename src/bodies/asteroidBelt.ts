@@ -44,6 +44,11 @@ export interface BeltSpec {
   colorB: THREE.Color;
   /** Brightness factor range [min, min + span] applied to each tint. */
   brightness: readonly [number, number];
+  /**
+   * `lit`: sunlit rocks. `glow`: unlit specks added to the image (never darker than the sky
+   * behind them), for a band seen only as a faint haze.
+   */
+  shading: 'lit' | 'glow';
 }
 
 /** Carbonaceous grey to stony brown, with a brightness spread. */
@@ -58,6 +63,7 @@ export const ASTEROID_BELT_SPEC: BeltSpec = {
   colorA: new THREE.Color('#77736c'),
   colorB: new THREE.Color('#8c7457'),
   brightness: [0.6, 0.6],
+  shading: 'lit',
 };
 
 /**
@@ -74,7 +80,8 @@ export const KUIPER_BELT_SPEC: BeltSpec = {
   sizeMax: KUIPER_SIZE_MAX,
   colorA: new THREE.Color('#8f8c8a'),
   colorB: new THREE.Color('#8a6a58'),
-  brightness: [0.22, 0.2],
+  brightness: [0.3, 0.2],
+  shading: 'glow',
 };
 
 /** Small deterministic PRNG returning floats in [0, 1). */
@@ -155,12 +162,20 @@ export function createAsteroidBelt(
 ): AsteroidBelt {
   const geometry = makeRockGeometry();
   // White base: the per-instance colour carries each rock's tint.
-  const material = new THREE.MeshStandardMaterial({
-    color: '#ffffff',
-    roughness: 1,
-    metalness: 0,
-    flatShading: true,
-  });
+  const material =
+    spec.shading === 'lit'
+      ? new THREE.MeshStandardMaterial({
+          color: '#ffffff',
+          roughness: 1,
+          metalness: 0,
+          flatShading: true,
+        })
+      : new THREE.MeshBasicMaterial({
+          color: '#ffffff',
+          blending: THREE.AdditiveBlending,
+          depthWrite: false,
+          transparent: true,
+        });
   // Rocks near the camera shrink away, so the belt never blocks a focused planet.
   material.onBeforeCompile = (shader) => {
     shader.vertexShader = shader.vertexShader.replace(

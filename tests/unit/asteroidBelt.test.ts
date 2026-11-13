@@ -197,3 +197,13 @@ describe('solar system Kuiper belt wiring', () => {
     expect((low.root.getObjectByName('kuiper-belt') as THREE.InstancedMesh).count).toBe(0);
   });
 });
+
+describe('belt shading', () => {
+  it('lights the asteroid belt and adds the Kuiper specks as faint unlit light', () => {
+    expect(createAsteroidBelt(10).mesh.material).toBeInstanceOf(THREE.MeshStandardMaterial);
+    const kuiper = createKuiperBelt(10).mesh.material as THREE.MeshBasicMaterial;
+    expect(kuiper).toBeInstanceOf(THREE.MeshBasicMaterial);
+    expect(kuiper.blending).toBe(THREE.AdditiveBlending);
+    expect(kuiper.depthWrite).toBe(false);
+  });
+});

@@ -285,6 +285,18 @@ describe('moons in the panel', () => {
     expect(val('titan', 'de', 'field.distanceSaturn')).toBe('1.221.870 km');
   });
 
+  it('keeps tiny masses and gravities readable (never a bare 0)', () => {
+    expect(val('phobos', 'en', 'field.mass')).toBe('1.78 × 10⁻⁹ × Earth');
+    expect(val('deimos', 'de', 'field.mass')).toBe('4,02 × 10⁻¹⁰ × Erde');
+    expect(val('enceladus', 'en', 'field.mass')).toBe('1.81 × 10⁻⁵ × Earth');
+    expect(val('io', 'en', 'field.mass')).toBe('0.015 × Earth');
+    expect(val('phobos', 'en', 'field.gravity')).toBe('0.0058 m/s²');
+    expect(val('deimos', 'en', 'field.gravity')).toBe('0.0025 m/s²');
+    expect(val('enceladus', 'vi', 'field.gravity')).toBe('0,11 m/s²');
+    expect(val('io', 'en', 'field.gravity')).toBe('1.8 m/s²');
+    expect(val('earth', 'en', 'field.gravity')).toBe('9.8 m/s²');
+  });
+
   it('omits the mean temperature where NASA gives none (Phobos, Deimos)', () => {
     for (const id of ['phobos', 'deimos'] as const) {
       expect(val(id, 'en', 'field.meanTemp')).toBeUndefined();
