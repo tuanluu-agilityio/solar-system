@@ -97,12 +97,12 @@ goes to a single PR once the user approves the push.
 | Phase | Task | Scope                                                              | Main files                                                                                     | Status  |
 | ----- | ---- | ------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------- | ------- |
 | 0     | t39  | Audit, baseline, this plan, `scripts/shots.mjs`                    | `docs/ENHANCEMENT_PLAN.md`, `scripts/shots.mjs`                                                | done    |
-| 1     | t39a | Deep space: star layers, twinkle, nebula, dust                     | `src/scene/sky.ts`, new `src/scene/starfield.ts`, `src/scene/dust.ts`, `src/main.ts` (wiring)  | pending |
-| 2     | t39b | The Sun and bloom tuning                                           | `src/bodies/sun.ts`, `src/scene/bloomConfig.ts`, `src/scene/postfx.ts`                         | pending |
-| 2     | t39c | Planet materials, Earth, rings and ring shadows, asteroid belt     | `src/bodies/{planet,earth,rings,asteroidBelt}.ts`, new `planetMaterial.ts`, `solarSystem.ts`   | pending |
-| 2     | t39e | Major moons and Kuiper belt                                        | `src/data/*`, `src/scene/solarSystem.ts`, `scripts/fetch-textures.mjs`, `public/textures`      | pending |
-| 3     | t39f | Cinematic camera and keyboard navigation                           | `src/camera/*`, `src/main.ts`                                                                  | pending |
-| 4     | t39d | HUD, settings, body navigator, panel polish, interface sounds      | `src/ui/*`, `src/i18n/strings.ts`, `src/state/*`, `src/quality/tiers.ts`, `src/audio/*`        | pending |
+| 1     | t39a | Deep space: star layers, twinkle, nebula, dust                     | `src/scene/sky.ts`, new `src/scene/starfield.ts`, `src/scene/dust.ts`, `src/main.ts` (wiring)  | done    |
+| 2     | t39b | The Sun and bloom tuning                                           | `src/bodies/sun.ts`, `src/scene/bloomConfig.ts`, `src/scene/postfx.ts`                         | done    |
+| 2     | t39c | Planet materials, Earth, rings and ring shadows, asteroid belt     | `src/bodies/{planet,earth,rings,asteroidBelt}.ts`, new `planetMaterial.ts`, `solarSystem.ts`   | done    |
+| 2     | t39e | Major moons and Kuiper belt                                        | `src/data/*`, `src/scene/solarSystem.ts`, `scripts/fetch-textures.mjs`, `public/textures`      | done    |
+| 3     | t39f | Cinematic camera and keyboard navigation                           | `src/camera/*`, `src/main.ts`                                                                  | done    |
+| 4     | t39d | HUD, settings, body navigator, panel polish, interface sounds      | `src/ui/*`, `src/i18n/strings.ts`, `src/state/*`, `src/quality/tiers.ts`, `src/audio/*`        | done    |
 | 5     | t39g | Performance pass, `ultra` tier checks, budget, mobile              | `src/quality/*`, `docs/perf-results.json`                                                      | pending |
 | 6     | t39h | Full QA (unit, lint, typecheck, build, budget, e2e), screenshots   | `tests/*`, `docs/screenshots`, `docs/IMPLEMENTATION_STATUS.md`                                 | pending |
 
@@ -134,10 +134,10 @@ and t39h on the integration branch.
 ## 8. Completion checklist
 
 - [x] Phase 0: audit, baseline, plan
-- [ ] Phase 1: deep space environment
-- [ ] Phase 2: Sun, planets, rings, moons
-- [ ] Phase 3: camera and exploration
-- [ ] Phase 4: interface and audio
+- [x] Phase 1: deep space environment
+- [x] Phase 2: Sun, planets, rings, moons
+- [x] Phase 3: camera and exploration
+- [x] Phase 4: interface and audio
 - [ ] Phase 5: performance and polish
 - [ ] Phase 6: final QA and `docs/IMPLEMENTATION_STATUS.md`
 

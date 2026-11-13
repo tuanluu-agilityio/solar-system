@@ -20,7 +20,7 @@ Last update: 2026-11-14.
 | 1     | t39a | Done, merged                            |
 | 2     | t39b | Done, merged                            |
 | 2     | t39c | Done, merged                            |
-| 2     | t39e | In progress on `feat/t39e` (not merged) |
+| 2     | t39e | Done, merged                            |
 | 3     | t39f | Done on the integration branch          |
 | 4     | t39d | Done, merged                            |
 | 5     | t39g | Not started                             |
@@ -79,6 +79,30 @@ Last update: 2026-11-14.
 - Integration fix: `SolarSystem.update(tSec, wallDtSec)` fades the orbit ribbons on real frame
   time, so pause and fast-forward no longer affect the fade.
 
+### Phase 2 (t39e): moons and Kuiper belt
+
+- Eight moons as selectable bodies: Phobos, Deimos, Io, Europa, Ganymede, Callisto, Enceladus,
+  Titan (`src/data/*`, NASA NSSDC fact sheets and JPL values, content in vi/en/ja/de). A moon
+  hangs off its parent planet (no more `id === 'moon'` special case), orbits in the planet's
+  equatorial plane, is tidally locked, and its orbital motion is slowed by one documented
+  factor in `src/config/scale.ts`. Phobos and Deimos use deformed geometry
+  (`src/bodies/moonShape.ts`).
+- Moons are hidden and unpickable unless the camera is within 4 times the outermost moon orbit
+  of their planet (`moonSystemVisible`); their maps load the first time they come into view.
+  Each planet's moons show independently, so a neighbour's moons can appear at a conjunction.
+- Maps: USGS Astrogeology public-domain mosaics (Io, Europa, Ganymede, Callisto, Titan,
+  Enceladus, Phobos), greyscale ones tinted toward the real colour; Deimos is generated and
+  credited as simulated. Credits updated in all four locales.
+- Kuiper belt: faint additive specks at 30 to 50 AU, not selectable, tier field `kuiperCount`.
+- UI: Moons chips on a planet's panel, a parent chip on a moon's panel, moons in the navigator
+  only while their planet system is selected, distance labels per parent, powers of ten for
+  tiny masses. `src/scene/nearPlane.ts` moves the near clipping plane with the focus distance.
+
+### Phase 3 additions (t39f)
+
+- Flights rise in a gentle arc (`flightArcHeight` in `src/camera/framing.ts`) that clears the
+  Sun when the straight path would cross it; off under `prefers-reduced-motion`.
+
 ### Phase 4 (t39d): interface, settings, sounds
 
 - Design tokens and restyle in `src/ui/styles.css`; inline SVG icons (`src/ui/icons.ts`).
@@ -96,19 +120,16 @@ Last update: 2026-11-14.
 ## Outstanding issues and known limitations
 
 - The night disc of Mercury and Venus looks brownish with the Sun behind them (Sun glare).
-- The Sun's granulation has hard cell edges in an extreme close-up.
 - Antialiasing is fixed when the renderer is created, so a live tier switch keeps it.
-- E2E specs not yet re-run after the merges: `quality`, `audio`, `tour`, `flows`, `hires`,
-  `picking`.
+- Moon labels near their planet on mobile were not checked in screenshots.
+- The unimaged polar caps of Europa, Ganymede and Callisto are filled from nearby latitudes.
+- `check:budget` counts the lazily loaded moon maps in the initial payload (reported 4.29 MB).
 
-- Flights are still an eased straight transition (no arced path around the Sun).
 - See `docs/KNOWN_ISSUES.md` for the open high-tier FPS entry.
 
 ## Exact next steps
 
-1. Wait for t39e (moons, Kuiper belt); review it and merge it (the `ultra` tier needs any new
-   `TierSettings` fields).
-2. Fix whatever the full e2e run on the integration branch reports.
-3. t39g: performance pass (`npm run test:perf`, `scripts/shots.mjs --quality low --mobile`).
-4. t39h: lint, typecheck, unit, build, budget, e2e one spec at a time, refresh
-   `docs/screenshots`, final update of this file; then ask the user to approve the push and PR.
+1. Full e2e run on the merged branch (`npm run test:e2e`); fix what it reports.
+2. `npm run test:perf` on an idle machine; update `docs/perf-results.json`.
+3. `npm run test:visual` to refresh `docs/screenshots`.
+4. Ask the user to approve the push and the PR to `main` (a merge deploys to production).
