@@ -923,7 +923,8 @@ kbd {
   padding: 22px;
   border-radius: var(--sse-radius-lg);
   background: var(--sse-surface-strong);
-  animation: sse-pop var(--sse-med) var(--sse-ease);
+  /* Fade only: a full-height sheet must not move outside the viewport while it appears. */
+  animation: sse-fade var(--sse-med) var(--sse-ease);
 }
 .lang-title {
   margin: 0;
