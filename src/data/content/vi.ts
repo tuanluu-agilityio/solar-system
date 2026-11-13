@@ -152,4 +152,100 @@ export const CONTENT_VI: Record<ContentId, BodyContent> = {
       'Một vòng quanh Mặt Trời mất khoảng 248 năm Trái Đất.',
     ],
   },
+  phobos: {
+    name: 'Phobos',
+    kindLabel: 'Vệ tinh của Sao Hỏa',
+    description:
+      'Phobos là vệ tinh lớn hơn và ở gần hơn trong hai vệ tinh nhỏ của Sao Hỏa, một khối đá sẫm màu, xù xì, kích thước khoảng 27 × 22 × 18 km. Nó quay quanh Sao Hỏa ba vòng mỗi ngày, chỉ cách bề mặt khoảng 6.000 km. Bề mặt Phobos phủ bụi mịn và chi chít vết va chạm của hàng nghìn thiên thạch.',
+    facts: [
+      'Hố va chạm lớn nhất của nó, Stickney, rộng khoảng 9 km.',
+      'Phobos đang tiến dần về phía Sao Hỏa khoảng 1,8 m mỗi trăm năm; khoảng 50 triệu năm nữa nó sẽ đâm vào Sao Hỏa hoặc vỡ ra thành một vành đai.',
+      'Asaph Hall phát hiện Phobos vào ngày 17 tháng 8 năm 1877.',
+      'Nơi có nắng chiếu đạt khoảng −4 °C, còn nơi khuất bóng xuống tới khoảng −112 °C.',
+    ],
+  },
+  deimos: {
+    name: 'Deimos',
+    kindLabel: 'Vệ tinh của Sao Hỏa',
+    description:
+      'Deimos là vệ tinh nhỏ hơn và ở xa hơn của Sao Hỏa, một khối có hình dạng bất thường kích thước khoảng 15 × 12 × 11 km. Bề mặt sẫm màu của nó làm từ vật chất giàu carbon, giống các tiểu hành tinh ở rìa ngoài vành đai tiểu hành tinh. Một lớp bụi có thể dày tới 100 m lấp bớt các hố va chạm, nên Deimos trông nhẵn hơn Phobos.',
+    facts: [
+      'Deimos quay quanh Sao Hỏa khoảng 30 giờ một vòng.',
+      'Tên của nó nghĩa là “nỗi khiếp sợ”; trong thần thoại Hy Lạp, Deimos là anh em của Phobos.',
+      'Asaph Hall phát hiện Deimos vào ngày 11 tháng 8 năm 1877, sáu ngày trước Phobos.',
+      'Phần lớn hố va chạm trên Deimos có đường kính dưới 2,5 km.',
+    ],
+  },
+  io: {
+    name: 'Io',
+    kindLabel: 'Vệ tinh của Sao Mộc',
+    description:
+      'Io là thế giới có núi lửa hoạt động mạnh nhất Hệ Mặt Trời, với hàng trăm núi lửa, có nơi phun dung nham cao hàng chục kilômét. Io bị giằng co giữa lực hấp dẫn khổng lồ của Sao Mộc và những lực kéo nhỏ hơn nhưng đều đặn của Europa và Ganymede. Lưu huỳnh ở nhiều dạng khác nhau tô bề mặt Io thành các màu vàng, cam, đỏ và trắng.',
+    facts: [
+      'Galileo Galilei phát hiện Io vào ngày 8 tháng 1 năm 1610.',
+      'Lực hút của Sao Mộc làm bề mặt rắn của Io nhô lên, hạ xuống tới 100 m.',
+      'Cứ mỗi vòng Ganymede quay quanh Sao Mộc, Europa quay hai vòng và Io quay bốn vòng.',
+      'Mỗi giây, Sao Mộc tước đi khoảng 1 tấn vật chất của Io.',
+    ],
+  },
+  europa: {
+    name: 'Europa',
+    kindLabel: 'Vệ tinh của Sao Mộc',
+    description:
+      'Europa là một vệ tinh băng có kích thước bằng khoảng 90% Mặt Trăng, bề mặt sáng của nó chằng chịt những vết nứt dài màu nâu đỏ. Bên dưới lớp vỏ băng dày khoảng 15 đến 25 km là một đại dương sâu 60 đến 150 km, có thể chứa lượng nước gấp đôi tất cả các đại dương trên Trái Đất. Vì thế Europa là một trong những nơi hứa hẹn nhất để tìm kiếm sự sống ngoài Trái Đất.',
+    facts: [
+      'Europa có rất ít hố va chạm nên bề mặt của nó có thể chỉ mới 40 đến 90 triệu năm tuổi.',
+      'Bề mặt băng của Europa phản xạ ánh sáng Mặt Trời nhiều gấp khoảng 5,5 lần Mặt Trăng.',
+      'Ánh sáng Mặt Trời mất khoảng 45 phút để tới Europa.',
+      'Người ta đã thấy những cột nước có thể đang phun cao khoảng 160 km trên bề mặt.',
+    ],
+  },
+  ganymede: {
+    name: 'Ganymede',
+    kindLabel: 'Vệ tinh của Sao Mộc',
+    description:
+      'Ganymede là vệ tinh lớn nhất Hệ Mặt Trời, lớn hơn cả hành tinh Sao Thủy và hành tinh lùn Sao Diêm Vương. Bề mặt của nó xen kẽ những vùng tối cổ xưa đầy hố va chạm với những vùng sáng hơn bị cắt ngang bởi các dải gờ và rãnh. Bên dưới lớp vỏ chủ yếu là băng dày khoảng 150 km là một đại dương nước mặn, được cho là chứa nhiều nước hơn toàn bộ nước trên bề mặt Trái Đất.',
+    facts: [
+      'Đây là vệ tinh duy nhất được biết có từ trường riêng, do tàu Galileo của NASA phát hiện năm 1996.',
+      'Từ trường của Ganymede tạo ra cực quang quanh cực bắc và cực nam của nó.',
+      'Ganymede quay hết một vòng quanh Sao Mộc trong khoảng 7 ngày.',
+      'Kính viễn vọng Hubble đã tìm thấy bằng chứng về một lớp khí quyển oxy mỏng.',
+    ],
+  },
+  callisto: {
+    name: 'Callisto',
+    kindLabel: 'Vệ tinh của Sao Mộc',
+    description:
+      'Callisto có bề mặt cổ xưa nhất và nhiều hố va chạm nhất Hệ Mặt Trời, khoảng 4 tỷ năm tuổi. Không có núi lửa hay mảng kiến tạo nào xóa đi dấu vết, nên các hố va chạm cứ thế chồng chất qua thời gian. Những đốm trắng sáng, được cho là đỉnh các hố phủ băng nước, rải rác trên nền bề mặt tối màu.',
+    facts: [
+      'Galileo Galilei phát hiện Callisto năm 1610, cùng với Io, Europa và Ganymede.',
+      'Có thể có một đại dương nước mặn nằm sâu khoảng 250 km dưới bề mặt.',
+      'Callisto ở xa Sao Mộc gấp khoảng 4,5 lần so với Io.',
+      'Nó có một lớp khí quyển carbon dioxide cực kỳ mỏng.',
+    ],
+  },
+  enceladus: {
+    name: 'Enceladus',
+    kindLabel: 'Vệ tinh của Sao Thổ',
+    description:
+      'Enceladus là một vệ tinh băng nhỏ, đường kính chỉ khoảng 500 km, nhưng có bề mặt trắng và phản xạ ánh sáng mạnh nhất Hệ Mặt Trời. Những tia hơi nước và hạt băng phun ra từ các khe nứt ấm gần cực nam, được gọi vui là “vằn hổ”. Một đại dương ẩn bên dưới lớp băng nuôi các tia phun ấy.',
+    facts: [
+      'Vì phản xạ quá nhiều ánh sáng Mặt Trời, bề mặt của nó lạnh khoảng −201 °C.',
+      'Bụi băng phun ra trải dọc quỹ đạo của nó và tạo thành vành E của Sao Thổ.',
+      'Các tia phun rời bề mặt với tốc độ khoảng 400 m mỗi giây.',
+      'William Herschel phát hiện Enceladus vào ngày 28 tháng 8 năm 1789.',
+    ],
+  },
+  titan: {
+    name: 'Titan',
+    kindLabel: 'Vệ tinh của Sao Thổ',
+    description:
+      'Titan là vệ tinh lớn nhất của Sao Thổ và là vệ tinh duy nhất có khí quyển dày, một lớp sương mù màu cam giàu nitơ che khuất bề mặt. Bên dưới, mưa methane và ethane đổ đầy các hồ và biển, khiến Titan là thế giới duy nhất ngoài Trái Đất được biết có chất lỏng trên bề mặt. Một đại dương nước có thể nằm sâu 55 đến 80 km dưới lớp vỏ băng.',
+    facts: [
+      'Titan rộng hơn Mặt Trăng gần 50%; chỉ Ganymede là lớn hơn nó.',
+      'Áp suất khí quyển trên bề mặt Titan cao hơn Trái Đất khoảng 60%.',
+      'Christiaan Huygens phát hiện Titan vào ngày 25 tháng 3 năm 1655.',
+      'Năm 2005, tàu đổ bộ Huygens hạ cánh xuống Titan, lần hạ cánh đầu tiên ở vùng ngoài Hệ Mặt Trời.',
+    ],
+  },
 };

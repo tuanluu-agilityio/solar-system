@@ -1,4 +1,11 @@
-import type { BodyDef, BodyId, BodyKind, OrbitalElements, PhysicalData } from './types';
+import {
+  BODY_IDS,
+  type BodyDef,
+  type BodyId,
+  type BodyKind,
+  type OrbitalElements,
+  type PhysicalData,
+} from './types';
 
 // Source: NASA Planetary Fact Sheet (massEarths = 10^24 kg / 5.97).
 // knownMoons as of 2026-10-29 (NASA Science moons pages; JPL counts as of Aug 2026)
@@ -9,7 +16,10 @@ import type { BodyDef, BodyId, BodyKind, OrbitalElements, PhysicalData } from '.
 // JPL's approximate-position formula is fit for 1800-2050, not a long-term ephemeris.
 // Earth uses the Earth-Moon barycenter elements from the source table.
 // Source: https://ssd.jpl.nasa.gov/planets/approx_pos.html
-const PLANETARY_ORBITS: Record<Exclude<BodyId, 'sun' | 'moon'>, OrbitalElements> = {
+type MoonBodyId =
+  'moon' | 'phobos' | 'deimos' | 'io' | 'europa' | 'ganymede' | 'callisto' | 'enceladus' | 'titan';
+
+const PLANETARY_ORBITS: Record<Exclude<BodyId, 'sun' | MoonBodyId>, OrbitalElements> = {
   mercury: {
     semiMajorAxisAu: 0.38709927,
     eccentricity: 0.20563593,
@@ -107,7 +117,10 @@ function def(
   physical: PhysicalData,
 ): BodyDef {
   const orbitColor = ORBIT_COLORS[id];
-  const orbit = id === 'sun' || id === 'moon' ? undefined : PLANETARY_ORBITS[id];
+  const orbit =
+    kind === 'star' || kind === 'moon'
+      ? undefined
+      : PLANETARY_ORBITS[id as Exclude<BodyId, 'sun' | MoonBodyId>];
   return {
     id,
     kind,
@@ -196,6 +209,34 @@ export const BODIES: Record<BodyId, BodyDef> = {
       { gas: 'Ar', percent: 1.94 },
     ],
   }),
+  // Moons below: NASA NSSDC satellite fact sheets (marsfact.html, joviansatfact.html,
+  // saturniansatfact.html, galileanfact_table.html) and JPL satellite physical parameters
+  // (https://ssd.jpl.nasa.gov/sats/phys_par/). massEarths = mass / 5.97e24 kg; gravity =
+  // JPL GM / mean radius^2 where the fact sheet gives none. All eight rotate synchronously
+  // (fact sheet "S": rotation period = orbital period); a synchronous moon's spin axis sits
+  // on its orbit normal (IAU WGCCRE pole models), so its tilt to the orbit is 0.
+  // Phobos and Deimos: mean radius 11.08 / 6.2 km (JPL), triaxial radii from marsfact.html.
+  // NASA gives them no mean temperature (Phobos: -4 °C sunlit, -112 °C shadowed).
+  phobos: def('phobos', 'moon', 'mars', null, {
+    diameterKm: 22.2,
+    massEarths: 0.00000000178,
+    surfaceGravity: 0.0058,
+    rotationPeriodHours: 7.65,
+    axialTiltDeg: 0,
+    distanceFromParentMkm: 0.009378,
+    orbitalPeriodDays: 0.31891,
+    shapeRadiiKm: [13.0, 11.4, 9.1],
+  }),
+  deimos: def('deimos', 'moon', 'mars', null, {
+    diameterKm: 12.4,
+    massEarths: 0.000000000402,
+    surfaceGravity: 0.0025,
+    rotationPeriodHours: 30.3,
+    axialTiltDeg: 0,
+    distanceFromParentMkm: 0.023459,
+    orbitalPeriodDays: 1.26244,
+    shapeRadiiKm: [7.8, 6.0, 5.1],
+  }),
   jupiter: def('jupiter', 'gas-giant', 'sun', 5, {
     diameterKm: 142984,
     massEarths: 317.8,
@@ -211,6 +252,48 @@ export const BODIES: Record<BodyId, BodyDef> = {
       { gas: 'He', percent: 10.2 },
     ],
   }),
+  // Galilean moons: diameter, gravity, rotation and mean temperature from the NSSDC
+  // Galilean satellite table; distance and orbital period from the Jovian satellite sheet.
+  io: def('io', 'moon', 'jupiter', null, {
+    diameterKm: 3643,
+    massEarths: 0.015,
+    surfaceGravity: 1.8,
+    rotationPeriodHours: 42.5,
+    axialTiltDeg: 0,
+    meanTempC: -155,
+    distanceFromParentMkm: 0.4218,
+    orbitalPeriodDays: 1.769138,
+  }),
+  europa: def('europa', 'moon', 'jupiter', null, {
+    diameterKm: 3122,
+    massEarths: 0.00804,
+    surfaceGravity: 1.31,
+    rotationPeriodHours: 85.2,
+    axialTiltDeg: 0,
+    meanTempC: -170,
+    distanceFromParentMkm: 0.6711,
+    orbitalPeriodDays: 3.551181,
+  }),
+  ganymede: def('ganymede', 'moon', 'jupiter', null, {
+    diameterKm: 5262,
+    massEarths: 0.0248,
+    surfaceGravity: 1.43,
+    rotationPeriodHours: 171.7,
+    axialTiltDeg: 0,
+    meanTempC: -160,
+    distanceFromParentMkm: 1.0704,
+    orbitalPeriodDays: 7.154553,
+  }),
+  callisto: def('callisto', 'moon', 'jupiter', null, {
+    diameterKm: 4821,
+    massEarths: 0.018,
+    surfaceGravity: 1.24,
+    rotationPeriodHours: 400.5,
+    axialTiltDeg: 0,
+    meanTempC: -155,
+    distanceFromParentMkm: 1.8827,
+    orbitalPeriodDays: 16.689017,
+  }),
   saturn: def('saturn', 'gas-giant', 'sun', 6, {
     diameterKm: 120536,
     massEarths: 95.2,
@@ -224,6 +307,32 @@ export const BODIES: Record<BodyId, BodyDef> = {
     atmosphere: [
       { gas: 'H₂', percent: 96.3 },
       { gas: 'He', percent: 3.25 },
+    ],
+  }),
+  // Enceladus: mean radius 252.1 km and GM from JPL; -201 °C from NASA Science.
+  enceladus: def('enceladus', 'moon', 'saturn', null, {
+    diameterKm: 504.2,
+    massEarths: 0.0000181,
+    surfaceGravity: 0.113,
+    rotationPeriodHours: 32.9,
+    axialTiltDeg: 0,
+    meanTempC: -201,
+    distanceFromParentMkm: 0.23802,
+    orbitalPeriodDays: 1.370218,
+  }),
+  // Titan: NSSDC tables; -179 °C and the N2/CH4 split from NASA Science (Titan facts).
+  titan: def('titan', 'moon', 'saturn', null, {
+    diameterKm: 5150,
+    massEarths: 0.0225,
+    surfaceGravity: 1.35,
+    rotationPeriodHours: 382.7,
+    axialTiltDeg: 0,
+    meanTempC: -179,
+    distanceFromParentMkm: 1.22187,
+    orbitalPeriodDays: 15.945421,
+    atmosphere: [
+      { gas: 'N₂', percent: 95 },
+      { gas: 'CH₄', percent: 5 },
     ],
   }),
   uranus: def('uranus', 'ice-giant', 'sun', 7, {
@@ -282,3 +391,13 @@ export const PLANET_ORDER: BodyId[] = [
   'neptune',
   'pluto',
 ];
+
+/** True for a natural satellite (its parent is a planet, not the Sun). */
+export function isMoonId(id: BodyId): boolean {
+  return BODIES[id].kind === 'moon';
+}
+
+/** The modelled moons of `id`, innermost first (`BODY_IDS` order). */
+export function moonsOf(id: BodyId): BodyId[] {
+  return BODY_IDS.filter((m) => BODIES[m].parent === id && isMoonId(m));
+}

@@ -1,7 +1,8 @@
+import { moonDisplay } from '../config/scale';
 import { BODIES } from '../data/bodies';
 import { getContent } from '../data/content';
 import { NAV_ORDER } from '../data/navOrder';
-import type { ContentId } from '../data/types';
+import type { BodyId, ContentId } from '../data/types';
 import { t } from '../i18n/i18n';
 import type { AppState } from '../state/appState';
 import type { Store } from '../state/store';
@@ -15,18 +16,36 @@ const NEUTRAL_DOTS: Partial<Record<ContentId, string>> = {
 };
 const FALLBACK_DOT = '#9aa6bd';
 
-/** Colour dot for a body: its orbit colour, else a neutral tone. */
+/** Colour dot for a body: its orbit colour, a moon its planet's, else a neutral tone. */
 export function navDot(id: ContentId): string {
+  const neutral = NEUTRAL_DOTS[id];
+  if (neutral) return neutral;
   if (id !== 'asteroid-belt') {
-    const c = BODIES[id].orbitColor;
+    const def = BODIES[id];
+    const c = def.orbitColor ?? (def.parent !== null ? BODIES[def.parent].orbitColor : undefined);
     if (c) return c;
   }
-  return NEUTRAL_DOTS[id] ?? FALLBACK_DOT;
+  return FALLBACK_DOT;
+}
+
+/**
+ * The planet whose moons the strip lists for `selected`: the planet itself or a moon's planet.
+ * Moons hidden from the overview (all but Earth's Moon) show only for that planet.
+ */
+function moonHost(selected: ContentId | null): ContentId | null {
+  if (selected === null || selected === 'asteroid-belt') return null;
+  const def = BODIES[selected];
+  return def.kind === 'moon' ? def.parent : selected;
+}
+
+function isDiscoveredMoon(id: ContentId): id is BodyId {
+  return id !== 'asteroid-belt' && BODIES[id].kind === 'moon' && !moonDisplay(id).overview;
 }
 
 /**
  * Body navigator: a compact strip of every body in `NAV_ORDER`, the current target marked
- * with `aria-current`. On phones it shows only in the overview (the bottom sheet and the tour
+ * with `aria-current`. A planet's moons (other than Earth's Moon) appear as smaller chips
+ * after it only while the planet or one of its moons is the target. On phones it shows only in the overview (the bottom sheet and the tour
  * dock need the space); on desktop it hides only while a tour runs.
  */
 export function createBodyNav(
@@ -41,7 +60,7 @@ export function createBodyNav(
   for (const id of NAV_ORDER) {
     const b = document.createElement('button');
     b.type = 'button';
-    b.className = 'nav-item';
+    b.className = isDiscoveredMoon(id) ? 'nav-item nav-moon' : 'nav-item';
     b.setAttribute('data-testid', `nav-${id}`);
     // The nav click selects with its own sound (userSelect); skip the generic button tick.
     b.dataset.sound = 'none';
@@ -75,6 +94,10 @@ export function createBodyNav(
     nav.classList.toggle('with-panel', s.layout === 'desktop' && s.selected !== null);
     if (s.selected !== current) {
       current = s.selected;
+      const host = moonHost(s.selected);
+      for (const [id, b] of buttons) {
+        if (isDiscoveredMoon(id)) b.hidden = BODIES[id].parent !== host;
+      }
       for (const [id, b] of buttons) {
         if (id === s.selected) b.setAttribute('aria-current', 'true');
         else b.removeAttribute('aria-current');

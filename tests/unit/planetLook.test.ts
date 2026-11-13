@@ -10,7 +10,18 @@ import {
 } from '../../src/bodies/planetLook';
 import { BODY_IDS } from '../../src/data/types';
 
-const ROCKY: LookBodyId[] = ['mercury', 'moon', 'pluto'];
+const ROCKY: LookBodyId[] = [
+  'mercury',
+  'moon',
+  'pluto',
+  'phobos',
+  'deimos',
+  'io',
+  'europa',
+  'ganymede',
+  'callisto',
+  'enceladus',
+];
 const GIANTS: LookBodyId[] = ['jupiter', 'saturn', 'uranus', 'neptune'];
 
 describe('PLANET_LOOKS', () => {
@@ -68,6 +79,24 @@ describe('PLANET_LOOKS', () => {
     expect(m.haze!.strength).toBeLessThan(0.5);
     expect(m.terminatorTint!.strength).toBeLessThanOrEqual(0.08);
     expect(m.shell!.scale).toBeLessThan(1.03);
+  });
+
+  it('gives Titan a thick orange haze, a soft terminator and the only moon atmosphere shell', () => {
+    const t = PLANET_LOOKS.titan;
+    expect(t.kind).toBe('cloudDeck');
+    expect(t.relief).toBe(0);
+    expect(t.haze!.strength).toBeGreaterThanOrEqual(0.5);
+    expect(t.terminatorSoftness).toBeGreaterThanOrEqual(0.15);
+    expect(t.shell).not.toBeNull();
+    const moonsWithShell = (
+      ['moon', 'phobos', 'deimos', 'io', 'europa', 'ganymede', 'callisto', 'enceladus'] as const
+    ).filter((id) => PLANET_LOOKS[id].shell !== null);
+    expect(moonsWithShell).toEqual([]);
+  });
+
+  it('keeps bright icy moons brighter than the dark Martian moons and Callisto', () => {
+    expect(PLANET_LOOKS.enceladus.exposure).toBeGreaterThan(PLANET_LOOKS.phobos.exposure);
+    expect(PLANET_LOOKS.europa.exposure).toBeGreaterThan(PLANET_LOOKS.callisto.exposure);
   });
 
   it('casts a ring shadow only on Saturn', () => {

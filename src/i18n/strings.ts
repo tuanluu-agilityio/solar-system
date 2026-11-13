@@ -27,6 +27,8 @@ const EN = {
   'credits.textures': 'Textures: Solar System Scope (CC BY 4.0)',
   'credits.data': 'Data: NASA Planetary Fact Sheet and NASA Science',
   'credits.voice': 'Narration voice generated with Microsoft Edge TTS',
+  'credits.moonMaps':
+    'Moon maps: USGS Astrogeology mosaics of NASA Voyager, Galileo, Cassini and Viking data (public domain); the Deimos map is simulated',
   'credits.support': 'Buy me a coffee',
   'credits.close': 'Close',
 
@@ -47,6 +49,9 @@ const EN = {
   'field.gravity': 'Surface gravity',
 
   'field.distanceEarth': 'Average distance from Earth',
+  'field.distanceMars': 'Average distance from Mars',
+  'field.distanceJupiter': 'Average distance from Jupiter',
+  'field.distanceSaturn': 'Average distance from Saturn',
   'unit.km': 'km',
   'unit.millionKm': 'million km',
   'unit.days': 'days',
@@ -93,6 +98,8 @@ const EN = {
   'nav.label': 'Bodies',
   'panel.prev': 'Previous body',
   'panel.next': 'Next body',
+  'panel.moons': 'Moons',
+  'panel.parent': 'Parent planet',
 } as const;
 
 export type UiKey = keyof typeof EN;
@@ -121,6 +128,8 @@ const VI: Record<UiKey, string> = {
   'credits.textures': 'Texture: Solar System Scope (CC BY 4.0)',
   'credits.data': 'Dữ liệu: NASA Planetary Fact Sheet và NASA Science',
   'credits.voice': 'Giọng thuyết minh được tạo bằng Microsoft Edge TTS',
+  'credits.moonMaps':
+    'Bản đồ vệ tinh: ảnh ghép của USGS Astrogeology từ dữ liệu NASA Voyager, Galileo, Cassini và Viking (phạm vi công cộng); bản đồ Deimos là hình mô phỏng',
   'credits.support': 'Buy me a coffee',
   'credits.close': 'Đóng',
 
@@ -141,6 +150,9 @@ const VI: Record<UiKey, string> = {
   'field.gravity': 'Trọng lực bề mặt',
 
   'field.distanceEarth': 'Khoảng cách trung bình tới Trái Đất',
+  'field.distanceMars': 'Khoảng cách trung bình tới Sao Hỏa',
+  'field.distanceJupiter': 'Khoảng cách trung bình tới Sao Mộc',
+  'field.distanceSaturn': 'Khoảng cách trung bình tới Sao Thổ',
   'unit.km': 'km',
   'unit.millionKm': 'triệu km',
   'unit.days': 'ngày',
@@ -187,6 +199,8 @@ const VI: Record<UiKey, string> = {
   'nav.label': 'Thiên thể',
   'panel.prev': 'Thiên thể trước',
   'panel.next': 'Thiên thể kế tiếp',
+  'panel.moons': 'Vệ tinh',
+  'panel.parent': 'Hành tinh mẹ',
 };
 
 // Japanese: AI translation from the English table, not yet proofread by a native speaker.
@@ -214,6 +228,8 @@ const JA: Record<UiKey, string> = {
   'credits.textures': 'テクスチャ: Solar System Scope (CC BY 4.0)',
   'credits.data': 'データ: NASA Planetary Fact Sheet および NASA Science',
   'credits.voice': 'ナレーション音声は Microsoft Edge TTS で生成',
+  'credits.moonMaps':
+    '衛星マップ: NASA のボイジャー、ガリレオ、カッシーニ、バイキングのデータによる USGS Astrogeology のモザイク (パブリックドメイン)。ダイモスのマップは模擬画像',
   'credits.support': 'Buy me a coffee',
   'credits.close': '閉じる',
 
@@ -233,6 +249,9 @@ const JA: Record<UiKey, string> = {
   'field.gravity': '表面重力',
 
   'field.distanceEarth': '地球からの平均距離',
+  'field.distanceMars': '火星からの平均距離',
+  'field.distanceJupiter': '木星からの平均距離',
+  'field.distanceSaturn': '土星からの平均距離',
   'unit.km': 'km',
   'unit.millionKm': '百万 km',
   'unit.days': '日',
@@ -279,6 +298,8 @@ const JA: Record<UiKey, string> = {
   'nav.label': '天体',
   'panel.prev': '前の天体',
   'panel.next': '次の天体',
+  'panel.moons': '衛星',
+  'panel.parent': '母惑星',
 };
 
 // German: AI translation from the English table, informal "du" form.
@@ -308,6 +329,8 @@ const DE: Record<UiKey, string> = {
   'credits.textures': 'Texturen: Solar System Scope (CC BY 4.0)',
   'credits.data': 'Daten: NASA Planetary Fact Sheet und NASA Science',
   'credits.voice': 'Sprecherstimme erzeugt mit Microsoft Edge TTS',
+  'credits.moonMaps':
+    'Mondkarten: USGS-Astrogeology-Mosaike aus Daten von NASA Voyager, Galileo, Cassini und Viking (gemeinfrei); die Deimos-Karte ist simuliert',
   'credits.support': 'Buy me a coffee',
   'credits.close': 'Schließen',
 
@@ -328,6 +351,9 @@ const DE: Record<UiKey, string> = {
   'field.gravity': 'Oberflächenschwerkraft',
 
   'field.distanceEarth': 'Mittlere Entfernung zur Erde',
+  'field.distanceMars': 'Mittlere Entfernung zum Mars',
+  'field.distanceJupiter': 'Mittlere Entfernung zum Jupiter',
+  'field.distanceSaturn': 'Mittlere Entfernung zum Saturn',
   'unit.km': 'km',
   'unit.millionKm': 'Mio. km',
   'unit.days': 'Tage',
@@ -374,6 +400,8 @@ const DE: Record<UiKey, string> = {
   'nav.label': 'Himmelskörper',
   'panel.prev': 'Vorheriger Himmelskörper',
   'panel.next': 'Nächster Himmelskörper',
+  'panel.moons': 'Monde',
+  'panel.parent': 'Mutterplanet',
 };
 
 export const UI_STRINGS: Record<Lang, Record<UiKey, string>> = {

@@ -152,4 +152,100 @@ export const CONTENT_EN: Record<ContentId, BodyContent> = {
       'One trip around the Sun takes Pluto about 248 Earth years.',
     ],
   },
+  phobos: {
+    name: 'Phobos',
+    kindLabel: 'Moon of Mars',
+    description:
+      'Phobos is the larger and closer of Mars’ two small moons, a dark, lumpy body about 27 by 22 by 18 km. It races around Mars three times a day, only about 6,000 km above the surface. Fine dust covers it, and thousands of meteorite impacts have gouged its surface.',
+    facts: [
+      'Its largest crater, Stickney, is about 9 km wide.',
+      'Phobos is creeping toward Mars by about 1.8 m every hundred years; in about 50 million years it will crash into Mars or break up into a ring.',
+      'Asaph Hall discovered Phobos on August 17, 1877.',
+      'Sunlit ground reaches about −4 °C, while shadowed ground drops to about −112 °C.',
+    ],
+  },
+  deimos: {
+    name: 'Deimos',
+    kindLabel: 'Moon of Mars',
+    description:
+      'Deimos is the smaller and outer moon of Mars, an irregular body about 15 by 12 by 11 km. Its dark surface is made of carbon-rich material, like the asteroids of the outer asteroid belt. A layer of dust perhaps 100 m deep partly fills its craters, so it looks smoother than Phobos.',
+    facts: [
+      'Deimos circles Mars about every 30 hours.',
+      'Its name means “dread”; in Greek myth Deimos is the brother of Phobos.',
+      'Asaph Hall discovered Deimos on August 11, 1877, six days before Phobos.',
+      'Most of its craters are smaller than 2.5 km across.',
+    ],
+  },
+  io: {
+    name: 'Io',
+    kindLabel: 'Moon of Jupiter',
+    description:
+      'Io is the most volcanically active world in the Solar System, with hundreds of volcanoes, some throwing lava fountains dozens of kilometers high. It is caught in a tug-of-war between Jupiter’s huge gravity and the smaller, precisely timed pulls of Europa and Ganymede. Sulfur in many forms paints its surface yellow, orange, red and white.',
+    facts: [
+      'Galileo Galilei discovered Io on January 8, 1610.',
+      'Jupiter’s pull makes Io’s solid surface rise and fall by as much as 100 m.',
+      'For every orbit Ganymede makes, Europa orbits twice and Io four times.',
+      'Jupiter strips about 1 ton of material from Io every second.',
+    ],
+  },
+  europa: {
+    name: 'Europa',
+    kindLabel: 'Moon of Jupiter',
+    description:
+      'Europa is an icy moon about 90% the size of Earth’s Moon, its bright surface crisscrossed by long reddish-brown cracks. Under an ice shell about 15 to 25 km thick lies an ocean 60 to 150 km deep that may hold twice as much water as all of Earth’s oceans. That makes it one of the most promising places to look for life beyond Earth.',
+    facts: [
+      'So few craters mark Europa that its surface may be only 40 to 90 million years old.',
+      'Its icy surface reflects about 5.5 times as much sunlight as our Moon.',
+      'Sunlight takes about 45 minutes to reach Europa.',
+      'Possible plumes of water have been seen rising about 160 km above its surface.',
+    ],
+  },
+  ganymede: {
+    name: 'Ganymede',
+    kindLabel: 'Moon of Jupiter',
+    description:
+      'Ganymede is the largest moon in the Solar System, bigger than the planet Mercury and the dwarf planet Pluto. Its surface mixes old, dark, cratered regions with brighter terrain sliced by ridges and grooves. A saltwater ocean, thought to hold more water than all the water on Earth’s surface, lies under a crust of mostly ice about 150 km thick.',
+    facts: [
+      'It is the only moon known to have its own magnetic field, discovered by NASA’s Galileo spacecraft in 1996.',
+      'Its magnetic field creates auroras around its north and south poles.',
+      'Ganymede completes an orbit of Jupiter about every 7 days.',
+      'Hubble has found evidence of a thin oxygen atmosphere.',
+    ],
+  },
+  callisto: {
+    name: 'Callisto',
+    kindLabel: 'Moon of Jupiter',
+    description:
+      'Callisto has the oldest and most heavily cratered surface in the Solar System, about 4 billion years old. With no active volcanoes or moving plates to erase them, its craters have piled up over time. Bright white spots, thought to be crater peaks capped with water ice, dot its dark surface.',
+    facts: [
+      'Galileo Galilei discovered Callisto in 1610, together with Io, Europa and Ganymede.',
+      'A salty ocean may lie about 250 km beneath its surface.',
+      'Callisto is about 4.5 times farther from Jupiter than Io.',
+      'It has an extremely thin atmosphere of carbon dioxide.',
+    ],
+  },
+  enceladus: {
+    name: 'Enceladus',
+    kindLabel: 'Moon of Saturn',
+    description:
+      'Enceladus is a small icy moon, only about 500 km across, with the whitest, most reflective surface in the Solar System. Jets of water vapor and ice grains spray from warm cracks near its south pole, nicknamed the “tiger stripes.” A hidden ocean beneath the ice feeds them.',
+    facts: [
+      'Because it reflects so much sunlight, its surface is about −201 °C.',
+      'Its icy spray spreads around its orbit and forms Saturn’s E ring.',
+      'The jets leave the surface at about 400 m per second.',
+      'William Herschel discovered Enceladus on August 28, 1789.',
+    ],
+  },
+  titan: {
+    name: 'Titan',
+    kindLabel: 'Moon of Saturn',
+    description:
+      'Titan is Saturn’s largest moon and the only moon with a thick atmosphere, a nitrogen-rich orange haze that hides its surface. Below it, rain of methane and ethane fills lakes and seas, making Titan the only world besides Earth known to have liquid on its surface. An ocean of water may lie 55 to 80 km beneath its icy crust.',
+    facts: [
+      'Titan is nearly 50% wider than Earth’s Moon; only Ganymede is bigger.',
+      'The air pressure at its surface is about 60% higher than on Earth.',
+      'Christiaan Huygens discovered Titan on March 25, 1655.',
+      'In 2005 the Huygens probe landed on Titan, the first landing in the outer Solar System.',
+    ],
+  },
 };

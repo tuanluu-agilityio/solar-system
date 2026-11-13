@@ -16,6 +16,7 @@ describe('tiers', () => {
       antialias: false,
       starCount: 7000,
       dustCount: 0,
+      kuiperCount: 0,
     });
     expect(tierSettings('medium')).toEqual({
       pixelRatioCap: 2,
@@ -29,6 +30,7 @@ describe('tiers', () => {
       antialias: true,
       starCount: 12000,
       dustCount: 250,
+      kuiperCount: 1500,
     });
     expect(tierSettings('high')).toEqual({
       pixelRatioCap: 2,
@@ -42,6 +44,7 @@ describe('tiers', () => {
       antialias: true,
       starCount: 18000,
       dustCount: 500,
+      kuiperCount: 3000,
     });
   });
   it('has an ultra tier that is never picked automatically', () => {
@@ -52,6 +55,7 @@ describe('tiers', () => {
       textureSet: 'high',
       skySize: 4096,
       antialias: true,
+      kuiperCount: 4500,
     });
     for (const isMobile of [true, false]) {
       for (const cores of [2, 8, 32]) {

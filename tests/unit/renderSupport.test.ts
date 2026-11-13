@@ -4,6 +4,7 @@ import {
   aggregateProgress,
   fallbackColor,
   isDataTextureKey,
+  isLazyTextureKey,
   skyKey,
   skySet,
 } from '../../src/scene/textureKeys';
@@ -15,6 +16,15 @@ describe('texture keys', () => {
   it('has a non-default fallback colour for every low-set body texture', () => {
     for (const key of Object.keys(manifest.low).filter((k) => !k.startsWith('sky'))) {
       expect(fallbackColor(key), key).not.toBe(0x808080);
+    }
+  });
+  it('loads the maps of moons hidden from the overview lazily, not at boot', () => {
+    const lazy = Object.keys(manifest.low).filter((k) => isLazyTextureKey(k));
+    expect(lazy.sort()).toEqual(
+      ['callisto', 'deimos', 'enceladus', 'europa', 'ganymede', 'io', 'phobos', 'titan'].sort(),
+    );
+    for (const key of ['moon', 'earth_day', 'jupiter', 'saturn_ring', 'sky_2048']) {
+      expect(isLazyTextureKey(key), key).toBe(false);
     }
   });
   it('uses a neutral colour for unknown keys and dark for sky', () => {

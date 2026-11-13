@@ -3,6 +3,8 @@ import type { AppState } from '../state/appState';
 import type { Store } from '../state/store';
 
 export const TEXTURES_URL = 'https://www.solarsystemscope.com/textures/';
+/** USGS Astrogeology map search: the public-domain global mosaics used for the moons. */
+export const MOON_MAPS_URL = 'https://astrogeology.usgs.gov/search';
 
 export interface Credits {
   open(): void;
@@ -10,7 +12,7 @@ export interface Credits {
   dispose(): void;
 }
 
-/** Credits modal: the three required credits plus a close button. Text follows `store.lang`. */
+/** Credits modal: the three required credits, the moon maps and a close button. Text follows `store.lang`. */
 export function createCredits(root: HTMLElement, store: Store<AppState>): Credits {
   const overlay = document.createElement('div');
   overlay.className = 'credits-overlay';
@@ -35,9 +37,15 @@ export function createCredits(root: HTMLElement, store: Store<AppState>): Credit
   textureLink.target = '_blank';
   textureLink.rel = 'noopener noreferrer';
   textures.append(textureLink);
+  const moonMaps = document.createElement('li');
+  const moonMapsLink = document.createElement('a');
+  moonMapsLink.href = MOON_MAPS_URL;
+  moonMapsLink.target = '_blank';
+  moonMapsLink.rel = 'noopener noreferrer';
+  moonMaps.append(moonMapsLink);
   const data = document.createElement('li');
   const voice = document.createElement('li');
-  list.append(textures, data, voice);
+  list.append(textures, moonMaps, data, voice);
   const close = document.createElement('button');
   close.type = 'button';
   close.className = 'ctl-btn glass credits-close';
@@ -51,6 +59,7 @@ export function createCredits(root: HTMLElement, store: Store<AppState>): Credit
     dialog.setAttribute('aria-label', t(lang, 'credits.title'));
     title.textContent = t(lang, 'credits.title');
     textureLink.textContent = t(lang, 'credits.textures');
+    moonMapsLink.textContent = t(lang, 'credits.moonMaps');
     data.textContent = t(lang, 'credits.data');
     voice.textContent = t(lang, 'credits.voice');
     support.textContent = t(lang, 'credits.support');

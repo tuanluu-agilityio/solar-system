@@ -1,18 +1,18 @@
 import * as THREE from 'three';
-import { BODIES } from '../data/bodies';
+import { BODIES, moonsOf } from '../data/bodies';
 import { BODY_IDS, type BodyId, type ContentId } from '../data/types';
 import type { TierSettings } from '../quality/tiers';
 import {
   ASTEROID_BELT_MKM,
   MOON_ORBIT_DISPLAY,
+  MOON_SYSTEM_VIEW_FACTOR,
   displayOrbitRadius,
   displayPlanetRadius,
   displayRadius,
+  moonDisplay,
 } from '../config/scale';
 import { overviewBoost } from '../camera/framing';
 import {
-  PICK_MIN_RADIUS,
-  PICK_SCALE,
   createPickProxy,
   createPlanet,
   sphereSegments,
@@ -43,7 +43,7 @@ import {
   type LookBodyId,
   type PlanetLook,
 } from '../bodies/planetLook';
-import { createAsteroidBelt } from '../bodies/asteroidBelt';
+import { createAsteroidBelt, createKuiperBelt } from '../bodies/asteroidBelt';
 import { createOrbitLine, type OrbitLine } from '../bodies/orbitLine';
 import { ORBIT_STYLE, stepEmphasis } from '../bodies/orbitMath';
 import { isFallbackTexture, makeFallbackTexture } from './textures';
@@ -53,6 +53,14 @@ export type { BodyObject };
 export interface FocusTarget {
   object: THREE.Object3D;
   radius: number;
+}
+
+export interface SolarSystemOptions {
+  /**
+   * Called once for each moon the first time its planet system comes into view (moons are
+   * hidden in the overview), so its map can load lazily. Until then it shows its fallback colour.
+   */
+  onFirstShown?: (id: BodyId) => void;
 }
 
 export interface SolarSystem {
@@ -72,7 +80,8 @@ export interface SolarSystem {
   /**
    * Screen-space minimum size: scales each far body up (`overviewBoost`) so it stays
    * visible on a view `viewH` CSS px tall; a body the camera is near keeps its true size.
-   * Hides the Moon while a boosted Earth would cover its orbit.
+   * Hides the Moon while a boosted Earth would cover its orbit, and every other moon unless the
+   * camera is near its planet (`moonSystemVisible`).
    */
   applyOverviewBoost(camera: THREE.PerspectiveCamera, viewH: number): void;
   /** Keeps the orbit ribbons a constant pixel width: drawing-buffer size and pixel ratio. */
@@ -113,13 +122,28 @@ const URANUS_RING_STYLE = { ringlets: 0, narrow: 1, tint: 0 };
 const MOON_CLEARANCE = 0.8;
 /** A boosted pick proxy stays this much larger than the shown body. */
 const PICK_BOOST_MARGIN = 1.2;
-/** Layer the raycaster never tests: a hidden Moon cannot be picked. */
+/** Layer the raycaster never tests: a hidden moon cannot be picked. */
 const UNPICKABLE_LAYER = 1;
 /** The sun is the world origin. */
 const SUN_WORLD_POS = new THREE.Vector3(0, 0, 0);
 
 type TexUniform = THREE.IUniform<THREE.Texture | null>;
 type NumUniform = THREE.IUniform<number>;
+
+/**
+ * A planet's modelled moons that are hidden from the overview show only while the camera is
+ * within `MOON_SYSTEM_VIEW_FACTOR` times the outermost moon's orbit radius of the planet.
+ */
+export function moonSystemVisible(cameraDistance: number, outermostOrbitRadius: number): boolean {
+  return cameraDistance < outermostOrbitRadius * MOON_SYSTEM_VIEW_FACTOR;
+}
+
+/** Image width of a texture (0 for a solid fallback or an unloaded image). */
+function textureWidth(t: THREE.Texture | null | undefined): number {
+  if (!t || isFallbackTexture(t)) return 0;
+  const img = t.image as { width?: number } | null | undefined;
+  return img?.width ?? 0;
+}
 
 function bodyTexture(tex: Map<string, THREE.Texture>, id: BodyId): THREE.Texture {
   const keys = TEXTURE_KEYS[id] ?? [id];
@@ -340,7 +364,19 @@ function createSunStandIn(root: THREE.Group): BodyObject {
   return { id: 'sun', orbitPivot, tiltGroup, mesh, radius, pickProxy };
 }
 
-export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettings): SolarSystem {
+/** A planet with moons that hide in the overview, the moons and the radius that shows them. */
+interface MoonSystem {
+  planet: BodyObject;
+  moons: BodyObject[];
+  viewRadius: number;
+  shown: boolean;
+}
+
+export function createSolarSystem(
+  tex: Map<string, THREE.Texture>,
+  s: TierSettings,
+  opts: SolarSystemOptions = {},
+): SolarSystem {
   const root = new THREE.Group();
   root.name = 'solar-system';
   const bodies = new Map<BodyId, BodyObject>();
@@ -352,17 +388,34 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
 
   bodies.set('sun', createSunStandIn(root));
 
-  // BODY_IDS lists Earth before the Moon, which hangs off Earth's offset node.
+  // A moon hangs off its planet's offset node; BODY_IDS lists every planet before its moons.
+  // Regular moons orbit in the planet's equatorial plane: a frame tilted like the planet but
+  // outside its tilt group, so neither the spin nor the overview boost carries them.
+  const equators = new Map<BodyId, THREE.Object3D>();
+  const frameFor = (id: BodyId): THREE.Object3D => {
+    const parentId = BODIES[id].parent;
+    if (parentId === null || parentId === 'sun') return root;
+    const planet = rigs.get(parentId);
+    if (!planet) throw new Error(`${parentId} must be created before ${id}`);
+    if (!moonDisplay(id).equatorial) return planet.offset;
+    let eq = equators.get(parentId);
+    if (!eq) {
+      eq = new THREE.Group();
+      eq.name = `${parentId}-equator`;
+      eq.rotation.z = THREE.MathUtils.degToRad(BODIES[parentId].physical.axialTiltDeg);
+      planet.offset.add(eq);
+      equators.set(parentId, eq);
+    }
+    return eq;
+  };
   for (const id of BODY_IDS) {
     if (id === 'sun') continue;
     const texture = bodyTexture(tex, id);
-    const parent = id === 'moon' ? rigs.get('earth')?.offset : root;
-    if (!parent) throw new Error('Earth must be created before the Moon');
     const material = createBodyMaterial(id, texture, tex, clock);
-    const rig = createPlanet(id, texture, s, parent, material);
+    const rig = createPlanet(id, texture, s, frameFor(id), material);
     rigs.set(id, rig);
     bodies.set(id, rig.body);
-    // One orbit ribbon per planet and Pluto; the Moon's tiny orbit stays unmarked.
+    // One orbit ribbon per planet and Pluto; moon orbits stay unmarked.
     const orbitColor = BODIES[id].orbitColor;
     if (orbitColor && rig.orbitShape) {
       const line = createOrbitLine(rig.orbitShape, orbitColor);
@@ -381,6 +434,34 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
 
   const belt = createAsteroidBelt(s.asteroidCount);
   root.add(belt.mesh);
+  // Visual only: no pick proxy, label or panel. In its own group, so the asteroid belt stays
+  // the only instanced mesh among the root's children.
+  const kuiper = createKuiperBelt(s.kuiperCount);
+  const kuiperGroup = new THREE.Group();
+  kuiperGroup.name = 'kuiper-belt-group';
+  kuiperGroup.add(kuiper.mesh);
+  root.add(kuiperGroup);
+
+  // Planets whose moons hide in the overview (Earth's Moon has its own rule below).
+  const moonSystems: MoonSystem[] = [];
+  for (const planetId of BODY_IDS) {
+    const moons = moonsOf(planetId).filter((m) => !moonDisplay(m).overview);
+    const planet = bodies.get(planetId);
+    if (moons.length === 0 || !planet) continue;
+    moonSystems.push({
+      planet,
+      moons: moons.map((m) => bodies.get(m)!),
+      viewRadius: Math.max(...moons.map((m) => moonDisplay(m).orbitRadius)),
+      shown: false,
+    });
+  }
+  const firstShown = new Set<BodyId>();
+  const setMoonShown = (b: BodyObject, on: boolean): void => {
+    b.tiltGroup.visible = on;
+    b.pickProxy.layers.set(on ? 0 : UNPICKABLE_LAYER);
+  };
+  // Hidden (not drawn, not pickable, no map requested) until the camera first comes near.
+  for (const sys of moonSystems) for (const m of sys.moons) setMoonShown(m, false);
 
   const deco = decorate(bodies, tex, s, clock);
   const venusUniforms = uniformsOf(bodies.get('venus')?.mesh);
@@ -411,6 +492,7 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
       const drift = venusUniforms.uDrift as NumUniform | undefined;
       if (drift) drift.value = driftOffset(PLANET_LOOKS.venus.drift, tSec, reducedMotion);
       belt.update(tSec);
+      kuiper.update(tSec);
       const earthPosition = rigs.get('earth')!.offset.position;
       const earthDistance = Math.hypot(earthPosition.x, earthPosition.y, earthPosition.z);
       const beltRadius = displayOrbitRadius(beltMid);
@@ -466,7 +548,9 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
       } else if (u.uMap) {
         const key = (TEXTURE_KEYS[id] ?? [id]).find((k) => real(k));
         const t = key ? real(key) : null;
-        if (t) {
+        // Never swap a larger map for a smaller one (a lazy low map arriving after the high one).
+        const current = u.uMap.value as THREE.Texture | null;
+        if (t && textureWidth(t) >= textureWidth(current)) {
           old(u.uMap);
           setPlanetMap(mat, t);
         }
@@ -493,7 +577,7 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
         const k = overviewBoost(b.radius, bodyPos.distanceTo(camPos), camera.fov, viewH);
         boosts.set(b.id, k);
         b.tiltGroup.scale.setScalar(k);
-        const proxyR = Math.max(b.radius * PICK_SCALE, PICK_MIN_RADIUS);
+        const proxyR = b.pickProxy.userData.baseRadius as number;
         b.pickProxy.scale.setScalar(Math.max(1, (b.radius * k * PICK_BOOST_MARGIN) / proxyR));
         // The picker prefers the body whose visible disc is under the tap.
         b.pickProxy.userData.shownRadius = b.radius * k;
@@ -507,6 +591,21 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
         const visible = shown < MOON_ORBIT_DISPLAY * MOON_CLEARANCE;
         moon.tiltGroup.visible = visible;
         moon.pickProxy.layers.set(visible ? 0 : UNPICKABLE_LAYER);
+      }
+      // Systems are independent: when Jupiter and Saturn line up in the compressed layout, a
+      // focus on one can show the other's moons too, just as it shows the other planet.
+      for (const sys of moonSystems) {
+        sys.planet.mesh.getWorldPosition(bodyPos);
+        const shown = moonSystemVisible(bodyPos.distanceTo(camPos), sys.viewRadius);
+        if (shown === sys.shown) continue;
+        sys.shown = shown;
+        for (const m of sys.moons) {
+          setMoonShown(m, shown);
+          if (shown && !firstShown.has(m.id)) {
+            firstShown.add(m.id);
+            opts.onFirstShown?.(m.id);
+          }
+        }
       }
     },
     setViewport(w, h, pixelRatio) {
@@ -525,6 +624,7 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
       for (const rig of rigs.values()) rig.setSegments(next);
       deco.apply(next);
       belt.setCount(next.asteroidCount);
+      kuiper.setCount(next.kuiperCount);
     },
   };
   solar.update(0);

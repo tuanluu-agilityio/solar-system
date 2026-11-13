@@ -89,10 +89,20 @@ test('the body navigator flies to a body and the panel steps to the next one', a
   } else {
     await expect(page.getByTestId('nav-mars')).toHaveAttribute('aria-current', 'true');
   }
+  // A planet's moons follow it in NAV_ORDER: the next body after Mars is Phobos.
   await page.getByTestId('panel-next').click();
   await expect
     .poll(() => page.evaluate(() => (window as unknown as AppWindow).__app.getState().selected), {
       timeout: 25_000,
     })
-    .toBe('asteroid-belt');
+    .toBe('phobos');
+  // The moon's panel leads back to its planet (below the fold of the phone's peek sheet).
+  const parentChip = page.getByTestId('parent-mars');
+  if (mobile) await parentChip.dispatchEvent('click');
+  else await parentChip.click();
+  await expect
+    .poll(() => page.evaluate(() => (window as unknown as AppWindow).__app.getState().selected), {
+      timeout: 25_000,
+    })
+    .toBe('mars');
 });
