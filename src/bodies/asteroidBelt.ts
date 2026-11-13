@@ -19,7 +19,7 @@ const ROCK_JITTER = 0.28;
 const ROCK_SEED = 4242;
 const DEFAULT_SEED = 1337;
 /** Camera distances (display units) over which nearby rocks fade in by shrinking. */
-export const NEAR_FADE = { start: 6, end: 20 } as const;
+export const NEAR_FADE = { start: 1.5, end: 6 } as const;
 
 /** Smallest angular size (radians) a distant rock is drawn at: about a pixel at 720p. */
 const MIN_ROCK_ANGLE = 0.0007;
