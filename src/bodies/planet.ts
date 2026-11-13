@@ -6,13 +6,15 @@ import {
   EARTH_YEAR_DAYS,
   displayPlanetRadius,
   INITIAL_PHASE,
-  MOON_ORBIT_DISPLAY,
   displaySemiMajorAxis,
   displayRadius,
+  moonDisplay,
   orbitalAngle,
   rotationAngle,
+  type MoonDisplay,
 } from '../config/scale';
 import { writePositionAtMeanAnomaly, type KeplerOrbitShape } from './kepler';
+import { irregularGeometry } from './moonShape';
 
 export interface BodyObject {
   id: BodyId;
@@ -35,15 +37,26 @@ export interface PlanetRig {
 
 export const PICK_SCALE = 1.8;
 export const PICK_MIN_RADIUS = 2.5;
-/** Turning the sphere by PI points its texture centre (u = 0.5, +x) back toward the planet. */
+/**
+ * A moon seen only near its planet gets a tap target of at most this share of its orbit
+ * radius, so it never swallows the planet or its sibling moons (Phobos orbits 0.66 units out).
+ */
+export const MOON_PICK_ORBIT_SHARE = 0.3;
+/**
+ * Turning the sphere by PI points its texture centre (u = 0.5, +x, longitude 0: the sub-planet
+ * point of a synchronous moon's map) back toward the planet.
+ */
 const MOON_NEAR_SIDE_YAW = Math.PI;
+/** Seed of the lumpy shape of irregular moons (Phobos, Deimos): fixed, so it never changes. */
+const SHAPE_SEED = 1877;
 
 /** Low tier is the only one capped at pixel ratio 1.5 (see Global Constraints). */
 export function sphereSegments(s: TierSettings): number {
   return s.pixelRatioCap <= 1.5 ? 32 : 64;
 }
 
-function orbitPeriodDays(id: BodyId): number {
+function orbitPeriodDays(id: BodyId, moon: MoonDisplay | null): number {
+  if (moon) return moon.periodDays;
   // The Earth year is exactly 60 s of display time.
   if (id === 'earth') return EARTH_YEAR_DAYS;
   return BODIES[id].physical.orbitalPeriodDays ?? EARTH_YEAR_DAYS;
@@ -61,19 +74,44 @@ function orbitShapeOf(id: BodyId): KeplerOrbitShape | null {
   };
 }
 
-function makeGeometry(radius: number, s: TierSettings): THREE.SphereGeometry {
+/** A per-body seed: Phobos and Deimos get different lumps. */
+function shapeSeed(id: BodyId): number {
+  let h = SHAPE_SEED;
+  for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619) >>> 0;
+  return h;
+}
+
+/** A UV sphere, or for a body with triaxial radii (Phobos, Deimos) a lumpy irregular shape. */
+function makeGeometry(id: BodyId, radius: number, s: TierSettings): THREE.SphereGeometry {
   const seg = sphereSegments(s);
+  const shape = BODIES[id].physical.shapeRadiiKm;
+  if (shape) return irregularGeometry(radius, shape, seg, shapeSeed(id));
   return new THREE.SphereGeometry(radius, seg, seg / 2);
 }
 
-/** Enlarged invisible (but raycastable) tap target, spec 3.3. */
-export function createPickProxy(id: BodyId, radius: number): THREE.Mesh {
+/** Radius of the tap target: 1.8x the body, at least `minRadius`. */
+export function pickRadius(radius: number, minRadius: number = PICK_MIN_RADIUS): number {
+  return Math.max(radius * PICK_SCALE, minRadius);
+}
+
+/**
+ * Enlarged invisible (but raycastable) tap target, spec 3.3. `minRadius` defaults to the
+ * overview-sized `PICK_MIN_RADIUS`; moons seen only up close pass a smaller one.
+ */
+export function createPickProxy(
+  id: BodyId,
+  radius: number,
+  minRadius: number = PICK_MIN_RADIUS,
+): THREE.Mesh {
+  const baseRadius = pickRadius(radius, minRadius);
   const proxy = new THREE.Mesh(
-    new THREE.SphereGeometry(Math.max(radius * PICK_SCALE, PICK_MIN_RADIUS), 12, 8),
+    new THREE.SphereGeometry(baseRadius, 12, 8),
     new THREE.MeshBasicMaterial({ visible: false }),
   );
   proxy.name = `${id}-pick`;
   proxy.userData.bodyId = id;
+  // Unscaled tap-target radius: the overview boost scales the proxy relative to it.
+  proxy.userData.baseRadius = baseRadius;
   // Radius of the visible body (updated by the overview boost); the picker prefers it.
   proxy.userData.shownRadius = radius;
   return proxy;
@@ -91,7 +129,9 @@ export function createPlanet(
   material?: THREE.Material,
 ): PlanetRig {
   const phys = BODIES[id].physical;
-  const isMoon = id === 'moon';
+  // A moon circles its planet on a display orbit; planets and Pluto follow Kepler ellipses.
+  const moon = BODIES[id].kind === 'moon' ? moonDisplay(id) : null;
+  const isMoon = moon !== null;
   const radius = isMoon ? displayRadius(phys.diameterKm) : displayPlanetRadius(phys.diameterKm);
   const orbitShape = orbitShapeOf(id);
   if (!isMoon && !orbitShape) throw new Error(`Missing orbit elements for ${id}`);
@@ -102,7 +142,7 @@ export function createPlanet(
 
   const offset = new THREE.Group();
   offset.name = `${id}-offset`;
-  if (isMoon) offset.position.x = MOON_ORBIT_DISPLAY;
+  if (moon) offset.position.x = moon.orbitRadius;
   orbitPivot.add(offset);
 
   const tiltGroup = new THREE.Group();
@@ -111,21 +151,26 @@ export function createPlanet(
   offset.add(tiltGroup);
 
   const mesh = new THREE.Mesh(
-    makeGeometry(radius, s),
+    makeGeometry(id, radius, s),
     material ?? new THREE.MeshStandardMaterial({ map: texture, roughness: 1, metalness: 0 }),
   );
   mesh.name = id;
   if (isMoon) mesh.rotation.y = MOON_NEAR_SIDE_YAW;
   tiltGroup.add(mesh);
 
-  const pickProxy = createPickProxy(id, radius);
+  // Moons hidden from the overview never need the overview-sized minimum tap target.
+  const pickMin =
+    moon && !moon.overview
+      ? Math.min(PICK_MIN_RADIUS, moon.orbitRadius * MOON_PICK_ORBIT_SHARE)
+      : PICK_MIN_RADIUS;
+  const pickProxy = createPickProxy(id, radius, pickMin);
   offset.add(pickProxy);
 
   // A tilt above 90 deg already flips the spin axis, which renders the retrograde direction.
   // Data keeps the negative period; using it here too would double-count and spin prograde.
   const spinHours =
     phys.axialTiltDeg > 90 ? Math.abs(phys.rotationPeriodHours) : phys.rotationPeriodHours;
-  const period = orbitPeriodDays(id);
+  const period = orbitPeriodDays(id, moon);
   const phase = isMoon
     ? INITIAL_PHASE[id]
     : THREE.MathUtils.degToRad(BODIES[id].orbit!.meanAnomalyAtEpochDeg);
@@ -140,13 +185,13 @@ export function createPlanet(
       } else {
         orbitPivot.rotation.y = meanAnomaly;
       }
-      // The Moon is tidally locked: its fixed yaw rides along with the rotating pivot.
+      // Moons are tidally locked: the fixed yaw rides along with the rotating pivot.
       if (!isMoon) mesh.rotation.y = rotationAngle(spinHours, tSec);
       return meanAnomaly;
     },
     setSegments(next) {
       const old = mesh.geometry;
-      mesh.geometry = makeGeometry(radius, next);
+      mesh.geometry = makeGeometry(id, radius, next);
       old.dispose();
     },
   };

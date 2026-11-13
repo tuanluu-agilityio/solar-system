@@ -152,4 +152,100 @@ export const CONTENT_DE: Record<ContentId, BodyContent> = {
       'Für einen Umlauf um die Sonne braucht Pluto etwa 248 Erdjahre.',
     ],
   },
+  phobos: {
+    name: 'Phobos',
+    kindLabel: 'Marsmond',
+    description:
+      'Phobos ist der größere und innere der beiden kleinen Marsmonde, ein dunkler, unförmiger Körper von etwa 27 mal 22 mal 18 km. Er umkreist den Mars dreimal am Tag, nur etwa 6.000 km über der Oberfläche. Feiner Staub bedeckt ihn, und Tausende Meteoriteneinschläge haben seine Oberfläche zerfurcht.',
+    facts: [
+      'Sein größter Krater, Stickney, ist etwa 9 km breit.',
+      'Phobos nähert sich dem Mars um etwa 1,8 m pro hundert Jahre; in rund 50 Millionen Jahren wird er auf den Mars stürzen oder zu einem Ring zerbrechen.',
+      'Asaph Hall entdeckte Phobos am 17. August 1877.',
+      'Sonnenbeschienener Boden erreicht etwa −4 °C, im Schatten sinkt die Temperatur auf etwa −112 °C.',
+    ],
+  },
+  deimos: {
+    name: 'Deimos',
+    kindLabel: 'Marsmond',
+    description:
+      'Deimos ist der kleinere und äußere Marsmond, ein unregelmäßiger Körper von etwa 15 mal 12 mal 11 km. Seine dunkle Oberfläche besteht aus kohlenstoffreichem Material, ähnlich wie die Asteroiden im äußeren Asteroidengürtel. Eine vielleicht 100 m dicke Staubschicht füllt seine Krater teilweise auf, deshalb wirkt er glatter als Phobos.',
+    facts: [
+      'Deimos umrundet den Mars etwa alle 30 Stunden.',
+      'Sein Name bedeutet „Schrecken“; in der griechischen Mythologie ist Deimos der Bruder von Phobos.',
+      'Asaph Hall entdeckte Deimos am 11. August 1877, sechs Tage vor Phobos.',
+      'Die meisten seiner Krater sind kleiner als 2,5 km.',
+    ],
+  },
+  io: {
+    name: 'Io',
+    kindLabel: 'Jupitermond',
+    description:
+      'Io ist die vulkanisch aktivste Welt im Sonnensystem, mit Hunderten Vulkanen, von denen manche Lavafontänen Dutzende Kilometer hoch schleudern. Io steckt in einem Tauziehen zwischen Jupiters gewaltiger Schwerkraft und den kleineren, genau getakteten Zügen von Europa und Ganymed. Schwefel in vielen Formen färbt die Oberfläche gelb, orange, rot und weiß.',
+    facts: [
+      'Galileo Galilei entdeckte Io am 8. Januar 1610.',
+      'Jupiters Anziehung hebt und senkt Ios feste Oberfläche um bis zu 100 m.',
+      'Während Ganymed Jupiter einmal umrundet, schafft Europa zwei und Io vier Umläufe.',
+      'Jupiter reißt Io jede Sekunde etwa 1 Tonne Material weg.',
+    ],
+  },
+  europa: {
+    name: 'Europa',
+    kindLabel: 'Jupitermond',
+    description:
+      'Europa ist ein Eismond, etwa 90 % so groß wie der Erdmond, und seine helle Oberfläche ist von langen rotbraunen Rissen durchzogen. Unter einem etwa 15 bis 25 km dicken Eispanzer liegt ein 60 bis 150 km tiefer Ozean, der doppelt so viel Wasser enthalten könnte wie alle Ozeane der Erde. Damit ist Europa einer der vielversprechendsten Orte für die Suche nach Leben außerhalb der Erde.',
+    facts: [
+      'Europa hat so wenige Krater, dass seine Oberfläche vielleicht nur 40 bis 90 Millionen Jahre alt ist.',
+      'Seine Eisoberfläche wirft etwa 5,5-mal so viel Sonnenlicht zurück wie unser Mond.',
+      'Sonnenlicht braucht etwa 45 Minuten bis zu Europa.',
+      'Mögliche Wasserfontänen wurden beobachtet, die etwa 160 km über die Oberfläche aufsteigen.',
+    ],
+  },
+  ganymede: {
+    name: 'Ganymed',
+    kindLabel: 'Jupitermond',
+    description:
+      'Ganymed ist der größte Mond im Sonnensystem, größer als der Planet Merkur und der Zwergplanet Pluto. Auf seiner Oberfläche wechseln sich alte, dunkle, verkraterte Gebiete mit helleren Regionen ab, die von Rücken und Furchen durchzogen sind. Unter einer etwa 150 km dicken Kruste aus überwiegend Eis liegt ein Salzwasserozean, der vermutlich mehr Wasser enthält als alles Wasser auf der Erdoberfläche.',
+    facts: [
+      'Er ist der einzige bekannte Mond mit eigenem Magnetfeld, entdeckt 1996 von der NASA-Sonde Galileo.',
+      'Sein Magnetfeld erzeugt Polarlichter rund um seinen Nord- und Südpol.',
+      'Ganymed umrundet Jupiter etwa alle 7 Tage.',
+      'Hubble hat Hinweise auf eine dünne Sauerstoffatmosphäre gefunden.',
+    ],
+  },
+  callisto: {
+    name: 'Kallisto',
+    kindLabel: 'Jupitermond',
+    description:
+      'Kallisto hat die älteste und am stärksten verkraterte Oberfläche im Sonnensystem, etwa 4 Milliarden Jahre alt. Ohne aktive Vulkane oder wandernde Platten, die sie auslöschen, haben sich die Krater im Lauf der Zeit angehäuft. Helle weiße Flecken, vermutlich mit Wassereis bedeckte Kratergipfel, sprenkeln die dunkle Oberfläche.',
+    facts: [
+      'Galileo Galilei entdeckte Kallisto 1610, zusammen mit Io, Europa und Ganymed.',
+      'Etwa 250 km unter der Oberfläche könnte ein salziger Ozean liegen.',
+      'Kallisto ist etwa 4,5-mal so weit von Jupiter entfernt wie Io.',
+      'Kallisto hat eine extrem dünne Atmosphäre aus Kohlendioxid.',
+    ],
+  },
+  enceladus: {
+    name: 'Enceladus',
+    kindLabel: 'Saturnmond',
+    description:
+      'Enceladus ist ein kleiner Eismond, nur etwa 500 km groß, mit der weißesten, am stärksten reflektierenden Oberfläche im Sonnensystem. Aus warmen Rissen nahe seinem Südpol, den sogenannten „Tigerstreifen“, schießen Fontänen aus Wasserdampf und Eiskörnchen. Gespeist werden sie von einem verborgenen Ozean unter dem Eis.',
+    facts: [
+      'Weil er so viel Sonnenlicht zurückwirft, ist seine Oberfläche etwa −201 °C kalt.',
+      'Sein Eisstaub verteilt sich entlang seiner Bahn und bildet Saturns E-Ring.',
+      'Die Fontänen verlassen die Oberfläche mit etwa 400 m pro Sekunde.',
+      'William Herschel entdeckte Enceladus am 28. August 1789.',
+    ],
+  },
+  titan: {
+    name: 'Titan',
+    kindLabel: 'Saturnmond',
+    description:
+      'Titan ist Saturns größter Mond und der einzige Mond mit einer dichten Atmosphäre, einem stickstoffreichen orangefarbenen Dunst, der seine Oberfläche verhüllt. Darunter füllt Regen aus Methan und Ethan Seen und Meere, und so ist Titan neben der Erde die einzige bekannte Welt mit Flüssigkeit auf der Oberfläche. Unter seiner Eiskruste könnte in 55 bis 80 km Tiefe ein Ozean aus Wasser liegen.',
+    facts: [
+      'Titan ist fast 50 % breiter als der Erdmond; nur Ganymed ist größer.',
+      'Der Luftdruck an seiner Oberfläche ist etwa 60 % höher als auf der Erde.',
+      'Christiaan Huygens entdeckte Titan am 25. März 1655.',
+      '2005 landete die Sonde Huygens auf Titan, die erste Landung im äußeren Sonnensystem.',
+    ],
+  },
 };
