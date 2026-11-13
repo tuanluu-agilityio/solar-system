@@ -48,9 +48,9 @@ export interface AsteroidBelt {
   setCount(n: number): void;
 }
 
-/** One lumpy low-poly rock shared by every instance: a jittered, flat-shaded icosphere. */
+/** One lumpy low-poly rock shared by every instance: a jittered, flat-shaded icosahedron (20 faces keep 8000 instances cheap). */
 function makeRockGeometry(): THREE.BufferGeometry {
-  const base = new THREE.IcosahedronGeometry(1, 1);
+  const base = new THREE.IcosahedronGeometry(1, 0);
   const rand = mulberry32(ROCK_SEED);
   // Jitter shared corners identically, so the faces stay closed.
   const pos = base.getAttribute('position');
