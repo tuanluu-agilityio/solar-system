@@ -43,7 +43,7 @@ import { aggregateProgress, skyKey, skySet } from './scene/textureKeys';
 import { createDeepSpace } from './scene/deepSpace';
 import { startLoop } from './scene/loop';
 import { createPostFX } from './scene/postfx';
-import { createSun } from './bodies/sun';
+import { createSun, sunDetailForTier } from './bodies/sun';
 import { createSolarSystem } from './scene/solarSystem';
 import { createPicker } from './interaction/picker';
 import { createKeyboardNav } from './interaction/keyboard';
@@ -309,7 +309,9 @@ async function boot(): Promise<void> {
   const skyTexture = skyTex.get(skyKey(sky));
   const deepSpace = createDeepSpace(skyTexture ?? null, settings, { renderer });
   scene.add(deepSpace.group);
-  const sun = createSun(lowTex.get('sun') ?? makeFallbackTexture('sun'));
+  const sun = createSun(lowTex.get('sun') ?? makeFallbackTexture('sun'), {
+    detail: sunDetailForTier(store.get().quality),
+  });
   scene.add(sun.group);
   const solar = createSolarSystem(lowTex, tierSettings(store.get().quality));
   solarRef = solar;
