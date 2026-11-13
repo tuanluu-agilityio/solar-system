@@ -40,7 +40,7 @@ import {
   makeFallbackTexture,
 } from './scene/textures';
 import { aggregateProgress, skyKey, skySet } from './scene/textureKeys';
-import { createSky } from './scene/sky';
+import { createDeepSpace } from './scene/deepSpace';
 import { startLoop } from './scene/loop';
 import { createPostFX } from './scene/postfx';
 import { createSun } from './bodies/sun';
@@ -305,7 +305,8 @@ async function boot(): Promise<void> {
     manifestPromise,
   ]);
   const skyTexture = skyTex.get(skyKey(sky));
-  if (skyTexture) scene.add(createSky(skyTexture));
+  const deepSpace = createDeepSpace(skyTexture ?? null, settings, { renderer });
+  scene.add(deepSpace.group);
   const sun = createSun(lowTex.get('sun') ?? makeFallbackTexture('sun'));
   scene.add(sun.group);
   const solar = createSolarSystem(lowTex, tierSettings(store.get().quality));
@@ -407,6 +408,7 @@ async function boot(): Promise<void> {
     sun.update(tSec);
     solar.update(tSec);
     rig.update(dt * rigTimeScale);
+    deepSpace.update(tSec, camera, renderer.getPixelRatio());
     solar.applyOverviewBoost(camera, canvas.clientHeight || window.innerHeight);
     labels.update();
     subtitles.update();

@@ -13,6 +13,8 @@ describe('tiers', () => {
       ringShadow: false,
       skySize: 2048,
       antialias: false,
+      starCount: 7000,
+      dustCount: 0,
     });
     expect(tierSettings('medium')).toEqual({
       pixelRatioCap: 2,
@@ -23,6 +25,8 @@ describe('tiers', () => {
       ringShadow: false,
       skySize: 4096,
       antialias: true,
+      starCount: 12000,
+      dustCount: 250,
     });
     expect(tierSettings('high')).toEqual({
       pixelRatioCap: 2,
@@ -33,6 +37,8 @@ describe('tiers', () => {
       ringShadow: true,
       skySize: 4096,
       antialias: true,
+      starCount: 18000,
+      dustCount: 500,
     });
   });
   it('lowers tiers with floor', () => {

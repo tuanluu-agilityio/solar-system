@@ -28,6 +28,24 @@ export function skyTone(c: number): number {
   return SKY_TONE.max * (1 - Math.exp(-x / SKY_TONE.max));
 }
 
+/**
+ * Sky look (visual only, not data). The sky map is expected to be the star-free glow baked by
+ * `skyGlow.ts` (the raw texture's point stars read as chunky squares when magnified), while
+ * `starfield.ts` supplies crisp stars. The bake also adds darker dust lanes and a faint fbm
+ * nebula map (muted hues on the galactic band), which this shader scales by `nebula`.
+ */
+export const SKY_FX = {
+  /**
+   * Gain on the sky map. The baked glow has lost the light of its point stars and is lifted a
+   * little to keep the band as bright as before.
+   */
+  glowGain: 1.25,
+  /** Linear scale of the baked nebula colour (its hues peak at about 0.55). */
+  nebula: 0.15,
+  /** Strength of the dust lanes darkening the band (0..1), applied in the bake. */
+  lanes: 0.6,
+} as const;
+
 const vertexShader = /* glsl */ `
   varying vec2 vUv;
   void main() {
@@ -38,30 +56,53 @@ const vertexShader = /* glsl */ `
 
 const fragmentShader = /* glsl */ `
   uniform sampler2D uMap;
+  uniform sampler2D uNebulaMap;
   uniform float uBlack;
   uniform float uGain;
   uniform float uGamma;
   uniform float uMax;
+  uniform float uGlowGain;
+  uniform float uNebula;
   varying vec2 vUv;
   void main() {
-    vec3 c = texture2D(uMap, vUv).rgb;
+    vec3 c = texture2D(uMap, vUv).rgb * uGlowGain;
     vec3 x = uGain * pow(max(c - uBlack, vec3(0.0)), vec3(uGamma));
-    gl_FragColor = vec4(uMax * (1.0 - exp(-x / uMax)), 1.0);
+    vec3 col = uMax * (1.0 - exp(-x / uMax));
+    // Gas follows the starlight: strongest where the band's glow is bright.
+    float glow = smoothstep(0.0, 0.1, dot(col, vec3(0.2126, 0.7152, 0.0722)));
+    col += uNebula * (0.25 + 0.75 * glow) * texture2D(uNebulaMap, vUv).rgb;
+    gl_FragColor = vec4(col, 1.0);
     #include <tonemapping_fragment>
     #include <colorspace_fragment>
   }
 `;
 
-export function createSky(tex: THREE.Texture): THREE.Mesh {
+let black: THREE.DataTexture | null = null;
+function blackTexture(): THREE.DataTexture {
+  if (!black) {
+    black = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1);
+    black.needsUpdate = true;
+  }
+  return black;
+}
+
+/**
+ * The sky sphere. `tex` is the Milky Way map (ideally the baked glow from `skyGlow.ts`);
+ * `nebulaMap` is the baked nebula colour (without one there is no nebula).
+ */
+export function createSky(tex: THREE.Texture, nebulaMap?: THREE.Texture): THREE.Mesh {
   const geo = new THREE.SphereGeometry(SKY_RADIUS, 64, 32);
   geo.scale(-1, 1, 1); // mirror: flips winding so front faces point inward
   const mat = new THREE.ShaderMaterial({
     uniforms: {
       uMap: { value: tex },
+      uNebulaMap: { value: nebulaMap ?? blackTexture() },
       uBlack: { value: SKY_TONE.black },
       uGain: { value: SKY_TONE.gain },
       uGamma: { value: SKY_TONE.gamma },
       uMax: { value: SKY_TONE.max },
+      uGlowGain: { value: SKY_FX.glowGain },
+      uNebula: { value: SKY_FX.nebula },
     },
     vertexShader,
     fragmentShader,
