@@ -4,7 +4,10 @@
 //
 //   node scripts/shots.mjs --url http://localhost:5173/ --out <dir> [--views overview,sun,earth]
 //        [--quality high] [--size 1280x720] [--mobile] [--headed] [--settle 2500] [--close 1]
+//        [--lang de] [--click settings,quality-low] [--tag popover]
 //
+// `--lang <code>` sets `sse.lang`; `--click <testid,...>` clicks those elements (in order) before
+// each shot and `--tag` is appended to the file name (for popover or open-state shots).
 // `--close <factor>` dollies in after arriving (wheel steps), for close-up detail shots.
 import { mkdirSync } from 'node:fs';
 import { join } from 'node:path';
@@ -25,6 +28,9 @@ const [w, h] = String(arg('size', '1280x720')).split('x').map(Number);
 const mobile = arg('mobile', false) === true;
 const settle = Number(arg('settle', 2500));
 const close = Number(arg('close', 0));
+const lang = String(arg('lang', 'en'));
+const clicks = String(arg('click', '')).split(',').filter(Boolean);
+const tag = String(arg('tag', ''));
 const prefix = String(arg('prefix', mobile ? 'mobile' : 'desktop'));
 
 mkdirSync(out, { recursive: true });
@@ -43,10 +49,10 @@ page.on('console', (m) => {
   if (m.type() === 'error' || m.type() === 'warning') errors.push(`[${m.type()}] ${m.text()}`);
 });
 page.on('pageerror', (e) => errors.push(`[pageerror] ${e.message}`));
-await page.addInitScript(() => {
-  localStorage.setItem('sse.lang', 'en');
+await page.addInitScript((lang) => {
+  localStorage.setItem('sse.lang', lang);
   localStorage.setItem('sse.tourSeen', 'true');
-});
+}, lang);
 const q = quality ? `&quality=${quality}` : '';
 await page.goto(`${url}?e2e=1${q}`);
 await page.waitForFunction(() => window.__app?.getState().ready === true, null, {
@@ -83,9 +89,22 @@ for (const view of views) {
         requestAnimationFrame(tick);
       }),
   );
-  const file = join(out, `${prefix}-${view}${close > 0 ? '-close' : ''}.png`);
+  for (const id of clicks) {
+    await page.locator(`[data-testid="${id}"]`).click();
+    await page.waitForTimeout(500);
+  }
+  const file = join(
+    out,
+    `${prefix}-${view}${close > 0 ? '-close' : ''}${tag ? `-${tag}` : ''}.png`,
+  );
   await page.screenshot({ path: file, scale: 'css' });
-  console.log(`${file}  (${fps} fps, tier ${await page.evaluate(() => window.__app.getState().quality)})`);
+  for (const id of [...clicks].reverse()) {
+    // Leave the page as it was for the next view (toggles and popovers close again).
+    if (id === 'settings') await page.keyboard.press('Escape');
+  }
+  console.log(
+    `${file}  (${fps} fps, tier ${await page.evaluate(() => window.__app.getState().quality)})`,
+  );
 }
 if (errors.length) console.log(`console issues:\n${[...new Set(errors)].join('\n')}`);
 await browser.close();

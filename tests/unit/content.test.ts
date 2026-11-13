@@ -178,8 +178,15 @@ describe('UI strings', () => {
 
   it('German UI is translated', () => {
     // Keys whose German value may equal English: a brand name, a unit symbol and the
-    // cognate 'Pause'.
-    const DE_SAME_AS_EN = new Set(['credits.support', 'unit.km', 'tour.pause']);
+    // cognates 'Pause', 'Auto' and 'Ultra'.
+    const DE_SAME_AS_EN = new Set([
+      'credits.support',
+      'unit.km',
+      'tour.pause',
+      'speed.pause',
+      'quality.auto',
+      'quality.ultra',
+    ]);
     for (const [key, value] of Object.entries(UI_STRINGS.de)) {
       if (DE_SAME_AS_EN.has(key)) continue;
       expect(value, `de.${key}`).not.toBe(UI_STRINGS.en[key as keyof typeof UI_STRINGS.en]);

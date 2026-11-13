@@ -277,6 +277,16 @@ describe('createSolarSystem', () => {
         expect(Math.abs(num(mat, 'uEmphasis') - 1)).toBeLessThan(0.01);
     });
 
+    it('hides and shows every orbit ribbon with setOrbitsVisible', () => {
+      const ss = make();
+      const lines = ss.root.children.filter((c) => c.name === 'orbit-line');
+      expect(lines.length).toBeGreaterThan(0);
+      ss.setOrbitsVisible(false);
+      for (const l of lines) expect(l.visible).toBe(false);
+      ss.setOrbitsVisible(true);
+      for (const l of lines) expect(l.visible).toBe(true);
+    });
+
     it('clamps a huge time jump to 0.25 s of emphasis smoothing', () => {
       const ss = make();
       ss.update(1);

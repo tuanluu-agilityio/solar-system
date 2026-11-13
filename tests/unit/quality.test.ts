@@ -41,7 +41,23 @@ describe('tiers', () => {
       dustCount: 500,
     });
   });
+  it('has an ultra tier that is never picked automatically', () => {
+    expect(tierSettings('ultra')).toMatchObject({
+      pixelRatioCap: 2,
+      bloomResolutionScale: 1,
+      asteroidCount: 12000,
+      textureSet: 'high',
+      skySize: 4096,
+      antialias: true,
+    });
+    for (const isMobile of [true, false]) {
+      for (const cores of [2, 8, 32]) {
+        expect(initialTier({ isMobile, dpr: 3, cores })).not.toBe('ultra');
+      }
+    }
+  });
   it('lowers tiers with floor', () => {
+    expect(lowerTier('ultra')).toBe('high');
     expect(lowerTier('high')).toBe('medium');
     expect(lowerTier('medium')).toBe('low');
     expect(lowerTier('low')).toBe('low');

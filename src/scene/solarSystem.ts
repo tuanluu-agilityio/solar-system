@@ -56,6 +56,8 @@ export interface SolarSystem {
   setViewport(drawingWidthPx: number, drawingHeightPx: number, pixelRatio: number): void;
   /** Dims the orbit ribbons while the camera is focused on a body. */
   setOrbitFocus(focused: boolean): void;
+  /** Shows or hides every orbit ribbon (the settings toggle). */
+  setOrbitsVisible(on: boolean): void;
 }
 
 const BELT_FOCUS_RADIUS = 12;
@@ -402,6 +404,9 @@ export function createSolarSystem(tex: Map<string, THREE.Texture>, s: TierSettin
     },
     setViewport(w, h, pixelRatio) {
       for (const line of orbitLines) line.setViewport(w, h, pixelRatio);
+    },
+    setOrbitsVisible(on) {
+      for (const line of orbitLines) line.object.visible = on;
     },
     setOrbitFocus(focused) {
       emphasisTarget = focused ? ORBIT_STYLE.focusEmphasis : 1;

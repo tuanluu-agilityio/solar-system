@@ -1,4 +1,5 @@
 import { isLang, type Lang } from '../data/types';
+import { isQualityChoice, type QualityChoice } from '../quality/tiers';
 
 export interface KeyValueStorage {
   getItem(k: string): string | null;
@@ -8,11 +9,19 @@ export interface Prefs {
   lang: Lang;
   muted: boolean;
   tourSeen: boolean;
+  /** Orbit lines and body labels are shown unless the user switched them off. */
+  orbits: boolean;
+  labels: boolean;
+  /** `auto` (or absent) lets the device and the FPS monitor pick the tier. */
+  quality: QualityChoice;
 }
 export const PREF_KEYS = {
   lang: 'sse.lang',
   muted: 'sse.muted',
   tourSeen: 'sse.tourSeen',
+  orbits: 'sse.orbits',
+  labels: 'sse.labels',
+  quality: 'sse.quality',
 } as const;
 
 /**
@@ -39,10 +48,14 @@ function read(storage: KeyValueStorage | null, key: string): string | null {
 export function loadPrefs(storage: KeyValueStorage | null, languages: readonly string[]): Prefs {
   const storedLang = read(storage, PREF_KEYS.lang);
   const lang: Lang = isLang(storedLang) ? storedLang : detectLang(languages);
+  const storedQuality = read(storage, PREF_KEYS.quality);
   return {
     lang,
     muted: read(storage, PREF_KEYS.muted) !== 'false',
     tourSeen: read(storage, PREF_KEYS.tourSeen) === 'true',
+    orbits: read(storage, PREF_KEYS.orbits) !== 'false',
+    labels: read(storage, PREF_KEYS.labels) !== 'false',
+    quality: isQualityChoice(storedQuality) ? storedQuality : 'auto',
   };
 }
 
