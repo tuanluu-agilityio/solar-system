@@ -15,6 +15,10 @@ export interface TierSettings {
   ringShadow: boolean;
   skySize: 2048 | 4096;
   antialias: boolean;
+  /** Procedural background stars (src/scene/starfield.ts). */
+  starCount: number;
+  /** Near-camera parallax dust motes (src/scene/dust.ts); 0 disables the layer. */
+  dustCount: number;
 }
 
 // Bloom is present in every tier (the quality floor).
@@ -28,6 +32,8 @@ const TIERS: Record<QualityTier, TierSettings> = {
     ringShadow: false,
     skySize: 2048,
     antialias: false,
+    starCount: 7000,
+    dustCount: 0,
   },
   medium: {
     pixelRatioCap: 2,
@@ -38,6 +44,8 @@ const TIERS: Record<QualityTier, TierSettings> = {
     ringShadow: false,
     skySize: 4096,
     antialias: true,
+    starCount: 12000,
+    dustCount: 250,
   },
   high: {
     pixelRatioCap: 2,
@@ -48,6 +56,8 @@ const TIERS: Record<QualityTier, TierSettings> = {
     ringShadow: true,
     skySize: 4096,
     antialias: true,
+    starCount: 18000,
+    dustCount: 500,
   },
 };
 
