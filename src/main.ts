@@ -248,12 +248,14 @@ async function boot(): Promise<void> {
   // One path for the FPS monitor and the settings selector. The loaded sky stays, and
   // antialias is fixed when the renderer is created, so ultra differs from high only in the
   // other fields. Textures only ever upgrade (on arrival at a body); a lower tier keeps them.
+  let sunRef: ReturnType<typeof createSun> | null = null;
   const applyTier = (next: QualityTier): void => {
     store.set({ quality: next });
     const s = tierSettings(next);
     applyRendererSettings(renderer, s);
     postfx.setSettings(s);
     solarRef?.setTierSettings(s);
+    sunRef?.setDetail(sunDetailForTier(next));
     syncOrbitViewport();
     afterTierChange();
   };
@@ -377,6 +379,7 @@ async function boot(): Promise<void> {
   const sun = createSun(lowTex.get('sun') ?? makeFallbackTexture('sun'), {
     detail: sunDetailForTier(store.get().quality),
   });
+  sunRef = sun;
   scene.add(sun.group);
   const solar = createSolarSystem(lowTex, tierSettings(store.get().quality));
   solarRef = solar;

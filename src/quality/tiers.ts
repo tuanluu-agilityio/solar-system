@@ -77,6 +77,8 @@ const TIERS: Record<QualityTier, TierSettings> = {
     ringShadow: true,
     skySize: 4096,
     antialias: true,
+    starCount: 26000,
+    dustCount: 800,
   },
 };
 
