@@ -222,6 +222,37 @@ body {
   text-shadow: 0 1px 6px #000;
   pointer-events: none;
 }
+.beyond-link {
+  position: absolute;
+  z-index: 20;
+  top: calc(38px + env(safe-area-inset-top));
+  left: calc(16px + env(safe-area-inset-left));
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--sse-accent);
+  font-size: 0.8rem;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  text-shadow: 0 1px 6px #000;
+}
+.beyond-link::after {
+  content: '↗';
+  margin-left: 6px;
+}
+.beyond-link:hover {
+  text-decoration: underline;
+}
+#app[data-tour='active'] .beyond-link,
+.beyond-link[hidden] {
+  display: none;
+}
+@media (max-width: 767px) {
+  .beyond-link {
+    top: calc(50px + env(safe-area-inset-top));
+    font-size: 0.74rem;
+  }
+}
 .control-cluster {
   position: absolute;
   z-index: 20;
@@ -334,6 +365,25 @@ body {
   color: var(--sse-text);
   background: var(--sse-accent-soft);
   border-color: rgba(124, 196, 255, 0.35);
+}
+/* The link onward to the companion project, after the last body. */
+.nav-item.nav-beyond {
+  margin-left: 8px;
+  border-color: rgba(124, 196, 255, 0.4);
+  color: var(--sse-accent);
+  text-decoration: none;
+}
+.nav-item.nav-beyond::after {
+  content: '↗';
+  margin-left: 6px;
+  font-size: 0.85em;
+}
+.nav-item.nav-beyond:hover {
+  background: var(--sse-accent-soft);
+  color: var(--sse-accent);
+}
+.credits-beyond {
+  margin-bottom: 10px;
 }
 /* A planet's moons, shown after it while it or one of its moons is the target. */
 .nav-item.nav-moon {
