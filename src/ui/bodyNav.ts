@@ -6,6 +6,7 @@ import type { BodyId, ContentId } from '../data/types';
 import { t } from '../i18n/i18n';
 import type { AppState } from '../state/appState';
 import type { Store } from '../state/store';
+import { DEEP_SPACE_URL } from './credits';
 import { isTourActive } from './tourControls';
 
 // Neutral dots for the entries that draw no orbit ribbon (presentation only, not body data).
@@ -75,6 +76,17 @@ export function createBodyNav(
     buttons.set(id, b);
     nav.append(b);
   }
+  // After the last body: the way onward, to the companion project beyond the Solar System.
+  const beyond = document.createElement('a');
+  beyond.className = 'nav-item nav-beyond';
+  beyond.href = DEEP_SPACE_URL;
+  beyond.target = '_blank';
+  beyond.rel = 'noopener noreferrer';
+  beyond.setAttribute('data-testid', 'nav-beyond');
+  const beyondName = document.createElement('span');
+  beyondName.className = 'nav-name';
+  beyond.append(beyondName);
+  nav.append(beyond);
   root.append(nav);
 
   let lang = '';
@@ -84,6 +96,8 @@ export function createBodyNav(
     nav.setAttribute('aria-label', t(s.lang, 'nav.label'));
     if (s.lang !== lang) {
       lang = s.lang;
+      beyondName.textContent = t(s.lang, 'beyond.link');
+      beyond.title = t(s.lang, 'beyond.hint');
       for (const [id, b] of buttons) {
         const name = getContent(id, s.lang).name;
         const label = b.querySelector('.nav-name');

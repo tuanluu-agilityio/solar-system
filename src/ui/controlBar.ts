@@ -1,3 +1,4 @@
+import { DEEP_SPACE_URL } from './credits';
 import { t } from '../i18n/i18n';
 import { icon, setIcon, type IconName } from './icons';
 import type { AppState } from '../state/appState';
@@ -35,6 +36,13 @@ export function createControlBar(
   const title = document.createElement('h1');
   title.className = 'app-title';
   title.setAttribute('data-testid', 'title');
+  // Under the title: the way onward to the companion project beyond the Solar System.
+  const beyond = document.createElement('a');
+  beyond.className = 'beyond-link';
+  beyond.href = DEEP_SPACE_URL;
+  beyond.target = '_blank';
+  beyond.rel = 'noopener noreferrer';
+  beyond.setAttribute('data-testid', 'beyond-link');
 
   const cluster = document.createElement('div');
   cluster.className = 'control-cluster';
@@ -56,13 +64,17 @@ export function createControlBar(
   const note = document.createElement('p');
   note.className = 'not-to-scale';
   note.setAttribute('data-testid', 'not-to-scale');
-  root.append(title, cluster, hint, note);
+  root.append(title, beyond, cluster, hint, note);
 
   let hintDismissed = false;
   const render = (): void => {
     const s = store.get();
     document.documentElement.lang = s.lang;
     title.textContent = t(s.lang, 'appTitle');
+    beyond.textContent = t(s.lang, 'beyond.link');
+    beyond.title = t(s.lang, 'beyond.hint');
+    // The desktop panel and the mobile sheet both take this corner's attention.
+    beyond.hidden = s.selected !== null;
     lang.setAttribute('aria-label', t(s.lang, 'lang.switch'));
     // The label names the action, like `tour.start`: muted -> "Sound on".
     setIcon(sound, s.muted ? 'volumeOff' : 'volumeOn');
@@ -121,6 +133,7 @@ export function createControlBar(
       window.removeEventListener('pointerup', onUp);
       window.removeEventListener('pointercancel', onUp);
       title.remove();
+      beyond.remove();
       cluster.remove();
       hint.remove();
       note.remove();

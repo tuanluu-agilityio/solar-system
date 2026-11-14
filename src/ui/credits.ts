@@ -6,6 +6,9 @@ export const TEXTURES_URL = 'https://www.solarsystemscope.com/textures/';
 /** USGS Astrogeology map search: the public-domain global mosaics used for the moons. */
 export const MOON_MAPS_URL = 'https://astrogeology.usgs.gov/search';
 
+/** The author's companion project: a 3D voyage beyond the Solar System. */
+export const DEEP_SPACE_URL = 'https://deep-space-odyssey.netlify.app/';
+
 export interface Credits {
   open(): void;
   close(): void;
@@ -31,6 +34,12 @@ export function createCredits(root: HTMLElement, store: Store<AppState>): Credit
   support.target = '_blank';
   support.rel = 'noopener noreferrer';
   support.setAttribute('data-testid', 'credits-support');
+  const beyond = document.createElement('a');
+  beyond.className = 'credits-support credits-beyond';
+  beyond.href = DEEP_SPACE_URL;
+  beyond.target = '_blank';
+  beyond.rel = 'noopener noreferrer';
+  beyond.setAttribute('data-testid', 'credits-beyond');
   const textures = document.createElement('li');
   const textureLink = document.createElement('a');
   textureLink.href = TEXTURES_URL;
@@ -50,7 +59,7 @@ export function createCredits(root: HTMLElement, store: Store<AppState>): Credit
   close.type = 'button';
   close.className = 'ctl-btn glass credits-close';
   close.setAttribute('data-testid', 'credits-close');
-  dialog.append(title, list, support, close);
+  dialog.append(title, list, beyond, support, close);
   overlay.append(dialog);
   root.append(overlay);
 
@@ -62,6 +71,8 @@ export function createCredits(root: HTMLElement, store: Store<AppState>): Credit
     moonMapsLink.textContent = t(lang, 'credits.moonMaps');
     data.textContent = t(lang, 'credits.data');
     voice.textContent = t(lang, 'credits.voice');
+    beyond.textContent = t(lang, 'beyond.link');
+    beyond.title = t(lang, 'beyond.hint');
     support.textContent = t(lang, 'credits.support');
     close.textContent = t(lang, 'credits.close');
   };
