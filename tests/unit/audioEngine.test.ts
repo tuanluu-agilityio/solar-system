@@ -8,6 +8,7 @@ import {
 } from '../../src/audio/audioEngine';
 import { nextShimmer, pinkNoise } from '../../src/audio/ambient';
 import { WHOOSH_DURATION_S } from '../../src/audio/whoosh';
+import { UI_MIN_GAP_S, UI_PEAK, uiSoundDuration } from '../../src/audio/uiSounds';
 
 // Hand-written minimal fake of the Web Audio API: just enough surface for the engine,
 // recording every automation event so the tests can check what was scheduled.
@@ -269,6 +270,59 @@ describe('AudioEngine whoosh', () => {
     const before = ctx.sources.length;
     engine.playWhoosh();
     expect(ctx.sources.length).toBe(before);
+  });
+});
+
+describe('AudioEngine interface sounds', () => {
+  it('plays a short sine blip through the sfx bus when unmuted', async () => {
+    const { ctx, engine } = setup();
+    await engine.unlock();
+    engine.setMuted(false);
+    const before = ctx.sources.length;
+    engine.playUi('tick');
+    const blips = ctx.sources.slice(before);
+    expect(blips).toHaveLength(1);
+    expect(blips[0]?.type).toBe('sine');
+    expect(blips[0]?.started).toBe(true);
+    expect(blips[0]?.stopped).toBe(true);
+    // The envelope (the last gain created) never exceeds the soft peak.
+    const env = ctx.gains.at(-1)!;
+    expect(Math.max(...env.gain.events.map((e) => e.value))).toBeLessThanOrEqual(UI_PEAK);
+    expect(UI_PEAK).toBeLessThan(0.3);
+  });
+
+  it('select is a two-note sound', async () => {
+    const { ctx, engine } = setup();
+    await engine.unlock();
+    engine.setMuted(false);
+    const before = ctx.sources.length;
+    engine.playUi('select');
+    expect(ctx.sources.length - before).toBe(2);
+    expect(uiSoundDuration('select')).toBeLessThan(0.3);
+  });
+
+  it('is silent while muted and before unlock', async () => {
+    const { ctx, engine } = setup();
+    engine.playUi('tick');
+    await engine.unlock();
+    const before = ctx.sources.length;
+    engine.playUi('tick');
+    expect(ctx.sources.length).toBe(before);
+  });
+
+  it('drops sounds closer together than the minimum gap', async () => {
+    const { ctx, engine } = setup();
+    await engine.unlock();
+    engine.setMuted(false);
+    const before = ctx.sources.length;
+    ctx.currentTime = 1;
+    engine.playUi('tick');
+    ctx.currentTime = 1 + UI_MIN_GAP_S / 2;
+    engine.playUi('tick');
+    expect(ctx.sources.length - before).toBe(1);
+    ctx.currentTime = 1 + UI_MIN_GAP_S * 1.5;
+    engine.playUi('tick');
+    expect(ctx.sources.length - before).toBe(2);
   });
 });
 

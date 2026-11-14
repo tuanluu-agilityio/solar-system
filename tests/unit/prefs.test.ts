@@ -29,6 +29,15 @@ const throwing: KeyValueStorage = {
   },
 };
 
+const DEFAULTS = {
+  lang: 'en',
+  muted: true,
+  tourSeen: false,
+  orbits: true,
+  labels: true,
+  quality: 'auto',
+};
+
 describe('detectLang', () => {
   it('vi when any entry starts with vi', () => expect(detectLang(['vi-VN', 'en'])).toBe('vi'));
   it('vi when vi is the first supported entry', () =>
@@ -64,14 +73,14 @@ describe('SUPPORTED_LANGS', () => {
 
 describe('loadPrefs', () => {
   it('defaults with empty storage', () => {
-    expect(loadPrefs(mem(), ['vi'])).toEqual({ lang: 'vi', muted: true, tourSeen: false });
+    expect(loadPrefs(mem(), ['vi'])).toEqual({ ...DEFAULTS, lang: 'vi', tourSeen: false });
   });
   it('stored muted=false', () => {
     expect(loadPrefs(mem({ [PREF_KEYS.muted]: 'false' }), ['en']).muted).toBe(false);
   });
   it('stored tourSeen=true and lang=en', () => {
     const p = loadPrefs(mem({ [PREF_KEYS.tourSeen]: 'true', [PREF_KEYS.lang]: 'en' }), ['vi']);
-    expect(p).toEqual({ lang: 'en', muted: true, tourSeen: true });
+    expect(p).toEqual({ ...DEFAULTS, lang: 'en', tourSeen: true });
   });
   it('a saved de wins over the browser languages', () =>
     expect(loadPrefs(mem({ [PREF_KEYS.lang]: 'de' }), ['ja']).lang).toBe('de'));
@@ -93,10 +102,38 @@ describe('loadPrefs', () => {
     expect(loadPrefs(mem({ [PREF_KEYS.lang]: 'xx' }), ['vi']).lang).toBe('vi');
   });
   it('throwing storage yields defaults', () => {
-    expect(loadPrefs(throwing, ['en'])).toEqual({ lang: 'en', muted: true, tourSeen: false });
+    expect(loadPrefs(throwing, ['en'])).toEqual({ ...DEFAULTS, lang: 'en', tourSeen: false });
   });
   it('null storage yields defaults', () => {
-    expect(loadPrefs(null, ['vi'])).toEqual({ lang: 'vi', muted: true, tourSeen: false });
+    expect(loadPrefs(null, ['vi'])).toEqual({ ...DEFAULTS, lang: 'vi', tourSeen: false });
+  });
+});
+
+describe('view and quality prefs', () => {
+  it('orbits and labels default on and only an explicit false turns them off', () => {
+    const p = loadPrefs(mem({ [PREF_KEYS.orbits]: 'false' }), ['en']);
+    expect(p.orbits).toBe(false);
+    expect(p.labels).toBe(true);
+    expect(loadPrefs(mem({ [PREF_KEYS.labels]: 'false' }), ['en']).labels).toBe(false);
+    expect(loadPrefs(mem({ [PREF_KEYS.orbits]: 'junk' }), ['en']).orbits).toBe(true);
+  });
+  it('quality accepts the five choices and falls back to auto', () => {
+    for (const q of ['auto', 'low', 'medium', 'high', 'ultra']) {
+      expect(loadPrefs(mem({ [PREF_KEYS.quality]: q }), ['en']).quality).toBe(q);
+    }
+    expect(loadPrefs(mem({ [PREF_KEYS.quality]: 'extreme' }), ['en']).quality).toBe('auto');
+    expect(loadPrefs(mem(), ['en']).quality).toBe('auto');
+  });
+  it('saves them under sse.orbits, sse.labels and sse.quality', () => {
+    const s = mem();
+    savePref(s, 'orbits', false);
+    savePref(s, 'labels', false);
+    savePref(s, 'quality', 'ultra');
+    expect(s.data).toMatchObject({
+      'sse.orbits': 'false',
+      'sse.labels': 'false',
+      'sse.quality': 'ultra',
+    });
   });
 });
 

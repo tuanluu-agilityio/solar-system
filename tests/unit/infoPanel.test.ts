@@ -3,9 +3,9 @@ import { BODIES } from '../../src/data/bodies';
 import { createStore } from '../../src/state/store';
 import type { AppState } from '../../src/state/appState';
 import { initialTour } from '../../src/tour/tourMachine';
-import { createInfoPanel, panelFields } from '../../src/ui/infoPanel';
+import { createInfoPanel, panelFields, panelSections } from '../../src/ui/infoPanel';
 
-const val = (id: keyof typeof BODIES, lang: 'vi' | 'en', key: string): string | undefined =>
+const val = (id: keyof typeof BODIES, lang: 'vi' | 'en' | 'de', key: string): string | undefined =>
   panelFields(BODIES[id], lang).find((f) => f.key === key)?.value;
 
 describe('panelFields', () => {
@@ -47,6 +47,16 @@ describe('panelFields', () => {
   it('shows mass as a multiple of Earth with at most 3 significant digits', () => {
     expect(val('mercury', 'en', 'field.mass')).toBe('0.0553 × Earth');
     expect(val('jupiter', 'vi', 'field.mass')).toBe('318 × Trái Đất');
+  });
+  it('lists the atmosphere only for bodies that have one, formatted per locale', () => {
+    expect(val('earth', 'en', 'field.atmosphere')).toBe('N₂ 78.08% · O₂ 20.95% · Ar 0.93%');
+    expect(val('saturn', 'vi', 'field.atmosphere')).toBe('H₂ 96,3% · He 3,25%');
+    expect(val('neptune', 'de', 'field.atmosphere')).toBe(
+      'H₂ 80 % · He 19 % · CH₄ 1,5 %'.replace(/ %/g, '%'),
+    );
+    for (const id of ['sun', 'mercury', 'moon', 'pluto'] as const) {
+      expect(val(id, 'en', 'field.atmosphere')).toBeUndefined();
+    }
   });
   it('formats diameter, temperature, gravity and moons', () => {
     expect(val('earth', 'en', 'field.diameter')).toBe('12,756 km');
@@ -205,5 +215,157 @@ describe('createInfoPanel render guard and root state', () => {
     expect(root.dataset.sheet).toBeUndefined();
     store.set({ layout: 'mobile', selected: null, view: 'overview' });
     expect(root.dataset.sheet).toBeUndefined();
+  });
+});
+
+describe('panel sections and stepping', () => {
+  it('groups rows into physical and orbit sections, dropping empty ones', () => {
+    const secs = panelSections(panelFields(BODIES.earth, 'en'));
+    expect(secs.map((s) => s.title)).toEqual(['section.physical', 'section.orbit']);
+    const orbit = secs[1]!.fields.map((f) => f.key);
+    expect(orbit).toEqual(['field.distance', 'field.orbitalPeriod', 'field.rotationPeriod']);
+    expect(secs[0]!.fields.map((f) => f.key)).toContain('field.atmosphere');
+    const sun = panelSections(panelFields(BODIES.sun, 'en'));
+    expect(sun.map((s) => s.title)).toEqual(['section.physical', 'section.orbit']);
+    expect(panelSections([])).toEqual([]);
+  });
+
+  it('prev and next step through NAV_ORDER and wrap', () => {
+    const root = document.createElement('div');
+    const store = makeStore({ selected: 'earth', view: 'focus' });
+    const onStep = vi.fn();
+    createInfoPanel(root, store, () => undefined, onStep);
+    const btn = (id: string): HTMLButtonElement =>
+      root.querySelector<HTMLButtonElement>(`[data-testid="${id}"]`)!;
+    btn('panel-next').click();
+    expect(onStep).toHaveBeenLastCalledWith('moon');
+    btn('panel-prev').click();
+    expect(onStep).toHaveBeenLastCalledWith('venus');
+    store.set({ selected: 'sun' });
+    btn('panel-prev').click();
+    expect(onStep).toHaveBeenLastCalledWith('pluto');
+    expect(btn('panel-next').getAttribute('aria-label')).toBe('Next body');
+  });
+
+  it('shows an atmosphere row for Earth and none for the Moon', () => {
+    const root = document.createElement('div');
+    const store = makeStore({ selected: 'earth', view: 'focus' });
+    createInfoPanel(root, store, () => undefined);
+    expect(root.textContent).toContain('Atmosphere');
+    expect(root.textContent).toContain('O₂ 20.95%');
+    store.set({ selected: 'moon' });
+    expect(root.textContent).not.toContain('Atmosphere');
+  });
+});
+
+describe('moons in the panel', () => {
+  const MOONS = (Object.keys(BODIES) as (keyof typeof BODIES)[]).filter(
+    (id) => BODIES[id].kind === 'moon',
+  );
+
+  it('shows every moon distance in km from its own planet, in every language', () => {
+    const keyOf = {
+      earth: 'field.distanceEarth',
+      mars: 'field.distanceMars',
+      jupiter: 'field.distanceJupiter',
+      saturn: 'field.distanceSaturn',
+    } as const;
+    expect(MOONS).toHaveLength(9);
+    for (const id of MOONS) {
+      const parent = BODIES[id].parent as keyof typeof keyOf;
+      expect(keyOf[parent], id).toBeDefined();
+      for (const lang of ['en', 'vi', 'ja', 'de'] as const) {
+        const keys = panelFields(BODIES[id], lang).map((f) => f.key);
+        expect(keys, `${lang}/${id}`).toContain(keyOf[parent]);
+        expect(keys, `${lang}/${id}`).not.toContain('field.distance');
+      }
+    }
+    expect(val('phobos', 'en', 'field.distanceMars')).toBe('9,378 km');
+    expect(val('io', 'en', 'field.distanceJupiter')).toBe('421,800 km');
+    expect(val('titan', 'de', 'field.distanceSaturn')).toBe('1.221.870 km');
+  });
+
+  it('keeps tiny masses and gravities readable (never a bare 0)', () => {
+    expect(val('phobos', 'en', 'field.mass')).toBe('1.78 × 10⁻⁹ × Earth');
+    expect(val('deimos', 'de', 'field.mass')).toBe('4,02 × 10⁻¹⁰ × Erde');
+    expect(val('enceladus', 'en', 'field.mass')).toBe('1.81 × 10⁻⁵ × Earth');
+    expect(val('io', 'en', 'field.mass')).toBe('0.015 × Earth');
+    expect(val('phobos', 'en', 'field.gravity')).toBe('0.0058 m/s²');
+    expect(val('deimos', 'en', 'field.gravity')).toBe('0.0025 m/s²');
+    expect(val('enceladus', 'vi', 'field.gravity')).toBe('0,11 m/s²');
+    expect(val('io', 'en', 'field.gravity')).toBe('1.8 m/s²');
+    expect(val('earth', 'en', 'field.gravity')).toBe('9.8 m/s²');
+  });
+
+  it('omits the mean temperature where NASA gives none (Phobos, Deimos)', () => {
+    for (const id of ['phobos', 'deimos'] as const) {
+      expect(val(id, 'en', 'field.meanTemp')).toBeUndefined();
+    }
+    expect(val('europa', 'en', 'field.meanTemp')).toBe('-170 °C');
+  });
+
+  function panelFor(selected: AppState['selected'], lang: AppState['lang'] = 'en') {
+    const root = document.createElement('div');
+    const store = makeStore({ selected, view: 'focus', lang });
+    const onStep = vi.fn();
+    createInfoPanel(root, store, () => undefined, onStep);
+    const chips = (prefix: string): HTMLButtonElement[] => [
+      ...root.querySelectorAll<HTMLButtonElement>(`[data-testid^="${prefix}-"]`),
+    ];
+    return { root, store, onStep, chips };
+  }
+
+  it('gives a planet with modelled moons a Moons chip row that flies to the moon', () => {
+    const { root, store, onStep, chips } = panelFor('jupiter');
+    expect(chips('moon').map((b) => b.dataset.testid)).toEqual([
+      'moon-io',
+      'moon-europa',
+      'moon-ganymede',
+      'moon-callisto',
+    ]);
+    expect(chips('moon').map((b) => b.textContent)).toEqual([
+      'Io',
+      'Europa',
+      'Ganymede',
+      'Callisto',
+    ]);
+    expect(root.textContent).toContain('Moons');
+    chips('moon')[2]!.click();
+    expect(onStep).toHaveBeenLastCalledWith('ganymede');
+    store.set({ selected: 'mars' });
+    expect(chips('moon').map((b) => b.dataset.testid)).toEqual(['moon-phobos', 'moon-deimos']);
+    store.set({ selected: 'earth' });
+    expect(chips('moon').map((b) => b.dataset.testid)).toEqual(['moon-moon']);
+    store.set({ selected: 'venus' });
+    expect(chips('moon')).toHaveLength(0);
+    expect(root.textContent).not.toContain('Moons');
+    store.set({ selected: 'asteroid-belt' });
+    expect(chips('moon')).toHaveLength(0);
+  });
+
+  it('gives a moon a chip back to its planet', () => {
+    const { root, store, onStep, chips } = panelFor('titan');
+    expect(chips('parent').map((b) => b.dataset.testid)).toEqual(['parent-saturn']);
+    expect(chips('parent')[0]!.textContent).toBe('Saturn');
+    expect(root.textContent).toContain('Parent planet');
+    expect(chips('moon')).toHaveLength(0);
+    chips('parent')[0]!.click();
+    expect(onStep).toHaveBeenLastCalledWith('saturn');
+    store.set({ lang: 'de' });
+    expect(root.textContent).toContain('Mutterplanet');
+    store.set({ selected: 'moon' });
+    expect(chips('parent').map((b) => b.dataset.testid)).toEqual(['parent-earth']);
+  });
+
+  it('labels the chip rows in every language', () => {
+    for (const [lang, word] of [
+      ['vi', 'Vệ tinh'],
+      ['ja', '衛星'],
+      ['de', 'Monde'],
+    ] as const) {
+      const { root, chips } = panelFor('saturn', lang);
+      expect(root.textContent, lang).toContain(word);
+      expect(chips('moon')).toHaveLength(2);
+    }
   });
 });

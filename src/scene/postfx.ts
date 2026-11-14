@@ -28,6 +28,9 @@ export function createPostFX(
     BLOOM.radius,
     BLOOM.threshold,
   );
+  // Soft knee above the threshold (the typings expose highPassUniforms as `object`).
+  const knee = bloom.materialHighPassFilter.uniforms.smoothWidth;
+  if (knee) knee.value = BLOOM.smoothWidth;
   composer.addPass(bloom);
   composer.addPass(new OutputPass());
 

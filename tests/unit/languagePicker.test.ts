@@ -188,7 +188,7 @@ describe('language picker', () => {
 });
 
 describe('control bar language opener', () => {
-  it('is a compact 文A button that opens the picker', () => {
+  it('is a compact globe-icon button that opens the picker', () => {
     const store = makeStore('ja');
     const actions = {
       openLanguagePicker: vi.fn(),
@@ -198,7 +198,8 @@ describe('control bar language opener', () => {
     };
     const bar = createControlBar(root, store, actions);
     const btn = root.querySelector<HTMLButtonElement>('[data-testid="lang"]')!;
-    expect(btn.textContent).toBe('文A');
+    expect(btn.textContent).toBe('');
+    expect(btn.querySelector('svg[aria-hidden="true"]')).not.toBeNull();
     expect(btn.getAttribute('aria-haspopup')).toBe('dialog');
     expect(btn.getAttribute('aria-label')).toBe(UI_STRINGS.ja['lang.switch']);
     btn.click();

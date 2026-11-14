@@ -62,6 +62,14 @@ describe('runtime quality', () => {
     expect(run(rq, 30)).toBeNull();
     expect(onDowngrade.mock.calls.map((c) => c[0])).toEqual(['medium', 'low']);
   });
+  it('a manual choice (setAuto false) stops downgrading until auto is back on', () => {
+    const { rq, onDowngrade } = setup('high');
+    rq.setAuto(false);
+    expect(run(rq, 50)).toBeNull();
+    expect(onDowngrade).not.toHaveBeenCalled();
+    rq.setAuto(true);
+    expect(run(rq, 10)).toBe('medium');
+  });
   it('never samples with software rendering', () => {
     const { rq, onDowngrade } = setup('high', true);
     expect(run(rq, 100)).toBeNull();

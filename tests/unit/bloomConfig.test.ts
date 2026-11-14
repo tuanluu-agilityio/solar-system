@@ -3,8 +3,20 @@ import { BLOOM, bloomResolution } from '../../src/scene/bloomConfig';
 import { tierSettings } from '../../src/quality/tiers';
 
 describe('bloomConfig', () => {
-  it('uses the spec bloom parameters', () => {
-    expect(BLOOM).toEqual({ strength: 1.2, radius: 0.6, threshold: 0.85 });
+  it('keeps bloom present but gentle enough to preserve the solar surface detail', () => {
+    // Bloom is part of the quality floor: it must never be switched off.
+    expect(BLOOM.strength).toBeGreaterThan(0);
+    // UnrealBloomPass adds about 3 x strength of every above-threshold pixel (five mips whose
+    // factors sum to 3); at the old 1.2 the Sun clipped to a white blob.
+    expect(BLOOM.strength * 3).toBeLessThanOrEqual(1.5);
+    // The threshold sits at or above display white so only HDR highlights (the Sun's hot
+    // granules, Earth's city lights at gain 1.6) bloom, not every lit surface.
+    expect(BLOOM.threshold).toBeGreaterThanOrEqual(0.9);
+    expect(BLOOM.threshold).toBeLessThan(1.6);
+    // A soft knee instead of the pass's default hard 0.01 step avoids a hard bloom edge.
+    expect(BLOOM.smoothWidth).toBeGreaterThan(0.01);
+    expect(BLOOM.radius).toBeGreaterThan(0);
+    expect(BLOOM.radius).toBeLessThanOrEqual(1);
   });
 
   it('scales the drawing-buffer size by bloomResolutionScale', () => {

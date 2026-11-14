@@ -6,6 +6,7 @@ export function isLang(value: unknown): value is Lang {
   return typeof value === 'string' && (SUPPORTED_LANGS as readonly string[]).includes(value);
 }
 
+/** Every body, the Sun outward; a moon follows its planet (and its inner siblings). */
 export const BODY_IDS = [
   'sun',
   'mercury',
@@ -13,8 +14,16 @@ export const BODY_IDS = [
   'earth',
   'moon',
   'mars',
+  'phobos',
+  'deimos',
   'jupiter',
+  'io',
+  'europa',
+  'ganymede',
+  'callisto',
   'saturn',
+  'enceladus',
+  'titan',
   'uranus',
   'neptune',
   'pluto',
@@ -29,10 +38,18 @@ export interface PhysicalData {
   surfaceGravity: number; // m/s²
   rotationPeriodHours: number; // negative = retrograde
   axialTiltDeg: number;
-  meanTempC: number;
-  distanceFromParentMkm?: number; // million km (Moon: from Earth)
+  /** Omitted where NASA gives no mean (Phobos and Deimos: only day and night extremes). */
+  meanTempC?: number;
+  distanceFromParentMkm?: number; // million km (a moon: from its planet)
   orbitalPeriodDays?: number;
   knownMoons?: number;
+  /** Main atmospheric gases (NASA Planetary Fact Sheet); formulas use Unicode subscripts. */
+  atmosphere?: readonly { gas: string; percent: number }[];
+  /**
+   * Irregular moons: triaxial radii in km, [toward the planet, along the orbit, polar].
+   * Spherical bodies omit it.
+   */
+  shapeRadiiKm?: readonly [number, number, number];
 }
 
 export interface OrbitalElements {

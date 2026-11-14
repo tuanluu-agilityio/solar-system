@@ -15,6 +15,7 @@ import type { FocusTarget } from '../scene/solarSystem';
 import type { Layout } from '../ui/layout';
 import {
   OVERVIEW_FIT_RADIUS,
+  flightArcHeight,
   focusDistance,
   focusFill,
   focusScreenOffset,
@@ -44,9 +45,27 @@ export interface CameraRig {
   getTarget(): FocusTarget | null;
   /** True while a fly-to / fly-to-overview transition is in progress. */
   isFlying(): boolean;
+  /** Multiplies the camera distance by `factor` (clamped to the zoom limits), smoothly. */
+  zoomBy(factor: number): void;
+  /** Turns the view about the vertical axis by `azimuthRad`, smoothly. */
+  rotateBy(azimuthRad: number): void;
+  /**
+   * Idle drift: while a body is focused and the user has not touched the view for
+   * IDLE_DRIFT_DELAY_SEC, the camera slowly circles it. Off by default.
+   */
+  setIdleDrift(on: boolean): void;
+  /** Flights rise in a gentle arc and clear the Sun (on by default; off for reduced motion). */
+  setFlightArc(on: boolean): void;
 }
 
 export const AUTO_ORBIT_RAD_PER_SEC = 0.08;
+/** Idle drift speed around a focused body, and how long the view must rest before it starts. */
+export const IDLE_DRIFT_RAD_PER_SEC = 0.025;
+export const IDLE_DRIFT_DELAY_SEC = 6;
+/** The drift eases in over this long instead of starting abruptly. */
+const IDLE_DRIFT_RAMP_SEC = 3;
+/** A flight's lift rises and falls over this long (within FLIGHT_MAX_SEC). */
+export const FLIGHT_ARC_SEC = 2.2;
 const SMOOTH_TIME = 0.25;
 const DRAGGING_SMOOTH_TIME = 0.1;
 /** Smoothing during a fly-to; with the cap below a flight takes about 2 s. */
@@ -60,6 +79,16 @@ const FOCUS_MAX_FACTOR = 12;
 
 /** camera-controls with a rigid shift of both the current and the end state (follow, auto-orbit). */
 class RigControls extends CameraControls {
+  /** Makes the next `update` rewrite the camera pose even when the controls are at rest. */
+  invalidate(): void {
+    this._needsUpdate = true;
+  }
+
+  /** The distance the camera is heading to (repeated zoom steps compound from it). */
+  get endDistance(): number {
+    return this._sphericalEnd.radius;
+  }
+
   shift(delta: Vector3, dTheta: number): void {
     if (delta.lengthSq() === 0 && dTheta === 0) return;
     this._target.add(delta);
@@ -91,7 +120,12 @@ export function createCameraRig(camera: PerspectiveCamera, dom: HTMLElement): Ca
   /** NDC shift that centres the overview disc; recomputed with the overview distance. */
   let overviewOffsetY = 0;
   let autoOrbit = false;
+  let idleDrift = false;
+  let idleSec = 0;
   let flight: Flight | null = null;
+  /** Lift of the current flight: peak height and time since the flight began. */
+  let arc: { height: number; elapsed: number } | null = null;
+  let arcOn = true;
   const lastPos = new Vector3();
   const pos = new Vector3();
   const delta = new Vector3();
@@ -107,6 +141,21 @@ export function createCameraRig(camera: PerspectiveCamera, dom: HTMLElement): Ca
     done.resolve();
   };
   controls.addEventListener('rest', finishFlight);
+  // Any touch of the view (drag, pinch, tap, wheel) restarts the idle clock.
+  const touch = (): void => {
+    idleSec = 0;
+  };
+  controls.addEventListener('controlstart', touch);
+  dom.addEventListener('pointerdown', touch);
+  dom.addEventListener('wheel', touch, { passive: true });
+
+  const from = new Vector3();
+  /** Starts the lift for a flight from the current look-at point to `to`. */
+  const startArc = (to: Vector3): void => {
+    controls.getTarget(from);
+    const height = arcOn ? flightArcHeight(from, to) : 0;
+    arc = height > 1e-6 ? { height, elapsed: 0 } : null;
+  };
 
   const startFlight = (): Promise<void> => {
     finishFlight(); // last request wins: the superseded promise resolves now
@@ -188,6 +237,7 @@ export function createCameraRig(camera: PerspectiveCamera, dom: HTMLElement): Ca
       const promise = startFlight();
       target = t;
       t.object.getWorldPosition(lastPos);
+      startArc(lastPos);
       const d = focusLimits(t);
       approachDirection(lastPos, dir);
       pos.copy(lastPos).addScaledVector(dir, d);
@@ -198,6 +248,7 @@ export function createCameraRig(camera: PerspectiveCamera, dom: HTMLElement): Ca
     flyToOverview() {
       const promise = startFlight();
       target = null;
+      startArc(tmp.set(0, 0, 0));
       overviewPose(true);
       applyViewOffset();
       return promise;
@@ -209,8 +260,35 @@ export function createCameraRig(camera: PerspectiveCamera, dom: HTMLElement): Ca
         delta.subVectors(pos, lastPos);
         lastPos.copy(pos);
       }
-      controls.shift(delta, autoOrbit ? AUTO_ORBIT_RAD_PER_SEC * dtSec : 0);
+      let turn = autoOrbit ? AUTO_ORBIT_RAD_PER_SEC * dtSec : 0;
+      if (idleDrift && target && !flight && !autoOrbit) {
+        idleSec += dtSec;
+        const ramp = Math.min(
+          1,
+          Math.max(0, (idleSec - IDLE_DRIFT_DELAY_SEC) / IDLE_DRIFT_RAMP_SEC),
+        );
+        // Smoothstep ease-in.
+        turn += IDLE_DRIFT_RAD_PER_SEC * ramp * ramp * (3 - 2 * ramp) * dtSec;
+      } else {
+        idleSec = 0;
+      }
+      controls.shift(delta, turn);
+      // The lift is added on top of the pose the controls write, so they must rewrite it
+      // every frame while it lasts (and once more when it ends).
+      if (arc) controls.invalidate();
       controls.update(dtSec);
+      if (arc) {
+        arc.elapsed += dtSec;
+        const u = Math.min(1, arc.elapsed / FLIGHT_ARC_SEC);
+        const s = Math.sin(Math.PI * u);
+        camera.position.y += arc.height * s * s;
+        camera.lookAt(controls.getTarget(tmp));
+        camera.updateMatrixWorld();
+        if (u >= 1) {
+          arc = null;
+          controls.invalidate();
+        }
+      }
       if (flight) {
         flight.elapsed += dtSec;
         if (flight.elapsed >= FLIGHT_MAX_SEC) finishFlight();
@@ -238,6 +316,27 @@ export function createCameraRig(camera: PerspectiveCamera, dom: HTMLElement): Ca
     },
     isFlying() {
       return flight !== null;
+    },
+    zoomBy(factor) {
+      if (!Number.isFinite(factor) || factor <= 0) return;
+      idleSec = 0;
+      const d = Math.min(
+        controls.maxDistance,
+        Math.max(controls.minDistance, controls.endDistance * factor),
+      );
+      void controls.dollyTo(d, true);
+    },
+    rotateBy(azimuthRad) {
+      idleSec = 0;
+      void controls.rotate(azimuthRad, 0, true);
+    },
+    setFlightArc(on) {
+      arcOn = on;
+      if (!on) arc = null;
+    },
+    setIdleDrift(on) {
+      idleDrift = on;
+      idleSec = 0;
     },
   };
 }

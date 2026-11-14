@@ -1,4 +1,5 @@
 import { SUPPORTED_LANGS, type Lang } from '../data/types';
+import { icon } from './icons';
 import { t } from '../i18n/i18n';
 import { LANG_NATIVE_NAMES } from '../i18n/strings';
 import type { AppState } from '../state/appState';
@@ -50,7 +51,7 @@ export function createLanguagePicker(
     const mark = document.createElement('span');
     mark.className = 'lang-check';
     mark.setAttribute('aria-hidden', 'true');
-    mark.textContent = '✓';
+    mark.append(icon('check'));
     b.append(name, mark);
     b.addEventListener('click', () => choose(lang));
     options.set(lang, b);

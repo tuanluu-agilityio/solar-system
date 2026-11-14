@@ -5,7 +5,15 @@ import type { ContentId } from './data/types';
 import type { AppState } from './state/appState';
 import { loadPrefs, savePref } from './state/prefs';
 import { getLayout } from './ui/layout';
-import { initialTier, tierSettings, type QualityTier } from './quality/tiers';
+import {
+  initialTier,
+  isQualityChoice,
+  softwareFallback,
+  tierSettings,
+  type QualityChoice,
+  type QualityTier,
+  type TierSettings,
+} from './quality/tiers';
 import { createFpsMonitor } from './quality/fpsMonitor';
 import { createRuntimeQuality, isSoftwareRenderer } from './quality/runtime';
 import {
@@ -36,16 +44,20 @@ import {
 import {
   listTextureKeys,
   loadHighTextures,
+  loadLowTextures,
   loadTextureSet,
   makeFallbackTexture,
 } from './scene/textures';
-import { aggregateProgress, skyKey, skySet } from './scene/textureKeys';
-import { createSky } from './scene/sky';
+import { aggregateProgress, isLazyTextureKey, skyKey, skySet } from './scene/textureKeys';
+import { nearPlaneFor } from './scene/nearPlane';
+import { createDeepSpace } from './scene/deepSpace';
 import { startLoop } from './scene/loop';
 import { createPostFX } from './scene/postfx';
-import { createSun } from './bodies/sun';
+import { createSun, sunDetailForTier } from './bodies/sun';
 import { createSolarSystem } from './scene/solarSystem';
 import { createPicker } from './interaction/picker';
+import { createKeyboardNav } from './interaction/keyboard';
+import { NAV_ORDER } from './data/navOrder';
 import { createLabels } from './ui/labels';
 import { createCameraRig } from './camera/cameraRig';
 import { createLoadingScreen, showBootError, showWebglUnsupported } from './ui/loadingScreen';
@@ -57,6 +69,9 @@ import { createTourControls, isTourActive } from './ui/tourControls';
 import { createSubtitles } from './ui/subtitles';
 import { installE2EApi } from './debug/e2eApi';
 import { createAudioEngine } from './audio/audioEngine';
+import { createSimClock } from './state/simClock';
+import { createBodyNav } from './ui/bodyNav';
+import { createSettings } from './ui/settings';
 
 function safeStorage(): Storage | null {
   try {
@@ -66,9 +81,14 @@ function safeStorage(): Storage | null {
   }
 }
 
-function pickTier(search: string): QualityTier {
+/** The `?quality=` URL parameter (e2e and debugging); it wins over the saved choice. */
+function urlTier(search: string): QualityTier | null {
   const q = new URLSearchParams(search).get('quality');
-  if (q === 'low' || q === 'medium' || q === 'high') return q;
+  return q === 'low' || q === 'medium' || q === 'high' || q === 'ultra' ? q : null;
+}
+
+/** The tier the device would start on (never ultra). */
+function deviceTier(): QualityTier {
   return initialTier({
     isMobile: window.matchMedia('(pointer:coarse)').matches,
     dpr: window.devicePixelRatio || 1,
@@ -98,13 +118,20 @@ async function boot(): Promise<void> {
     return;
   }
 
+  // Priority: ?quality= (stays automatic, so the FPS monitor still applies), then a saved
+  // manual choice, then the device's tier.
+  const forcedTier = urlTier(window.location.search);
+  const savedChoice: QualityChoice = forcedTier ? 'auto' : prefs.quality;
+  const startTier: QualityTier =
+    forcedTier ??
+    (isQualityChoice(savedChoice) && savedChoice !== 'auto' ? savedChoice : deviceTier());
   const store = createStore<AppState>({
     lang: prefs.lang,
     muted: prefs.muted,
     selected: null,
     view: 'overview',
     layout: getLayout(window.innerWidth, window.innerHeight),
-    quality: pickTier(window.location.search),
+    quality: startTier,
     tour: initialTour(TOUR_STOPS.length),
     ready: false,
   });
@@ -156,7 +183,7 @@ async function boot(): Promise<void> {
     savePref(storage, 'lang', lang);
     store.set({ lang });
   });
-  createControlBar(root, store, {
+  const controls = createControlBar(root, store, {
     openLanguagePicker: () => languagePicker.open(),
     toggleMute: () => setMuted(!store.get().muted),
     toggleTour() {
@@ -165,6 +192,15 @@ async function boot(): Promise<void> {
     },
     openCredits: () => credits.open(),
   });
+  // Faint interface sounds: a tick for every button (the nav buttons make the select sound).
+  root.addEventListener(
+    'click',
+    (e) => {
+      const b = e.target instanceof Element ? e.target.closest('button') : null;
+      if (b && b.dataset.sound !== 'none') audio.playUi('tick');
+    },
+    true,
+  );
 
   createTourControls(root, store, dispatchTour);
   const subtitles = createSubtitles(root, store, {
@@ -189,6 +225,19 @@ async function boot(): Promise<void> {
     20000,
   );
   const rig = createCameraRig(camera, canvas);
+  // Zoomed onto a tiny moon, the surface comes closer than the default near plane.
+  const targetPos = new THREE.Vector3();
+  const syncNearPlane = (): void => {
+    const t = rig.getTarget();
+    const gap = t
+      ? camera.position.distanceTo(t.object.getWorldPosition(targetPos)) - t.radius
+      : Infinity;
+    const near = nearPlaneFor(gap);
+    if (near !== camera.near) {
+      camera.near = near;
+      camera.updateProjectionMatrix();
+    }
+  };
   rig.setLayout(store.get().layout);
   // Tour stops on a phone are framed above the compact subtitle dock.
   store.subscribe((s, prev) => {
@@ -198,6 +247,10 @@ async function boot(): Promise<void> {
 
   // Runtime quality: the FPS monitor downgrades a tier; software rendering disables it (spec §11.4).
   let solarRef: ReturnType<typeof createSolarSystem> | null = null;
+  let orbitsOn = prefs.orbits;
+  let labelsOn = prefs.labels;
+  const simClock = createSimClock();
+  let syncLabels = (): void => undefined;
   // Orbit ribbons keep a constant pixel width: tell them the drawing buffer and pixel ratio.
   const drawingSize = new THREE.Vector2();
   const syncOrbitViewport = (): void => {
@@ -206,22 +259,55 @@ async function boot(): Promise<void> {
   };
   const rendererName = getRendererName(renderer);
   const software = isSoftwareRenderer(rendererName);
+  // Without a GPU the per-pixel shader detail and extra particle layers use the low values.
+  const settingsFor = (tier: QualityTier): TierSettings =>
+    software ? softwareFallback(tierSettings(tier)) : tierSettings(tier);
   console.info(
     `[quality] tier ${store.get().quality}, renderer ${rendererName ?? 'unknown'}${software ? ' (software: FPS monitor off)' : ''}`,
   );
+  // One path for the FPS monitor and the settings selector. The loaded sky stays, and
+  // antialias is fixed when the renderer is created, so ultra differs from high only in the
+  // other fields. Textures only ever upgrade (on arrival at a body); a lower tier keeps them.
+  let sunRef: ReturnType<typeof createSun> | null = null;
+  const applyTier = (next: QualityTier): void => {
+    store.set({ quality: next });
+    const s = settingsFor(next);
+    applyRendererSettings(renderer, s);
+    postfx.setSettings(s);
+    solarRef?.setTierSettings(s);
+    sunRef?.setDetail(software ? 'low' : sunDetailForTier(next));
+    syncOrbitViewport();
+    afterTierChange();
+  };
+  let afterTierChange = (): void => undefined;
   const runtimeQuality = createRuntimeQuality({
     monitor: createFpsMonitor(),
     software,
     getTier: () => store.get().quality,
     onDowngrade(next) {
-      store.set({ quality: next });
-      const s = tierSettings(next);
-      // The loaded sky and textures stay; antialias is fixed at renderer creation.
-      applyRendererSettings(renderer, s);
-      syncOrbitViewport();
-      postfx.setSettings(s);
-      solarRef?.setTierSettings(s);
+      applyTier(next);
       console.info(`[quality] downgraded to ${next}`);
+    },
+  });
+  createSettings(root, store, controls.settingsButton, {
+    initial: { orbits: orbitsOn, labels: labelsOn, quality: savedChoice },
+    onSpeed: (speed) => simClock.setSpeed(speed),
+    onOrbits(on) {
+      orbitsOn = on;
+      savePref(storage, 'orbits', on);
+      solarRef?.setOrbitsVisible(on);
+    },
+    onLabels(on) {
+      labelsOn = on;
+      savePref(storage, 'labels', on);
+      syncLabels();
+    },
+    onQuality(choice) {
+      savePref(storage, 'quality', choice);
+      // A manual tier turns the automatic FPS downgrade off; auto turns it back on and
+      // re-picks the device's starting tier.
+      runtimeQuality.setAuto(choice === 'auto');
+      applyTier(choice === 'auto' ? deviceTier() : choice);
     },
   });
 
@@ -243,6 +329,7 @@ async function boot(): Promise<void> {
   };
   const userSelect = (id: ContentId): Promise<void> => {
     interruptTour();
+    audio.playUi('select');
     return selectBody(id);
   };
   const backToOverview = async (): Promise<void> => {
@@ -251,7 +338,9 @@ async function boot(): Promise<void> {
     audio.playWhoosh();
     await rig.flyToOverview();
   };
-  createInfoPanel(root, store, () => void backToOverview());
+  const selectFromUi = (id: ContentId): void => void userSelect(id);
+  createInfoPanel(root, store, () => void backToOverview(), selectFromUi);
+  createBodyNav(root, store, selectFromUi);
   let cameraTargetId = (): ContentId | null => null;
   let projectBody: (id: ContentId) => { x: number; y: number } | null = () => null;
 
@@ -286,7 +375,10 @@ async function boot(): Promise<void> {
     },
   });
 
-  const lowKeys = (await listTextureKeys('low')).filter((k) => !k.startsWith('sky'));
+  // Moon maps load when their planet system first comes into view (onFirstShown below).
+  const lowKeys = (await listTextureKeys('low')).filter(
+    (k) => !k.startsWith('sky') && !isLazyTextureKey(k),
+  );
   const parts = [
     { loaded: 0, total: lowKeys.length },
     { loaded: 0, total: 1 },
@@ -305,14 +397,30 @@ async function boot(): Promise<void> {
     manifestPromise,
   ]);
   const skyTexture = skyTex.get(skyKey(sky));
-  if (skyTexture) scene.add(createSky(skyTexture));
-  const sun = createSun(lowTex.get('sun') ?? makeFallbackTexture('sun'));
+  const deepSpace = createDeepSpace(skyTexture ?? null, settingsFor(store.get().quality), {
+    renderer,
+  });
+  scene.add(deepSpace.group);
+  const sun = createSun(lowTex.get('sun') ?? makeFallbackTexture('sun'), {
+    detail: software ? 'low' : sunDetailForTier(store.get().quality),
+  });
+  sunRef = sun;
   scene.add(sun.group);
-  const solar = createSolarSystem(lowTex, tierSettings(store.get().quality));
+  const solar = createSolarSystem(lowTex, settingsFor(store.get().quality), {
+    onFirstShown: (id) => {
+      loadLowTextures(id)
+        .then((tex) => solar.upgradeTextures(id, tex))
+        .catch(() => undefined);
+    },
+  });
   solarRef = solar;
   scene.add(solar.root);
+  const reducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)');
+  solar.setReducedMotion(reducedMotion?.matches ?? false);
+  reducedMotion?.addEventListener?.('change', (e) => solar.setReducedMotion(e.matches));
   syncOrbitViewport();
   solar.setOrbitFocus(store.get().view !== 'overview');
+  solar.setOrbitsVisible(orbitsOn);
 
   selectBody = async (id) => {
     store.set({ selected: id, view: 'focus' });
@@ -330,6 +438,11 @@ async function boot(): Promise<void> {
         .then((tex) => solar.upgradeTextures(id, tex))
         .catch(() => undefined);
     }
+  };
+  afterTierChange = () => {
+    // Switching up to a high-texture tier while focused swaps in the large maps right away.
+    const id = cameraTargetId();
+    if (id) upgradeOnArrival(id);
   };
   const select = (id: ContentId): void => void userSelect(id);
   const contentIds: ContentId[] = [...solar.bodies.keys(), 'asteroid-belt'];
@@ -356,10 +469,28 @@ async function boot(): Promise<void> {
     isMobile: () => store.get().layout === 'mobile',
   });
   createPicker(canvas, camera, solar.pickables, select, (id) => labels.setHovered(id));
-  labels.setVisible(store.get().view === 'overview');
+  createKeyboardNav(
+    window,
+    () => ({ order: NAV_ORDER, selected: store.get().selected }),
+    (a) => {
+      if (a.type === 'select') select(a.id);
+      else if (a.type === 'overview') void backToOverview();
+      else {
+        interruptTour();
+        if (a.type === 'zoom') rig.zoomBy(a.factor);
+        else rig.rotateBy(a.azimuth);
+      }
+    },
+  );
+  // A resting focus view slowly circles its body, unless the user asked for less motion.
+  rig.setIdleDrift(!isE2E && !window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  rig.setFlightArc(!window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  // Labels show in the overview only, and only while the user keeps them on.
+  syncLabels = (): void => labels.setVisible(store.get().view === 'overview' && labelsOn);
+  syncLabels();
   store.subscribe((s, prev) => {
     if (s.view !== prev.view) {
-      labels.setVisible(s.view === 'overview');
+      syncLabels();
       solar.setOrbitFocus(s.view !== 'overview');
     }
   });
@@ -405,8 +536,12 @@ async function boot(): Promise<void> {
       transitioning: rig.isFlying(),
     });
     sun.update(tSec);
-    solar.update(tSec);
+    // Planets run on the simulation clock (speed control); the Sun keeps wall time.
+    simClock.advance(dt);
+    solar.update(simClock.time, dt);
     rig.update(dt * rigTimeScale);
+    syncNearPlane();
+    deepSpace.update(tSec, camera, renderer.getPixelRatio());
     solar.applyOverviewBoost(camera, canvas.clientHeight || window.innerHeight);
     labels.update();
     subtitles.update();

@@ -1,7 +1,10 @@
-import { BODIES } from '../data/bodies';
+import { BODIES, moonsOf } from '../data/bodies';
 import { getContent } from '../data/content';
-import type { BodyDef, ContentId, Lang } from '../data/types';
+import type { BodyDef, BodyId, ContentId, Lang } from '../data/types';
+import { NAV_ORDER } from '../data/navOrder';
 import { formatNumber, t } from '../i18n/i18n';
+import { neighbour } from '../interaction/keyboard';
+import { icon } from './icons';
 import type { UiKey } from '../i18n/strings';
 import type { AppState } from '../state/appState';
 import type { Store } from '../state/store';
@@ -9,6 +12,28 @@ import type { Store } from '../state/store';
 export interface PanelField {
   key: UiKey;
   value: string;
+}
+
+/** Rows of the orbit and rotation section; every other row is physical. */
+const ORBIT_KEYS: ReadonlySet<UiKey> = new Set<UiKey>([
+  'field.distance',
+  'field.distanceEarth',
+  'field.distanceMars',
+  'field.distanceJupiter',
+  'field.distanceSaturn',
+  'field.orbitalPeriod',
+  'field.rotationPeriod',
+]);
+
+/** Splits the rows into the physical and the orbit sections (empty sections are dropped). */
+export function panelSections(
+  fields: readonly PanelField[],
+): { title: UiKey; fields: PanelField[] }[] {
+  const sections: { title: UiKey; fields: PanelField[] }[] = [
+    { title: 'section.physical', fields: fields.filter((f) => !ORBIT_KEYS.has(f.key)) },
+    { title: 'section.orbit', fields: fields.filter((f) => ORBIT_KEYS.has(f.key)) },
+  ];
+  return sections.filter((s) => s.fields.length > 0);
 }
 
 export type SheetState = 'peek' | 'expanded';
@@ -20,10 +45,46 @@ const CLOSE_DRAG_PX = 80;
 /** A press that moves less than this is a tap on the handle. */
 const TAP_PX = 8;
 
-const MOON_ID = 'moon';
+/** "Average distance from <planet>" for each planet with modelled moons. */
+const DISTANCE_FROM: Partial<Record<BodyId, UiKey>> = {
+  earth: 'field.distanceEarth',
+  mars: 'field.distanceMars',
+  jupiter: 'field.distanceJupiter',
+  saturn: 'field.distanceSaturn',
+};
 
 function sig3(lang: Lang, v: number): string {
   return formatNumber(lang, Number(v.toPrecision(3)), 6);
+}
+
+const SUPERSCRIPT: Record<string, string> = {
+  '-': '⁻',
+  '0': '⁰',
+  '1': '¹',
+  '2': '²',
+  '3': '³',
+  '4': '⁴',
+  '5': '⁵',
+  '6': '⁶',
+  '7': '⁷',
+  '8': '⁸',
+  '9': '⁹',
+};
+/** Below this a mass (in Earths) is written in powers of ten: small moons would read "0". */
+const SCIENTIFIC_BELOW = 1e-3;
+
+/** 3 significant digits; tiny values as `m × 10ⁿ` (1.78 × 10⁻⁹). */
+function massValue(lang: Lang, v: number): string {
+  if (v === 0 || v >= SCIENTIFIC_BELOW) return sig3(lang, v);
+  const exp = Math.floor(Math.log10(v));
+  const mantissa = Number((v / 10 ** exp).toPrecision(3));
+  const power = [...String(exp)].map((c) => SUPERSCRIPT[c] ?? c).join('');
+  return `${formatNumber(lang, mantissa, 2)} × 10${power}`;
+}
+
+/** One decimal (9.8 m/s²); weak gravity keeps 2 significant digits (0.0058, not 0). */
+function gravityValue(lang: Lang, g: number): string {
+  return g >= 0.5 ? formatNumber(lang, g, 1) : formatNumber(lang, Number(g.toPrecision(2)), 6);
 }
 
 function withUnit(lang: Lang, n: string, unit: UiKey): string {
@@ -49,13 +110,15 @@ export function panelFields(def: BodyDef, lang: Lang): PanelField[] {
   });
   out.push({
     key: 'field.mass',
-    value: withUnit(lang, sig3(lang, p.massEarths), 'unit.earthMass'),
+    value: withUnit(lang, massValue(lang, p.massEarths), 'unit.earthMass'),
   });
   if (p.distanceFromParentMkm !== undefined) {
-    if (def.id === MOON_ID) {
+    // A moon: distance from its planet, in km.
+    const fromPlanet = def.parent !== null ? DISTANCE_FROM[def.parent] : undefined;
+    if (fromPlanet) {
       const km = Math.round(p.distanceFromParentMkm * 1e6);
       out.push({
-        key: 'field.distanceEarth',
+        key: fromPlanet,
         value: withUnit(lang, formatNumber(lang, km), 'unit.km'),
       });
     } else {
@@ -76,10 +139,18 @@ export function panelFields(def: BodyDef, lang: Lang): PanelField[] {
     });
   }
   out.push({ key: 'field.rotationPeriod', value: rotationValue(lang, p.rotationPeriodHours) });
-  out.push({ key: 'field.meanTemp', value: `${formatNumber(lang, p.meanTempC)} °C` });
-  out.push({ key: 'field.gravity', value: `${formatNumber(lang, p.surfaceGravity, 1)} m/s²` });
+  if (p.meanTempC !== undefined) {
+    out.push({ key: 'field.meanTemp', value: `${formatNumber(lang, p.meanTempC)} °C` });
+  }
+  out.push({ key: 'field.gravity', value: `${gravityValue(lang, p.surfaceGravity)} m/s²` });
   if (p.knownMoons !== undefined) {
     out.push({ key: 'field.moons', value: formatNumber(lang, p.knownMoons) });
+  }
+  if (p.atmosphere && p.atmosphere.length > 0) {
+    out.push({
+      key: 'field.atmosphere',
+      value: p.atmosphere.map((a) => `${a.gas} ${formatNumber(lang, a.percent, 2)}%`).join(' · '),
+    });
   }
   return out;
 }
@@ -98,6 +169,22 @@ function bodyDef(id: ContentId): BodyDef | null {
 }
 
 /**
+ * Related bodies shown as chips: a planet's modelled moons, or a moon's planet. Null when
+ * there are none (the Sun, planets without modelled moons, the asteroid belt).
+ */
+export function relatedBodies(
+  id: ContentId,
+): { title: UiKey; prefix: 'moon' | 'parent'; ids: BodyId[] } | null {
+  const def = bodyDef(id);
+  if (!def) return null;
+  if (def.kind === 'moon' && def.parent !== null) {
+    return { title: 'panel.parent', prefix: 'parent', ids: [def.parent] };
+  }
+  const moons = moonsOf(def.id);
+  return moons.length > 0 ? { title: 'panel.moons', prefix: 'moon', ids: moons } : null;
+}
+
+/**
  * Info panel: a fixed left panel on desktop, a draggable bottom sheet on mobile.
  * Rebuilds its text on `lang`, `selected` and `layout` changes; all content uses textContent.
  */
@@ -105,6 +192,7 @@ export function createInfoPanel(
   root: HTMLElement,
   store: Store<AppState>,
   onBack: () => void,
+  onStep: (id: ContentId) => void = () => undefined,
 ): { dispose(): void } {
   const panel = el('aside', 'info-panel glass');
   panel.setAttribute('data-testid', 'panel');
@@ -116,21 +204,36 @@ export function createInfoPanel(
   const head = el('div', 'panel-head');
   const title = el('h2', 'panel-title');
   const sub = el('p', 'panel-sub');
-  head.append(title, sub);
+  head.append(sub, title);
   grab.append(handle, head);
 
-  const back = el('button', 'ctl-btn glass panel-back');
+  const actions = el('div', 'panel-actions');
+  const back = el('button', 'ctl-btn panel-back');
   back.type = 'button';
   back.setAttribute('data-testid', 'back');
+  const backLabel = el('span');
+  back.append(icon('chevronLeft'), backLabel);
+  const stepper = el('div', 'panel-stepper');
+  const prev = el('button', 'ctl-btn panel-step');
+  prev.type = 'button';
+  prev.setAttribute('data-testid', 'panel-prev');
+  prev.append(icon('chevronLeft'));
+  const next = el('button', 'ctl-btn panel-step');
+  next.type = 'button';
+  next.setAttribute('data-testid', 'panel-next');
+  next.append(icon('chevronRight'));
+  stepper.append(prev, next);
+  actions.append(back, stepper);
 
   const scroll = el('div', 'panel-scroll');
-  const fields = el('dl', 'panel-fields');
+  const sections = el('div', 'panel-sections');
+  const related = el('section', 'panel-section panel-related');
   const desc = el('p', 'panel-desc');
   const factsTitle = el('h3', 'panel-facts-title');
   const facts = el('ul', 'panel-facts');
   const source = el('p', 'panel-source');
-  scroll.append(fields, desc, factsTitle, facts, source);
-  panel.append(grab, back, scroll);
+  scroll.append(sections, related, desc, factsTitle, facts, source);
+  panel.append(grab, actions, scroll);
   root.append(panel);
 
   let sheet: SheetState = 'peek';
@@ -167,18 +270,49 @@ export function createInfoPanel(
       def && def.orderFromSun !== null
         ? t(lang, 'panel.order', { kind: content.kindLabel, n: def.orderFromSun })
         : content.kindLabel;
-    back.textContent = t(lang, 'backToOverview');
-    fields.replaceChildren(
-      ...(def ? panelFields(def, lang) : []).flatMap((f) => {
-        const row = el('div', 'panel-field');
-        const dt = el('dt');
-        dt.textContent = t(lang, f.key);
-        const dd = el('dd');
-        dd.textContent = f.value;
-        row.append(dt, dd);
-        return [row];
+    backLabel.textContent = t(lang, 'backToOverview');
+    prev.setAttribute('aria-label', t(lang, 'panel.prev'));
+    next.setAttribute('aria-label', t(lang, 'panel.next'));
+    sections.replaceChildren(
+      ...panelSections(def ? panelFields(def, lang) : []).map((sec) => {
+        const box = el('section', 'panel-section');
+        const h = el('h3', 'panel-section-title');
+        h.textContent = t(lang, sec.title);
+        const list = el('dl', 'panel-fields');
+        list.append(
+          ...sec.fields.map((f) => {
+            const row = el('div', 'panel-field');
+            const dt = el('dt');
+            dt.textContent = t(lang, f.key);
+            const dd = el('dd');
+            dd.textContent = f.value;
+            row.append(dt, dd);
+            return row;
+          }),
+        );
+        box.append(h, list);
+        return box;
       }),
     );
+    const rel = relatedBodies(s.selected);
+    related.hidden = rel === null;
+    related.replaceChildren();
+    if (rel) {
+      const h = el('h3', 'panel-section-title');
+      h.textContent = t(lang, rel.title);
+      const row = el('div', 'panel-chips');
+      row.append(
+        ...rel.ids.map((id) => {
+          const chip = el('button', 'panel-chip');
+          chip.type = 'button';
+          chip.setAttribute('data-testid', `${rel.prefix}-${id}`);
+          chip.textContent = getContent(id, lang).name;
+          chip.addEventListener('click', () => onStep(id));
+          return chip;
+        }),
+      );
+      related.append(h, row);
+    }
     desc.textContent = content.description;
     factsTitle.textContent = t(lang, 'panel.facts');
     facts.replaceChildren(
@@ -194,6 +328,12 @@ export function createInfoPanel(
   render();
 
   back.addEventListener('click', () => onBack());
+  const step = (dir: 1 | -1): void => {
+    const id = neighbour({ order: NAV_ORDER, selected: store.get().selected }, dir);
+    if (id) onStep(id);
+  };
+  prev.addEventListener('click', () => step(-1));
+  next.addEventListener('click', () => step(1));
 
   // Drag on the handle/header: up toggles to expanded, down returns to peek or closes.
   let startY: number | null = null;

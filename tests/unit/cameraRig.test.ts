@@ -1,6 +1,10 @@
 import * as THREE from 'three';
 import { describe, expect, it } from 'vitest';
-import { AUTO_ORBIT_RAD_PER_SEC, createCameraRig } from '../../src/camera/cameraRig';
+import {
+  AUTO_ORBIT_RAD_PER_SEC,
+  IDLE_DRIFT_DELAY_SEC,
+  createCameraRig,
+} from '../../src/camera/cameraRig';
 import {
   focusDistance,
   focusFill,
@@ -226,5 +230,101 @@ describe('createCameraRig', () => {
     off();
     down();
     expect(n).toBe(1);
+  });
+
+  it('zoomBy scales the distance and clamps to the focus limits', () => {
+    const { camera, rig } = setup();
+    const t = body(100, 0, 0);
+    void rig.flyTo(t);
+    run(rig, 4);
+    const d0 = camera.position.distanceTo(t.object.position);
+    rig.zoomBy(0.8);
+    run(rig, 3);
+    expect(camera.position.distanceTo(t.object.position)).toBeCloseTo(d0 * 0.8, 1);
+    for (let i = 0; i < 40; i++) rig.zoomBy(0.5);
+    run(rig, 4);
+    // FOCUS_MIN_FACTOR 1.3 times the radius.
+    expect(camera.position.distanceTo(t.object.position)).toBeCloseTo(2 * 1.3, 1);
+    rig.zoomBy(Number.NaN);
+    rig.zoomBy(0);
+    run(rig, 1);
+    expect(camera.position.distanceTo(t.object.position)).toBeCloseTo(2 * 1.3, 1);
+  });
+
+  it('rotateBy turns the view around the target and keeps the distance', () => {
+    const { camera, rig } = setup();
+    const t = body(100, 0, 0);
+    void rig.flyTo(t);
+    run(rig, 4);
+    const before = camera.position.clone().sub(t.object.position);
+    rig.rotateBy(Math.PI / 2);
+    run(rig, 4);
+    const after = camera.position.clone().sub(t.object.position);
+    expect(after.length()).toBeCloseTo(before.length(), 2);
+    const flat = (v: THREE.Vector3): THREE.Vector3 => v.clone().setY(0).normalize();
+    expect(flat(before).dot(flat(after))).toBeCloseTo(0, 2);
+  });
+
+  it('idle drift circles a focused body only after the view has rested, and a touch restarts it', () => {
+    const { dom, camera, rig } = setup();
+    const t = body(100, 0, 0);
+    void rig.flyTo(t);
+    run(rig, 4);
+    rig.setIdleDrift(true);
+    const rel = (): THREE.Vector3 => camera.position.clone().sub(t.object.position);
+    const start = rel();
+    run(rig, IDLE_DRIFT_DELAY_SEC - 1);
+    expect(rel().distanceTo(start)).toBeLessThan(1e-3);
+    run(rig, 8);
+    const drifted = rel();
+    expect(drifted.distanceTo(start)).toBeGreaterThan(0.05);
+    expect(drifted.length()).toBeCloseTo(start.length(), 2);
+    dom.dispatchEvent(new Event('pointerdown'));
+    run(rig, 2);
+    const held = rel();
+    run(rig, 2);
+    expect(rel().distanceTo(held)).toBeLessThan(1e-3);
+  });
+
+  it('idle drift never runs in the overview or when switched off', () => {
+    const { camera, rig } = setup();
+    rig.setIdleDrift(true);
+    run(rig, 1);
+    const p = camera.position.clone();
+    run(rig, IDLE_DRIFT_DELAY_SEC + 6);
+    expect(camera.position.distanceTo(p)).toBeLessThan(1e-3);
+    const t = body(100, 0, 0);
+    void rig.flyTo(t);
+    run(rig, 4);
+    rig.setIdleDrift(false);
+    const q = camera.position.clone();
+    run(rig, IDLE_DRIFT_DELAY_SEC + 6);
+    expect(camera.position.distanceTo(q)).toBeLessThan(1e-3);
+  });
+
+  it('a flight lifts the camera mid-way and ends on the exact focus pose', () => {
+    const lifted = setup();
+    const flat = setup();
+    flat.rig.setFlightArc(false);
+    const a = body(300, 0, 0);
+    const b = body(300, 0, 0);
+    void lifted.rig.flyTo(a);
+    void flat.rig.flyTo(b);
+    run(lifted.rig, 1.1);
+    run(flat.rig, 1.1);
+    expect(lifted.camera.position.y - flat.camera.position.y).toBeGreaterThan(1);
+    run(lifted.rig, 4);
+    run(flat.rig, 4);
+    expect(lifted.camera.position.distanceTo(flat.camera.position)).toBeLessThan(1e-3);
+    expect(lifted.camera.quaternion.angleTo(flat.camera.quaternion)).toBeLessThan(1e-4);
+  });
+
+  it('keeps looking at the look-at point while lifted', () => {
+    const { camera, rig } = setup();
+    const t = body(300, 0, 0);
+    void rig.flyTo(t);
+    run(rig, 1.1);
+    // The view direction passes through a point on the way to the target, not past it.
+    expect(targetOf(camera).y).toBeLessThan(0);
   });
 });

@@ -10,6 +10,7 @@ Solar System Explorer: a mobile-first, multilingual (vi/en/ja/de) three.js web a
 
 - Spec (Vietnamese): `docs/superpowers/specs/2026-10-29-solar-system-explorer-design.md`. "§3.8" style references point here.
 - Plan: `docs/superpowers/plans/2026-10-29-solar-system-explorer.md` (tasks, Wave Plan, Branch Map, Global Constraints, Review Focus).
+- Photorealistic enhancement (Task 39): `docs/ENHANCEMENT_PLAN.md` (audit, approach, phases) and `docs/IMPLEMENTATION_STATUS.md` (what is done, known limits, next steps).
 
 ## Commands
 
@@ -20,6 +21,7 @@ Solar System Explorer: a mobile-first, multilingual (vi/en/ja/de) three.js web a
 - `npm run narration` (`scripts/generate-narration.py` in `.venv`, needs network for Edge TTS; regenerates only changed text).
 - `npm run check:budget` (`scripts/check-budget.mjs`, run after `npm run build`; initial payload and JS gzip budgets).
 - `npm run test:visual` (`playwright.visual.config.ts`): refreshes `docs/screenshots/`, one worker.
+- `node scripts/shots.mjs --url http://localhost:<port>/ --out <dir> --views overview,sun,earth` real-GPU screenshots of a running dev server with FPS and console output (options in the file header: `--close`, `--mobile`, `--quality`, `--lang`, `--click`, `--tag`). Use it to judge shader and UI changes; `test:visual` runs on SwiftShader.
 - `npm run test:perf` (`playwright.perf.config.ts`): headed real-GPU FPS, port 4179, writes `docs/perf-results.json` (ADR 0005).
 - Port 4173 is shared: `test:e2e` and `test:visual` both start a preview server on it. Never run them (or two worktrees' e2e) at the same time.
 - E2E is slow under software GL (SwiftShader). `playwright.config.ts` uses `workers: 2`, `retries: 1`, 60 s timeout on purpose; run a single spec/project while iterating.
@@ -31,8 +33,8 @@ Solar System Explorer: a mobile-first, multilingual (vi/en/ja/de) three.js web a
 - `docs/` progress (`progress/t<NN>.md`), `decisions/` (ADRs), `KNOWN_ISSUES.md`, `BACKLOG.md`, `HUMAN_REVIEW.md`, `ai-setup.md` (both Vietnamese), `screenshots/`, `perf-results.json`, `superpowers/` (spec, plan).
 - `scripts/` texture fetch, narration generation (+ its pytest), budget check.
 - `src/config/` scale and time constants; `src/data/` body data, localized content (vi/en/ja/de), tour stops (see `src/data/CLAUDE.md` to add a body); `src/i18n/`; `src/state/` store and prefs; `src/quality/` tiers and FPS monitor.
-- `src/tour/` state machine, narration, controller; `src/scene/` renderer, sky, postfx, textures, loop; `src/bodies/` planets, sun, earth, rings, belt, orbits.
-- `src/camera/` framing and rig; `src/ui/labelLayout.ts` label placement; `src/interaction/` picker; `src/audio/` engine, ambient, whoosh; `src/ui/` layout, styles, panels, controls; `src/debug/` e2e API.
+- `src/tour/` state machine, narration, controller; `src/scene/` renderer, deep space (sky, baked glow and nebula, starfield, dust), postfx, textures, loop; `src/bodies/` shared planet shader (`planetMaterial.ts`) and per-body look table (`planetLook.ts`), sun, earth, rings, belt, orbits.
+- `src/camera/` framing and rig (flights, arc, idle drift); `src/ui/labelLayout.ts` label placement; `src/interaction/` picker and keyboard navigation; `src/audio/` engine, ambient, whoosh, interface sounds; `src/ui/` layout, styles (design tokens), panels, controls, settings popover, body navigator, icons; `src/state/simClock.ts` simulation time; `src/debug/` e2e API.
 - `public/textures/`, `public/audio/narration/` committed assets and manifests.
 - `tests/unit/`, `tests/e2e/`, `tests/visual/`, `tests/perf/`.
 
@@ -53,6 +55,8 @@ Solar System Explorer: a mobile-first, multilingual (vi/en/ja/de) three.js web a
 - Tap targets are at least 44x44 CSS px.
 - Performance: at least 30 FPS on a mid-range phone, 55 FPS on a laptop iGPU; initial load (JS + low textures + sky) at most 8 MB; JS at most 800 KB gzip; pixel ratio at most 2 (1.5 on `low`).
 - Quality never drops below: textured bodies + sun light + sun bloom.
+- Quality tiers are `low`, `medium`, `high`, `ultra`; `ultra` is only ever chosen by the user. Every new effect is gated by a `TierSettings` field and has a cheap path on `low`. Animated shader motion and camera drift respect `prefers-reduced-motion`.
+- Saved preferences: `sse.lang`, `sse.muted`, `sse.tourSeen`, `sse.orbits`, `sse.labels`, `sse.quality`.
 - Voices: `vi-VN-HoaiMyNeural`, `en-US-AvaNeural`, `ja-JP-NanamiNeural`, `de-DE-KatjaNeural` (Edge TTS, verified with `edge_tts.list_voices()`).
 - Credits must show: "Textures: Solar System Scope (CC BY 4.0)" linking https://www.solarsystemscope.com/textures/; NASA as data source; "Narration voice generated with Microsoft Edge TTS".
 - UI disclaimer in every language: sizes and distances are not to scale.

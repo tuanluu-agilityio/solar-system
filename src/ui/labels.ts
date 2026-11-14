@@ -17,7 +17,8 @@ const ALWAYS_VISIBLE: ReadonlySet<BodyId> = new Set([
 /**
  * Declutter priority, highest first (the hovered body always goes first). Earth and the
  * large planets win; the Sun needs no label to be found, and the Moon only shows when it
- * is not hidden next to a boosted Earth and there is room.
+ * is not hidden next to a boosted Earth and there is room. The other moons are hidden (so
+ * unlabelled) in the overview and only compete for room near their planet.
  */
 const PRIORITY: readonly BodyId[] = [
   'earth',
@@ -31,6 +32,15 @@ const PRIORITY: readonly BodyId[] = [
   'pluto',
   'sun',
   'moon',
+  // Other moons show only near their planet (hidden in the overview), largest first.
+  'ganymede',
+  'titan',
+  'callisto',
+  'io',
+  'europa',
+  'enceladus',
+  'phobos',
+  'deimos',
 ];
 
 export interface LabelOptions {

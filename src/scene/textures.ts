@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { BodyId } from '../data/types';
-import { fallbackColor, textureKeysFor } from './textureKeys';
+import { fallbackColor, isDataTextureKey, textureKeysFor } from './textureKeys';
 
 export { textureKeysFor };
 
@@ -29,7 +29,7 @@ export function makeFallbackTexture(key: string): THREE.DataTexture {
   const b = hex & 255;
   for (let i = 0; i < 4; i++) data.set([r, g, b, 255], i * 4);
   const tex = new THREE.DataTexture(data, 2, 2, THREE.RGBAFormat);
-  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.colorSpace = isDataTextureKey(key) ? THREE.NoColorSpace : THREE.SRGBColorSpace;
   tex.needsUpdate = true;
   // Lets overlay layers (clouds, ring alpha) tell a solid stand-in from a real map.
   tex.userData.isFallback = true;
@@ -58,7 +58,7 @@ export async function loadTextureSet(
       try {
         if (!rel) throw new Error('not in manifest');
         tex = await loader.loadAsync(`${import.meta.env.BASE_URL}${rel}`);
-        tex.colorSpace = THREE.SRGBColorSpace;
+        tex.colorSpace = isDataTextureKey(key) ? THREE.NoColorSpace : THREE.SRGBColorSpace;
       } catch (err) {
         console.warn(`Texture "${set}/${key}" failed to load, using fallback colour`, err);
         tex = makeFallbackTexture(key);
@@ -71,21 +71,34 @@ export async function loadTextureSet(
   return out;
 }
 
-const highCache = new Map<BodyId, Promise<Map<string, THREE.Texture>>>();
+const caches: Record<'low' | 'high', Map<BodyId, Promise<Map<string, THREE.Texture>>>> = {
+  low: new Map(),
+  high: new Map(),
+};
 
 /** Loads a body's `high` textures once; later calls share the same result. */
 export function loadHighTextures(id: BodyId): Promise<Map<string, THREE.Texture>> {
-  let p = highCache.get(id);
+  return loadBodyTextures('high', id);
+}
+
+/** Loads a body's `low` textures once (maps left out of the boot download, such as moons). */
+export function loadLowTextures(id: BodyId): Promise<Map<string, THREE.Texture>> {
+  return loadBodyTextures('low', id);
+}
+
+function loadBodyTextures(set: 'low' | 'high', id: BodyId): Promise<Map<string, THREE.Texture>> {
+  const cache = caches[set];
+  let p = cache.get(id);
   if (!p) {
-    const loading = loadTextureSet('high', textureKeysFor(id), () => {});
+    const loading = loadTextureSet(set, textureKeysFor(id), () => {});
     p = loading;
-    highCache.set(id, loading);
+    cache.set(id, loading);
     // An all-fallback result is a transient failure: forget it so the next focus retries.
     void loading.then(
       (tex) => {
-        if ([...tex.values()].every((t) => isFallbackTexture(t))) highCache.delete(id);
+        if ([...tex.values()].every((t) => isFallbackTexture(t))) cache.delete(id);
       },
-      () => highCache.delete(id),
+      () => cache.delete(id),
     );
   }
   return p;

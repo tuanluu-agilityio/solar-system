@@ -1,4 +1,5 @@
 import { t } from '../i18n/i18n';
+import { icon, setIcon } from './icons';
 import type { AppState } from '../state/appState';
 import type { Store } from '../state/store';
 import type { TourEvent, TourStatus } from '../tour/tourMachine';
@@ -41,16 +42,19 @@ export function createTourControls(
   bar.className = 'tour-controls';
   bar.hidden = true;
   const prev = button('tour-prev');
-  prev.textContent = '⏮';
+  prev.append(icon('skipPrev'));
   const pause = button('tour-pause');
   const next = button('tour-next');
-  next.textContent = '⏭';
+  next.append(icon('skipNext'));
   const exit = button('tour-exit');
-  exit.textContent = '✕';
+  exit.append(icon('close'));
   const progress = document.createElement('span');
   progress.className = 'tour-progress';
   progress.setAttribute('data-testid', 'tour-progress');
   progress.setAttribute('aria-live', 'polite');
+  const pauseLabel = document.createElement('span');
+  pauseLabel.className = 'tour-resume-label';
+  pause.append(icon('pause'), pauseLabel);
   bar.append(prev, pause, next, progress, exit);
   dock.append(bar);
 
@@ -65,7 +69,8 @@ export function createTourControls(
 
     const paused = tour.status === 'paused';
     pause.classList.toggle('tour-resume', paused);
-    pause.textContent = paused ? `▶ ${t(lang, 'tour.resume')}` : '⏸';
+    setIcon(pause, paused ? 'play' : 'pause');
+    pauseLabel.textContent = paused ? t(lang, 'tour.resume') : '';
     pause.setAttribute('aria-label', t(lang, paused ? 'tour.resume' : 'tour.pause'));
     prev.setAttribute('aria-label', t(lang, 'tour.prev'));
     next.setAttribute('aria-label', t(lang, 'tour.next'));
