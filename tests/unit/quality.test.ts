@@ -96,3 +96,23 @@ describe('fps monitor', () => {
     expect(run(createFpsMonitor(), 40, 2900).every((r) => r === null)).toBe(true);
   });
 });
+
+describe('softwareFallback', () => {
+  it('keeps the tier-visible numbers and drops shader detail and particle layers to low', async () => {
+    const { softwareFallback, tierSettings } = await import('../../src/quality/tiers');
+    const high = tierSettings('high');
+    const low = tierSettings('low');
+    const s = softwareFallback(high);
+    expect(s.pixelRatioCap).toBe(high.pixelRatioCap);
+    expect(s.asteroidCount).toBe(high.asteroidCount);
+    expect(s.textureSet).toBe(high.textureSet);
+    expect(s.bloomResolutionScale).toBe(high.bloomResolutionScale);
+    expect(s.planetDetail).toBe(false);
+    expect(s.starCount).toBe(low.starCount);
+    expect(s.dustCount).toBe(0);
+    expect(s.kuiperCount).toBe(0);
+    // The input is not mutated, and low stays low.
+    expect(high.planetDetail).toBe(true);
+    expect(softwareFallback(low)).toEqual(low);
+  });
+});

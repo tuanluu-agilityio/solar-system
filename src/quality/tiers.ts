@@ -103,6 +103,23 @@ export function tierSettings(t: QualityTier): TierSettings {
   return { ...TIERS[t] };
 }
 
+/**
+ * Settings for a software renderer (no GPU: SwiftShader, llvmpipe). The tier and everything a
+ * user can see listed for it (pixel ratio, asteroid count, texture set) stay as chosen; only
+ * the per-pixel shader detail and the extra particle layers drop to the low tier's values, so
+ * the app stays usable without hardware acceleration.
+ */
+export function softwareFallback(s: TierSettings): TierSettings {
+  const low = TIERS.low;
+  return {
+    ...s,
+    planetDetail: low.planetDetail,
+    starCount: Math.min(s.starCount, low.starCount),
+    dustCount: low.dustCount,
+    kuiperCount: low.kuiperCount,
+  };
+}
+
 export function lowerTier(t: QualityTier): QualityTier {
   if (t === 'ultra') return 'high';
   return t === 'high' ? 'medium' : 'low';

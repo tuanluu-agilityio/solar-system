@@ -8,9 +8,11 @@ import { getLayout } from './ui/layout';
 import {
   initialTier,
   isQualityChoice,
+  softwareFallback,
   tierSettings,
   type QualityChoice,
   type QualityTier,
+  type TierSettings,
 } from './quality/tiers';
 import { createFpsMonitor } from './quality/fpsMonitor';
 import { createRuntimeQuality, isSoftwareRenderer } from './quality/runtime';
@@ -257,6 +259,9 @@ async function boot(): Promise<void> {
   };
   const rendererName = getRendererName(renderer);
   const software = isSoftwareRenderer(rendererName);
+  // Without a GPU the per-pixel shader detail and extra particle layers use the low values.
+  const settingsFor = (tier: QualityTier): TierSettings =>
+    software ? softwareFallback(tierSettings(tier)) : tierSettings(tier);
   console.info(
     `[quality] tier ${store.get().quality}, renderer ${rendererName ?? 'unknown'}${software ? ' (software: FPS monitor off)' : ''}`,
   );
@@ -266,11 +271,11 @@ async function boot(): Promise<void> {
   let sunRef: ReturnType<typeof createSun> | null = null;
   const applyTier = (next: QualityTier): void => {
     store.set({ quality: next });
-    const s = tierSettings(next);
+    const s = settingsFor(next);
     applyRendererSettings(renderer, s);
     postfx.setSettings(s);
     solarRef?.setTierSettings(s);
-    sunRef?.setDetail(sunDetailForTier(next));
+    sunRef?.setDetail(software ? 'low' : sunDetailForTier(next));
     syncOrbitViewport();
     afterTierChange();
   };
@@ -392,14 +397,16 @@ async function boot(): Promise<void> {
     manifestPromise,
   ]);
   const skyTexture = skyTex.get(skyKey(sky));
-  const deepSpace = createDeepSpace(skyTexture ?? null, settings, { renderer });
+  const deepSpace = createDeepSpace(skyTexture ?? null, settingsFor(store.get().quality), {
+    renderer,
+  });
   scene.add(deepSpace.group);
   const sun = createSun(lowTex.get('sun') ?? makeFallbackTexture('sun'), {
-    detail: sunDetailForTier(store.get().quality),
+    detail: software ? 'low' : sunDetailForTier(store.get().quality),
   });
   sunRef = sun;
   scene.add(sun.group);
-  const solar = createSolarSystem(lowTex, tierSettings(store.get().quality), {
+  const solar = createSolarSystem(lowTex, settingsFor(store.get().quality), {
     onFirstShown: (id) => {
       loadLowTextures(id)
         .then((tex) => solar.upgradeTextures(id, tex))
